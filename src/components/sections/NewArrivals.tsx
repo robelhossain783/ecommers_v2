@@ -238,9 +238,9 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
       <div className="section-header">
         <h2 className="section-title">New Arrival</h2>
 
-        <a href="/new-arrivals" className="see-all">
+        {/* <a href="/new-arrivals" className="see-all">
           View All
-        </a>
+        </a> */}
       </div>
 
       <div className="products-row">

@@ -10,7 +10,7 @@ import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
 import { Product } from "@/lib/backend_type";
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
 
 export default function AddToCarts() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -77,7 +77,7 @@ export default function AddToCarts() {
       // each cart item order create
       for (const item of cart) {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/create-order/",
+          `${BASE_URL}/api/create-order/`,
           {
             method: "POST",
             headers: {
@@ -111,9 +111,31 @@ export default function AddToCarts() {
         }
 
         const data = await response.json();
+        const confirmedOrderId = data.order_id || `ORDER-${data.id}`;
 
         // last order id
-        setOrderId(data.order_id || `ORDER-${data.id}`);
+        setOrderId(confirmedOrderId);
+
+        // Save order to localStorage
+        try {
+          const savedOrders = JSON.parse(localStorage.getItem("placed_orders") || "[]");
+          const newOrder = {
+            order_id: confirmedOrderId,
+            fullName: name,
+            phone: phone,
+            address: `${address}, ${district}`,
+            paymentMethod: paymentMethod.toUpperCase(),
+            product_name: item.product.name,
+            product_image: item.product.image,
+            quantity: item.quantity,
+            amount: Number(item.product.sell_price) * item.quantity + Math.round(deliveryCharge / cart.length),
+            status: "pending",
+            created_at: new Date().toISOString()
+          };
+          localStorage.setItem("placed_orders", JSON.stringify([newOrder, ...savedOrders]));
+        } catch (e) {
+          console.error("Failed to save order to localStorage", e);
+        }
       }
 
       setOrderPlaced(true);

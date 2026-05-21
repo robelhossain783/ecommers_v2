@@ -11,7 +11,7 @@ import { getProductBySlug } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
 
 interface CheckoutContentProps {
   slug: string;
@@ -137,7 +137,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/create-order/", {
+      const response = await fetch(`${BASE_URL}/api/create-order/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,8 +159,30 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
       }
 
       const data = await response.json();
-      setOrderId(data.order_id || `ORDER-${data.id}`);
+      const confirmedOrderId = data.order_id || `ORDER-${data.id}`;
+      setOrderId(confirmedOrderId);
       setOrderPlaced(true);
+
+      // Save order to localStorage
+      try {
+        const savedOrders = JSON.parse(localStorage.getItem("placed_orders") || "[]");
+        const newOrder = {
+          order_id: confirmedOrderId,
+          fullName,
+          phone: mobileNumber,
+          address: `${address}, ${district}`,
+          paymentMethod: paymentMethod.toUpperCase(),
+          product_name: product.name,
+          product_image: product.image,
+          quantity: quantity,
+          amount: grandTotal,
+          status: "pending",
+          created_at: new Date().toISOString()
+        };
+        localStorage.setItem("placed_orders", JSON.stringify([newOrder, ...savedOrders]));
+      } catch (e) {
+        console.error("Failed to save order to localStorage", e);
+      }
 
       // Clean cart upon order placement
       clearCart();

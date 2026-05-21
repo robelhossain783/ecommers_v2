@@ -23,7 +23,7 @@ export default function HomeClient() {
       <main style={{ paddingTop: "24px", paddingBottom: "24px" }}>
         <HeroBanner />
         <TrustBadges />
-        <CategoriesSection />
+        {/* <CategoriesSection /> */}
         <NewTrends />
         {/* <FeaturedProducts /> */}
         <PromoBanners />

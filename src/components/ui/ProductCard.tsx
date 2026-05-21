@@ -134,17 +134,19 @@ export default function ProductCard({
         {/* PRICE */}
         <div className="product-prices">
 
-          <span className="sale-price">
+          <span className="product-detail-sell-price">
             ৳{sellPrice}
           </span>
 
           {hasDiscount && (
-            <span className="regular-price">
+
+            <span className="product-detail-regular-price">
               ৳{regularPrice}
             </span>
           )}
 
         </div>
+
 
         {/* STOCK */}
         <p className="stock">

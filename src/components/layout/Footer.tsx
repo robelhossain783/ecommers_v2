@@ -6,14 +6,14 @@ export default function Footer() {
           {/* Brand */}
           <div className="footer-brand">
             <span className="logo-text">
-              <span style={{ color: "var(--primary)" }}>Eco</span>Mart
+              <span style={{ color: "var(--primary)" }}>IZU</span>Mart
             </span>
             <p className="footer-desc">
               Bangladesh&apos;s trusted tech e-commerce store for phones, gadgets &amp; accessories. Authentic products, fast delivery.
             </p>
             <div className="footer-contact">
               <p>📞 <a href="tel:09678148148">01607005806</a></p>
-              <p>✉️ <a href="mailto:contact@applegadgetsbd.com">contact@ecomartbd.com</a></p>
+              <p>✉️ <a href="mailto:contact@applegadgetsbd.com">contact@izumartbd.com</a></p>
             </div>
           </div>
 
@@ -60,11 +60,11 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="footer-bottom">
-          <p>© 2026 EcoMart Bangladesh | All rights reserved</p>
+          <p>© 2026 EZU Bangladesh | All rights reserved</p>
           <div className="social-links">
             <a href="https://wa.me/+8801607005806" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">💬</a>
-            <a href="https://facebook.com/eco_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
-            <a href="https://instagram.com/eco_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">📷</a>
+            <a href="https://facebook.com/Izu_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
+            <a href="https://instagram.com/Ico_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">📷</a>
           </div>
         </div>
       </div>

@@ -5,8 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 // Backend base URL
-const BASE_URL = "http://127.0.0.1:8000";
-
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
 // TypeScript Interfaces based on Django Backend structures
 interface Category {
   id: number;
