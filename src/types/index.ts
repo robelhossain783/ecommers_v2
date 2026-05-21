@@ -1,21 +1,21 @@
-export interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  salePrice: number;
-  regularPrice: number | null;
-  badge?: string;
-  category: string;
-  brand: string;
-  isOutOfStock?: boolean;
-}
+// export interface Product {
+//   id: number;
+//   name: string;
+//   slug: string;
+//   salePrice: number;
+//   regularPrice: number | null;
+//   badge?: string;
+//   category: string;
+//   brand: string;
+//   isOutOfStock?: boolean;
+// }
 
-export interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  slug: string;
-}
+// export interface Category {
+//   id: number;
+//   name: string;
+//   icon: string;
+//   slug: string;
+// }
 
 export interface Brand {
   id: number;

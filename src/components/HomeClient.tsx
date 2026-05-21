@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -16,29 +15,21 @@ import NewArrivals from "@/components/sections/NewArrivals";
 import SeoSection from "@/components/sections/SeoSection";
 
 export default function HomeClient() {
-  const [cartCount, setCartCount] = useState(0);
-
-  const handleAddToCart = () => {
-    setCartCount((prev) => prev + 1);
-    // Could use a toast notification here
-    alert("✅ Product added to cart!");
-  };
-
   return (
     <>
       <TopBar />
-      <Header cartCount={cartCount} />
+      <Header />
 
       <main style={{ paddingTop: "24px", paddingBottom: "24px" }}>
         <HeroBanner />
         <TrustBadges />
-        <CategoriesSection />
-        <NewTrends onAddToCart={handleAddToCart} />
-        {/* <FeaturedProducts onAddToCart={handleAddToCart} /> */}
+        {/* <CategoriesSection /> */}
+        <NewTrends />
+        {/* <FeaturedProducts /> */}
         <PromoBanners />
-        <NewArrivals onAddToCart={handleAddToCart} />
-        {/* <AcSection onAddToCart={handleAddToCart} /> */}
-        {/* <TopBrandProducts onAddToCart={handleAddToCart} /> */}
+        <NewArrivals />
+        {/* <AcSection /> */}
+        {/* <TopBrandProducts /> */}
         <SeoSection />
       </main>
 
