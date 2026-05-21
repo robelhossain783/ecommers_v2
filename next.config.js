@@ -2,6 +2,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  trailingSlash: true,
   images: {
     remotePatterns: [
       {
@@ -15,6 +16,18 @@ const nextConfig = {
         pathname: "/media/**",
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://127.0.0.1:8000/api/:path*",
+      },
+      {
+        source: "/media/:path*",
+        destination: "http://127.0.0.1:8000/media/:path*",
+      },
+    ];
   },
 };
 

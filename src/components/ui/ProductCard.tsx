@@ -68,6 +68,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 // import { a } from "@/types";
 import { Product } from "@/lib/backend_type";
 
@@ -104,55 +105,61 @@ export default function ProductCard({
         </span>
       )}
 
-      <div className="product-image-wrapper">
-  {product.image ? (
-    <Image
-      src={`${BASE_URL}${product.image}`}
-      alt={product.name}
-      width={250}
-      height={200}
-      className="product-image"
-      unoptimized
-    />
-  ) : (
-    <div className="no-image">No Image</div>
-  )}
-</div>
+      <Link href={`/product/${product.slug}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
+        <div className="product-image-wrapper">
+          {product.image ? (
+            <Image
+              src={product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`}
+              alt={product.name}
+              width={250}
+              height={200}
+              className="product-image"
+              unoptimized
+            />
+          ) : (
+            <div className="no-image">No Image</div>
+          )}
+        </div>
 
-      {/* PRODUCT NAME */}
-      <h3 className="product-name">
-        {product.name}
-      </h3>
+        {/* PRODUCT NAME */}
+        <h3 className="product-name">
+          {product.name}
+        </h3>
 
-      {/* CATEGORY */}
-      <p className="product-category">
-        {product.category.name}
-      </p>
+        {/* CATEGORY */}
+        <p className="product-category">
+          {product.category.name}
+        </p>
 
-      {/* PRICE */}
-      <div className="product-prices">
+        {/* PRICE */}
+        <div className="product-prices">
 
-        <span className="sale-price">
-          ৳{sellPrice}
-        </span>
-
-        {hasDiscount && (
-          <span className="regular-price">
-            ৳{regularPrice}
+          <span className="sale-price">
+            ৳{sellPrice}
           </span>
-        )}
 
-      </div>
+          {hasDiscount && (
+            <span className="regular-price">
+              ৳{regularPrice}
+            </span>
+          )}
 
-      {/* STOCK */}
-      <p className="stock">
-        Stock: {product.stock}
-      </p>
+        </div>
+
+        {/* STOCK */}
+        <p className="stock">
+          Stock: {product.stock}
+        </p>
+      </Link>
 
       {/* BUTTON */}
       <button
         className="add-cart-btn"
-        onClick={onAddToCart}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onAddToCart();
+        }}
       >
         Add to Cart
       </button>

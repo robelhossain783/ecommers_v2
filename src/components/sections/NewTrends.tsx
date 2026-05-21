@@ -31,15 +31,17 @@ import { useRouter } from "next/navigation";
 import ProductCard from "@/components/ui/ProductCard";
 import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
+import { useCart } from "@/context/CartContext";
 
 interface NewTrendsProps {
-  onAddToCart: () => void;
+  onAddToCart?: () => void;
 }
 
 export default function NewTrends({ onAddToCart }: NewTrendsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { addToCart } = useCart();
 
   // ---------------- FETCH API ----------------
   useEffect(() => {
@@ -59,10 +61,11 @@ export default function NewTrends({ onAddToCart }: NewTrendsProps) {
 
     fetchProducts();
   }, []);
-   // 👉 ADD TO CART HANDLER
+  // 👉 ADD TO CART HANDLER
   const handleAddToCart = (product: Product) => {
     console.log("Added:", product);
 
+    addToCart(product); // ✅ Add to global cart context
     onAddToCart?.(); // optional callback
 
     router.push("/cart"); // 🔥 go to cart page

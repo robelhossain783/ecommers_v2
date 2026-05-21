@@ -147,20 +147,94 @@
 // // }
 
 
+// "use client";
+
+// import { getNewArrival2 } from "@/lib/api";
+// import ProductCard from "@/components/ui/ProductCard";
+// import { useCart } from "@/context/CartContext";
+// import { useRouter } from "next/navigation";
+// import { Product } from "@/lib/backend_type";
+
+// interface NewArrivalsProps {
+//   onAddToCart?: () => void;
+// }
+
+// export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
+//   const { addToCart } = useCart();
+//   const router = useRouter();
+
+//   const handleAddToCart = (product: Product) => {
+//     addToCart(product);
+//     onAddToCart?.();
+//     router.push("/cart");
+//   };
+
+//   return (
+//     <div className="container section-gap">
+
+//       {/* HEADER */}
+//       <div className="section-header">
+//         <h2 className="section-title">New Arrival</h2>
+
+//         <a href="/new-arrivals" className="see-all">
+//           View All
+//         </a>
+//       </div>
+
+//       {/* PRODUCTS */}
+//       <div className="products-row">
+//         {newArrivals2.map((product) => (
+//           <ProductCard
+//             key={product.id}
+//             product={product as Product}
+//             onAddToCart={() => handleAddToCart(product as Product)}
+//           />
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
 "use client";
 
-import { newArrivals } from "@/data";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
+
+import { getNewArrival2 } from "@/lib/api";
 import ProductCard from "@/components/ui/ProductCard";
+import { Product } from "@/lib/backend_type";
 
 interface NewArrivalsProps {
-  onAddToCart: () => void;
+  onAddToCart?: () => void;
 }
 
 export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
+  const { addToCart } = useCart();
+  const router = useRouter();
+
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getNewArrival2();
+      setProducts(data);
+    }
+    load();
+  }, []);
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
+    onAddToCart?.();
+    router.push("/cart");
+  };
+
   return (
     <div className="container section-gap">
-      
-      {/* HEADER */}
+
       <div className="section-header">
         <h2 className="section-title">New Arrival</h2>
 
@@ -169,16 +243,16 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
         </a>
       </div>
 
-      {/* PRODUCTS */}
       <div className="products-row">
-        {newArrivals.map((product) => (
+        {products.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
-            onAddToCart={onAddToCart}
+            onAddToCart={() => handleAddToCart(product)}
           />
         ))}
       </div>
+
     </div>
   );
 }

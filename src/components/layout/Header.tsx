@@ -1,10 +1,16 @@
 "use client";
 
+import { useCart } from "@/context/CartContext";
+import Link from "next/link";
+
 interface HeaderProps {
-  cartCount: number;
+  cartCount?: number;
 }
 
-export default function Header({ cartCount }: HeaderProps) {
+export default function Header({ cartCount: propCartCount }: HeaderProps) {
+  const { cartCount: contextCartCount } = useCart();
+  const cartCount = propCartCount ?? contextCartCount;
+
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -32,10 +38,10 @@ export default function Header({ cartCount }: HeaderProps) {
           <a href="/offer" className="nav-link">Offers</a>
           {/* <a href="/compare" className="nav-link">Compare</a> */}
 
-          <button className="cart-btn" aria-label="Cart">
+          <Link href="/cart" className="cart-btn" aria-label="Cart" style={{ textDecoration: "none" }}>
             🛒
             <span className="cart-count">{cartCount}</span>
-          </button>
+          </Link>
 
           {/* <button className="signin-btn">Sign In</button> */}
         </nav>
