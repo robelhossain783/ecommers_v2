@@ -171,8 +171,6 @@
 // }
 
 
-
-
 "use client";
 
 import Image from "next/image";
@@ -184,25 +182,27 @@ interface ProductCardProps {
   onAddToCart: () => void;
 }
 
-// 🛠️ এটিকে আপনার আগের কোডের মতোই হুবহু ফাঁকা ("") রাখা হলো, যাতে প্রোডাক্ট ডেটা লোড হতে সমস্যা না হয়
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
+// ✅ এখানে আপনার আসল ব্যাকএন্ড এনভায়রনমেন্ট ভ্যারিয়েবলটি ব্যবহার করা হলো
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
 export default function ProductCard({
   product,
   onAddToCart,
 }: ProductCardProps) {
 
-  const sellPrice = Number(product.sell_price);
-  const regularPrice = Number(product.regular_price);
+  if (!product) return null;
+
+  const sellPrice = Number(product.sell_price || 0);
+  const regularPrice = Number(product.regular_price || 0);
 
   const hasDiscount = regularPrice && regularPrice > sellPrice;
   const discount = hasDiscount ? regularPrice - sellPrice : 0;
 
-  // ✅ ইমেজ ইউআরএল ঠিক করার লজিক
-  const imageUrl = product.image
+  // ✅ ক্লাউডিনারি ও লোকালহোস্ট দুইটার জন্যই ইমেজ ইউআরএল ঠিক করার পারফেক্ট লজিক
+  const imageSrc = product.image
     ? product.image.startsWith("http")
-      ? product.image // ক্লাউডিনারি (http) হলে সরাসরি সেই লিঙ্কটাই বসবে
-      : `${BASE_URL}${product.image}` // লোকালহোস্ট হলে BASE_URL যোগ হবে
+      ? product.image // ক্লাউডিনারি বা ফুল লিঙ্ক হলে সরাসরি বসবে
+      : `${BASE_URL}${product.image}` // লোকালহোস্টের মিডিয়া ফাইল হলে BASE_URL যুক্ত হবে
     : null;
 
   return (
@@ -215,16 +215,16 @@ export default function ProductCard({
         </span>
       )}
 
-      <Link href={`/product/${product.slug}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
+      <Link href={`/product/${product.slug || product.id}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
         <div className="product-image-wrapper">
-          {imageUrl ? (
+          {imageSrc ? (
             <Image
-              src={imageUrl} // 👈 ফিক্সড ইমেজ ইউআরএল
-              alt={product.name}
+              src={imageSrc}
+              alt={product.name || "Product Image"}
               width={250}
               height={200}
               className="product-image"
-              unoptimized // 👈 ক্লাউডিনারি ইমেজের জন্য অত্যন্ত জরুরি
+              unoptimized // ক্লাউডিনারি ইমেজের জন্য আবশ্যক
             />
           ) : (
             <div className="no-image">No Image</div>
@@ -238,7 +238,7 @@ export default function ProductCard({
 
         {/* CATEGORY */}
         <p className="product-category">
-          {product.category?.name || "Gadget"} {/* 👈 অপশনাল চেইনিং দেওয়া হলো যাতে ক্যাটাগরি না থাকলেও ক্র্যাশ না করে */}
+          {product.category?.name || "Gadget"}
         </p>
 
         {/* PRICE */}
@@ -256,7 +256,7 @@ export default function ProductCard({
 
         {/* STOCK */}
         <p className="stock">
-          Stock: {product.stock}
+          Stock: {product.stock ?? 0}
         </p>
       </Link>
 
