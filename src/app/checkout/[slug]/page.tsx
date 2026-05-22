@@ -11,7 +11,7 @@ import { getProductBySlug } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
+const BASE_URL = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000");
 
 interface CheckoutContentProps {
   slug: string;

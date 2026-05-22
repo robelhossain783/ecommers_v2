@@ -65,7 +65,10 @@ import { Product } from "@/lib/backend_type";
 import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 
 const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_BASE_URL || "";
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 };
 
 export async function getNewArrivals(): Promise<Product[]> {

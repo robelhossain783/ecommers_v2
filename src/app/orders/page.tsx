@@ -7,7 +7,7 @@ import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
+const BASE_URL = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000");
 
 interface OrderItem {
   product_name: string;
