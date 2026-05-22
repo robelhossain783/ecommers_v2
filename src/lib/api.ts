@@ -64,16 +64,19 @@
 import { Product } from "@/lib/backend_type";
 import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 
-const getBaseUrl = () => {
-  if (typeof window !== "undefined") {
-    return "";
-  }
-  return process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
-};
+// const getBaseUrl = () => {
+//   if (typeof window !== "undefined") {
+//     return "";
+//   }
+//   return process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
+// };
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  "http://127.0.0.1:8000";
 
 export async function getNewArrivals(): Promise<Product[]> {
   try {
-    const res = await fetch(`${getBaseUrl()}/api/products/list/`);
+    const res = await fetch(`${BASE_URL}/api/products/list/`);
     console.log("API RESP:", res);
 
     if (!res.ok) {
@@ -92,7 +95,7 @@ export async function getNewArrivals(): Promise<Product[]> {
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   // 1. Try to fetch from Django api
   try {
-    const res = await fetch(`${getBaseUrl()}/api/products/${slug}/`, {
+    const res = await fetch(`${BASE_URL}/api/products/${slug}/`, {
       cache: "no-store"
     });
     if (res.ok) {
@@ -137,7 +140,7 @@ export async function getNewArrival2(
     if (params?.start_date) query.append("start_date", params.start_date);
     if (params?.end_date) query.append("end_date", params.end_date);
 
-    const url = `${getBaseUrl()}/api/products/list/?${query.toString()}`;
+    const url = `${BASE_URL}/api/products/list/?${query.toString()}`;
 
     const res = await fetch(url, {
       method: "GET",

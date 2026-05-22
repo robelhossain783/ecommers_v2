@@ -65,11 +65,116 @@
 // }
 
 
+// "use client";
+
+// import Image from "next/image";
+// import Link from "next/link";
+// // import { a } from "@/types";
+// import { Product } from "@/lib/backend_type";
+
+// interface ProductCardProps {
+//   product: Product;
+//   onAddToCart: () => void;
+// }
+
+// const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
+
+// export default function ProductCard({
+//   product,
+//   onAddToCart,
+// }: ProductCardProps) {
+
+//   const sellPrice = Number(product.sell_price);
+//   const regularPrice = Number(product.regular_price);
+
+//   const hasDiscount =
+//     regularPrice && regularPrice > sellPrice;
+
+//   const discount =
+//     hasDiscount
+//       ? regularPrice - sellPrice
+//       : 0;
+
+//   return (
+//     <div className="product-card">
+
+//       {/* DISCOUNT BADGE */}
+//       {hasDiscount && (
+//         <span className="product-badge">
+//           ৳{discount} OFF
+//         </span>
+//       )}
+
+//       <Link href={`/product/${product.slug}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
+//         <div className="product-image-wrapper">
+//           {product.image ? (
+//             <Image
+//               src={product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`}
+//               alt={product.name}
+//               width={250}
+//               height={200}
+//               className="product-image"
+//               unoptimized
+//             />
+//           ) : (
+//             <div className="no-image">No Image</div>
+//           )}
+//         </div>
+
+//         {/* PRODUCT NAME */}
+//         <h3 className="product-name">
+//           {product.name}
+//         </h3>
+
+//         {/* CATEGORY */}
+//         <p className="product-category">
+//           {product.category.name}
+//         </p>
+
+//         {/* PRICE */}
+//         <div className="product-prices">
+
+//           <span className="product-detail-sell-price">
+//             ৳{sellPrice}
+//           </span>
+
+//           {hasDiscount && (
+
+//             <span className="product-detail-regular-price">
+//               ৳{regularPrice}
+//             </span>
+//           )}
+
+//         </div>
+
+
+//         {/* STOCK */}
+//         <p className="stock">
+//           Stock: {product.stock}
+//         </p>
+//       </Link>
+
+//       {/* BUTTON */}
+//       <button
+//         className="add-cart-btn"
+//         onClick={(e) => {
+//           e.preventDefault();
+//           e.stopPropagation();
+//           onAddToCart();
+//         }}
+//       >
+//         Add to Cart
+//       </button>
+
+//     </div>
+//   );
+// }
+
+
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-// import { a } from "@/types";
 import { Product } from "@/lib/backend_type";
 
 interface ProductCardProps {
@@ -84,16 +189,21 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
 
-  const sellPrice = Number(product.sell_price);
-  const regularPrice = Number(product.regular_price);
+  // সেফটি চেক: যদি কোনো কারণে প্রোডাক্ট অবজেক্টই না থাকে
+  if (!product) return null;
 
-  const hasDiscount =
-    regularPrice && regularPrice > sellPrice;
+  const sellPrice = Number(product.sell_price || 0);
+  const regularPrice = Number(product.regular_price || 0);
 
-  const discount =
-    hasDiscount
-      ? regularPrice - sellPrice
-      : 0;
+  const hasDiscount = regularPrice && regularPrice > sellPrice;
+  const discount = hasDiscount ? regularPrice - sellPrice : 0;
+
+  // ব্যাকএন্ড থেকে আসা ইমেজ ক্লাউডিনারি নাকি লোকালহোস্ট তা চেক করার নিরাপদ লজিক
+  const imageSrc = product.image
+    ? product.image.startsWith("http")
+      ? product.image
+      : `${BASE_URL}${product.image}`
+    : null;
 
   return (
     <div className="product-card">
@@ -105,12 +215,12 @@ export default function ProductCard({
         </span>
       )}
 
-      <Link href={`/product/${product.slug}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
+      <Link href={`/product/${product.slug || product.id}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
         <div className="product-image-wrapper">
-          {product.image ? (
+          {imageSrc ? (
             <Image
-              src={product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`}
-              alt={product.name}
+              src={imageSrc}
+              alt={product.name || "Product Image"}
               width={250}
               height={200}
               className="product-image"
@@ -123,34 +233,30 @@ export default function ProductCard({
 
         {/* PRODUCT NAME */}
         <h3 className="product-name">
-          {product.name}
+          {product.name || "Unnamed Product"}
         </h3>
 
         {/* CATEGORY */}
         <p className="product-category">
-          {product.category.name}
+          {product.category?.name || "Gadget"}
         </p>
 
         {/* PRICE */}
         <div className="product-prices">
-
           <span className="product-detail-sell-price">
             ৳{sellPrice}
           </span>
 
           {hasDiscount && (
-
             <span className="product-detail-regular-price">
               ৳{regularPrice}
             </span>
           )}
-
         </div>
-
 
         {/* STOCK */}
         <p className="stock">
-          Stock: {product.stock}
+          Stock: {product.stock ?? 0}
         </p>
       </Link>
 
