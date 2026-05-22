@@ -4,6 +4,8 @@ import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 interface HeaderProps {
   cartCount?: number;
 }
@@ -26,6 +28,14 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     { name: "Home Appliances", slug: "home-appliances", icon: "🏠" },
   ];
 
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const handleSearch = () => {
+    if (!query.trim()) return;
+
+    router.push(`/search?name=${query}`);
+  };
+
   return (
     <>
       <header className="site-header">
@@ -43,8 +53,16 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               type="text"
               className="search-input"
               placeholder="Search for phones, laptops, gadgets..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
             />
-            <button className="search-btn">Search</button>
+
+            <button className="search-btn" onClick={handleSearch}>
+              Search
+            </button>
           </div>
 
           {/* Nav */}
