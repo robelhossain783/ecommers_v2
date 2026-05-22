@@ -184,8 +184,8 @@ interface ProductCardProps {
   onAddToCart: () => void;
 }
 
-// জ্যাঙ্গো ব্যাকএন্ডের আসল URL (প্রয়োজন হলে এখান থেকে নেবে)
-const BACKEND_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://your-backend.onrender.com";
+// 🛠️ এটিকে আপনার আগের কোডের মতোই হুবহু ফাঁকা ("") রাখা হলো, যাতে প্রোডাক্ট ডেটা লোড হতে সমস্যা না হয়
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
 
 export default function ProductCard({
   product,
@@ -198,11 +198,11 @@ export default function ProductCard({
   const hasDiscount = regularPrice && regularPrice > sellPrice;
   const discount = hasDiscount ? regularPrice - sellPrice : 0;
 
-  // ✅ ইমেজ ইউআরএল ঠিক করার লজিক (যা ক্লাউডিনারি ও লোকালহোস্ট দুইটাই ঠিক রাখবে)
+  // ✅ ইমেজ ইউআরএল ঠিক করার লজিক
   const imageUrl = product.image
     ? product.image.startsWith("http")
-      ? product.image // ক্লাউডিনারি হলে সরাসরি লিঙ্ক বসবে
-      : `${BACKEND_URL}${product.image}` // লোকালহোস্ট বা সাধারণ মিডিয়া ফাইল হলে ব্যাকএন্ড URL যুক্ত হবে
+      ? product.image // ক্লাউডিনারি (http) হলে সরাসরি সেই লিঙ্কটাই বসবে
+      : `${BASE_URL}${product.image}` // লোকালহোস্ট হলে BASE_URL যোগ হবে
     : null;
 
   return (
@@ -219,12 +219,12 @@ export default function ProductCard({
         <div className="product-image-wrapper">
           {imageUrl ? (
             <Image
-              src={imageUrl} // 👈 আমাদের তৈরি করা পারফেক্ট লিঙ্কটি এখানে বসানো হলো
+              src={imageUrl} // 👈 ফিক্সড ইমেজ ইউআরএল
               alt={product.name}
               width={250}
               height={200}
               className="product-image"
-              unoptimized // 👈 ক্লাউডিনারি ইমেজ যাতে ফ্রন্টএন্ডে লোড হতে বাধা না পায়
+              unoptimized // 👈 ক্লাউডিনারি ইমেজের জন্য অত্যন্ত জরুরি
             />
           ) : (
             <div className="no-image">No Image</div>
@@ -238,7 +238,7 @@ export default function ProductCard({
 
         {/* CATEGORY */}
         <p className="product-category">
-          {product.category?.name || "Gadget"}
+          {product.category?.name || "Gadget"} {/* 👈 অপশনাল চেইনিং দেওয়া হলো যাতে ক্যাটাগরি না থাকলেও ক্র্যাশ না করে */}
         </p>
 
         {/* PRICE */}
