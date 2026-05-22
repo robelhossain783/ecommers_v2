@@ -171,6 +171,7 @@
 // }
 
 
+
 "use client";
 
 import Image from "next/image";
@@ -182,8 +183,9 @@ interface ProductCardProps {
   onAddToCart: () => void;
 }
 
-// ✅ এখানে আপনার আসল ব্যাকএন্ড এনভায়রনমেন্ট ভ্যারিয়েবলটি ব্যবহার করা হলো
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  "http://127.0.0.1:8000";
 
 export default function ProductCard({
   product,
@@ -195,54 +197,68 @@ export default function ProductCard({
   const sellPrice = Number(product.sell_price || 0);
   const regularPrice = Number(product.regular_price || 0);
 
-  const hasDiscount = regularPrice && regularPrice > sellPrice;
-  const discount = hasDiscount ? regularPrice - sellPrice : 0;
+  const hasDiscount =
+    regularPrice > sellPrice;
 
-  // ✅ ক্লাউডিনারি ও লোকালহোস্ট দুইটার জন্যই ইমেজ ইউআরএল ঠিক করার পারফেক্ট লজিক
+  const discount = hasDiscount
+    ? regularPrice - sellPrice
+    : 0;
+
+  // IMAGE URL FIX
   const imageSrc = product.image
     ? product.image.startsWith("http")
-      ? product.image // ক্লাউডিনারি বা ফুল লিঙ্ক হলে সরাসরি বসবে
-      : `${BASE_URL}${product.image}` // লোকালহোস্টের মিডিয়া ফাইল হলে BASE_URL যুক্ত হবে
-    : null;
+      ? product.image
+      : `${BASE_URL}${product.image}`
+    : "/no-image.png";
 
   return (
     <div className="product-card">
 
-      {/* DISCOUNT BADGE */}
+      {/* DISCOUNT */}
       {hasDiscount && (
         <span className="product-badge">
           ৳{discount} OFF
         </span>
       )}
 
-      <Link href={`/product/${product.slug || product.id}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* IMPORTANT */}
+      <Link
+        href={`/product/${product.slug}`}
+        className="product-card-link"
+        style={{
+          textDecoration: "none",
+          color: "inherit",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
+
+        {/* IMAGE */}
         <div className="product-image-wrapper">
-          {imageSrc ? (
-            <Image
-              src={imageSrc}
-              alt={product.name || "Product Image"}
-              width={250}
-              height={200}
-              className="product-image"
-              unoptimized // ক্লাউডিনারি ইমেজের জন্য আবশ্যক
-            />
-          ) : (
-            <div className="no-image">No Image</div>
-          )}
+          <Image
+            src={imageSrc}
+            alt={product.name || "Product"}
+            width={250}
+            height={200}
+            className="product-image"
+            unoptimized
+          />
         </div>
 
-        {/* PRODUCT NAME */}
+        {/* NAME */}
         <h3 className="product-name">
           {product.name}
         </h3>
 
         {/* CATEGORY */}
         <p className="product-category">
-          {product.category?.name || "Gadget"}
+          {product.category?.name || "Category"}
         </p>
 
         {/* PRICE */}
         <div className="product-prices">
+
           <span className="product-detail-sell-price">
             ৳{sellPrice}
           </span>
@@ -252,12 +268,14 @@ export default function ProductCard({
               ৳{regularPrice}
             </span>
           )}
+
         </div>
 
         {/* STOCK */}
         <p className="stock">
           Stock: {product.stock ?? 0}
         </p>
+
       </Link>
 
       {/* BUTTON */}
