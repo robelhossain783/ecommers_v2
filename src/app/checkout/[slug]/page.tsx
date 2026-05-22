@@ -229,7 +229,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
             {/* LEFT SIDE: ORDER FORM */}
             <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid var(--border)", padding: "28px", boxShadow: "var(--shadow-sm)" }}>
               <h2 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px", borderBottom: "2px solid var(--border-light)", paddingBottom: "12px" }}>
-                <span>📋</span> Shipping & Billing Information
+                <span></span> Shipping & Billing Information
               </h2>
 
               <form onSubmit={handlePlaceOrder}>
@@ -368,7 +368,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                       />
                       <div>
                         <strong style={{ fontSize: "14px", display: "block" }}>
-                          💵 Cash on Delivery (COD)
+                          Cash on Delivery (COD)
                         </strong>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                           Pay with cash upon delivery
@@ -398,7 +398,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                       />
                       <div>
                         <strong style={{ fontSize: "14px", display: "block" }}>
-                          📱 bKash Payment
+                          bKash Payment
                         </strong>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                           Pay instantly using bKash
@@ -428,7 +428,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                       />
                       <div>
                         <strong style={{ fontSize: "14px", display: "block" }}>
-                          💳 Nagad Payment
+                          Nagad Payment
                         </strong>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                           Pay using Nagad mobile banking
@@ -453,7 +453,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                       Processing Order...
                     </>
                   ) : (
-                    <>⚡ Complete Order Now (৳{grandTotal})</>
+                    <> Place Order (৳{grandTotal})</>
                   )}
                 </button>
               </form>

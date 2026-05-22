@@ -72,7 +72,7 @@ export default function NewArrivalsAllPage() {
 
         {/* Header Section */}
         <div className="category-products-header">
-          <h1 className="category-products-title">📁 All Available Products</h1>
+          <h1 className="category-products-title">All Available Products</h1>
           <p className="category-products-count">
             Explore our curated selection of <strong>{products.length}</strong> premium gadgets and accessories
           </p>

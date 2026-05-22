@@ -161,7 +161,7 @@ export default function MyOrdersPage() {
         {/* Header Section */}
         <div className="orders-title-sec">
           <div>
-            <h1>📦 Order History & Tracking</h1>
+            <h1>Order History & Tracking</h1>
             <p style={{ color: "var(--text-secondary)", marginTop: "4px", fontSize: "13px" }}>
               Track placed orders, view shipping details, and check real-time status.
             </p>

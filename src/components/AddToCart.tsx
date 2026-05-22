@@ -402,7 +402,7 @@ export default function AddToCarts() {
                         />
                         <div>
                           <strong style={{ fontSize: "14px", display: "block" }}>
-                            💵 Cash on Delivery (COD)
+                            Cash on Delivery (COD)
                           </strong>
                           <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                             Pay with cash upon delivery
@@ -432,7 +432,7 @@ export default function AddToCarts() {
                         />
                         <div>
                           <strong style={{ fontSize: "14px", display: "block" }}>
-                            📱 bKash Payment
+                            bKash Payment
                           </strong>
                           <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                             Pay instantly using bKash
@@ -462,7 +462,7 @@ export default function AddToCarts() {
                         />
                         <div>
                           <strong style={{ fontSize: "14px", display: "block" }}>
-                            💳 Nagad Payment
+                            Nagad Payment
                           </strong>
                           <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                             Pay using Nagad mobile banking
@@ -474,7 +474,7 @@ export default function AddToCarts() {
                   </div>
 
                   <button type="submit" className="checkout-btn">
-                    📦 Confirm Order (৳{total})
+                    Place Order (৳{total})
                   </button>
                 </form>
               </div>
