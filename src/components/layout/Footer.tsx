@@ -13,21 +13,21 @@ export default function Footer() {
             </p>
             <div className="footer-contact">
               <p>📞 <a href="tel:09678148148">01607005806</a></p>
-              <p>✉️ <a href="mailto:contact@applegadgetsbd.com">contact@izumartbd.com</a></p>
+              <p>✉️ <a href="rubel.defy2@gmail.com">contact@izumartbd.com</a></p>
             </div>
           </div>
 
-          {/* Mobile Phones */}
+          {/* Category */}
           <div className="footer-col">
-            <h4>Mobile Phones</h4>
+            <h4>Categories</h4>
             <ul className="footer-links">
-              {["iPhone", "Samsung", "Google", "Motorola", "Xiaomi", "iQOO", "OnePlus", "Vivo", "Infinix", "Tablet"].map((item) => (
+              {["Gadget", "Waletts", "Speakers", "Phone", "Laptop", "Tablet"].map((item) => (
                 <li key={item}><a href={`/category/phones-tablets/${item.toLowerCase()}`}>{item}</a></li>
               ))}
             </ul>
           </div>
 
-          {/* Accessories */}
+          {/* Accessories
           <div className="footer-col">
             <h4>Mobile Accessories</h4>
             <ul className="footer-links">
@@ -35,7 +35,7 @@ export default function Footer() {
                 <li key={item}><a href={`/category/${item.toLowerCase().replace(/ /g, "-")}`}>{item}</a></li>
               ))}
             </ul>
-          </div>
+          </div> */}
 
           {/* About */}
           <div className="footer-col">
@@ -60,7 +60,7 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="footer-bottom">
-          <p>© 2026 EZU Bangladesh | All rights reserved</p>
+          <p>© 2026 IZU MART Bangladesh | All rights reserved</p>
           <div className="social-links">
             <a href="https://wa.me/+8801607005806" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">💬</a>
             <a href="https://facebook.com/Izu_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
