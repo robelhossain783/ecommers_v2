@@ -183,9 +183,9 @@ interface ProductCardProps {
   onAddToCart: () => void;
 }
 
+// Render backend URL
 const BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ||
-  "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_BASE_URL || "";
 
 export default function ProductCard({
   product,
@@ -204,7 +204,7 @@ export default function ProductCard({
     ? regularPrice - sellPrice
     : 0;
 
-  // IMAGE URL FIX
+  // IMAGE FIX
   const imageSrc = product.image
     ? product.image.startsWith("http")
       ? product.image
@@ -214,14 +214,14 @@ export default function ProductCard({
   return (
     <div className="product-card">
 
-      {/* DISCOUNT */}
+      {/* DISCOUNT BADGE */}
       {hasDiscount && (
         <span className="product-badge">
           ৳{discount} OFF
         </span>
       )}
 
-      {/* IMPORTANT */}
+      {/* PRODUCT LINK */}
       <Link
         href={`/product/${product.slug}`}
         className="product-card-link"
@@ -236,17 +236,25 @@ export default function ProductCard({
 
         {/* IMAGE */}
         <div className="product-image-wrapper">
-          <Image
-            src={imageSrc}
-            alt={product.name || "Product"}
-            width={250}
-            height={200}
-            className="product-image"
-            unoptimized
-          />
+
+          {imageSrc ? (
+            <Image
+              src={imageSrc}
+              alt={product.name || "Product"}
+              width={250}
+              height={200}
+              className="product-image"
+              unoptimized
+            />
+          ) : (
+            <div className="no-image">
+              No Image
+            </div>
+          )}
+
         </div>
 
-        {/* NAME */}
+        {/* PRODUCT NAME */}
         <h3 className="product-name">
           {product.name}
         </h3>
@@ -278,7 +286,7 @@ export default function ProductCard({
 
       </Link>
 
-      {/* BUTTON */}
+      {/* ADD TO CART BUTTON */}
       <button
         className="add-cart-btn"
         onClick={(e) => {
