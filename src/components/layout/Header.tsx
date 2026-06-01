@@ -2,7 +2,7 @@
 
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface HeaderProps {
   cartCount?: number;
@@ -13,7 +13,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const cartCount = propCartCount ?? contextCartCount;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const categoriesList = [
+  const [categoriesList, setCategoriesList] = useState<any[]>([
     { name: "Gadgets", slug: "gadget", icon: "🔌" },
     { name: "Mobile Phone", slug: "mobile-phone", icon: "📱" },
     { name: "Laptop", slug: "laptops", icon: "💻" },
@@ -24,7 +24,53 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     { name: "AirPods", slug: "airpods", icon: "🎧" },
     { name: "Speakers", slug: "speakers", icon: "🔊" },
     { name: "Home Appliances", slug: "home-appliances", icon: "🏠" },
-  ];
+  ]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${baseUrl}/api/categories/list/`);
+        if (res.ok) {
+          const data = await res.json();
+          const ICON_MAPPING: Record<string, string> = {
+            "gadget": "🔌",
+            "gadgets": "🔌",
+            "mobile-phone": "📱",
+            "mobile": "📱",
+            "phone": "📱",
+            "phones": "📱",
+            "laptop": "💻",
+            "laptops": "💻",
+            "tablet": "📟",
+            "tablets": "📟",
+            "smart-watch": "⌚",
+            "smartwatch": "⌚",
+            "wallet": "💼",
+            "wallets": "💼",
+            "backpack": "🎒",
+            "backpacks": "🎒",
+            "airpods": "🎧",
+            "speakers": "🔊",
+            "home-appliances": "🏠",
+          };
+          const mapped = data.map((cat: any) => {
+            const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-");
+            const icon = ICON_MAPPING[slug.toLowerCase()] || "";
+            return {
+              name: cat.name,
+              slug: slug,
+              icon: icon
+            };
+          });
+          setCategoriesList(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch header categories:", err);
+      }
+    }
+    loadCategories();
+  }, []);
 
   return (
     <>

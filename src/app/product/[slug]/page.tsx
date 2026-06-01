@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import TopBar from "@/components/layout/TopBar";
+// import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
@@ -84,7 +84,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   if (loading) {
     return (
       <>
-        <TopBar />
+        {/* <TopBar /> */}
         <Header />
         <div className="product-details-container" style={{ textAlign: "center", padding: "100px 0" }}>
           <h2>Loading product details...</h2>
@@ -97,7 +97,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   if (!product) {
     return (
       <>
-        <TopBar />
+        {/* <TopBar /> */}
         <Header />
         <div className="product-details-container" style={{ textAlign: "center", padding: "100px 0" }}>
           <h2>Product Not Found</h2>
@@ -121,7 +121,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   return (
     <>
-      <TopBar />
+      {/* <TopBar /> */}
       <Header />
 
       <div className="product-details-container">

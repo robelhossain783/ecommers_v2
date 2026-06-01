@@ -87,7 +87,7 @@ img {
 }
 
 /* TOP NOTICE BAR */
-.top-bar {
+/* .top-bar {
   background-color: var(--primary);
   color: #fff;
   text-align: center;
@@ -95,7 +95,7 @@ img {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.2px;
-}
+} */
 
 /* HEADER */
 .site-header {

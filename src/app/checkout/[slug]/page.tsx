@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import TopBar from "@/components/layout/TopBar";
+// import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getProductBySlug } from "@/lib/api";
@@ -540,7 +540,7 @@ export default function CheckoutPage({ params }: { params: { slug: string } }) {
 
   return (
     <>
-      <TopBar />
+      {/* <TopBar /> */}
       <Header />
 
       <Suspense fallback={

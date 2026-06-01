@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import TopBar from "@/components/layout/TopBar";
+// import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
@@ -59,7 +59,7 @@ export default function NewArrivalsAllPage() {
 
   return (
     <>
-      <TopBar />
+      {/* <TopBar /> */}
       <Header />
 
       <div className="category-products-container">
