@@ -222,7 +222,7 @@ export default function NewTrends() {
 
       {/* PREVIEW PRODUCTS (only 4) */}
       <div className="products-row">
-        {products.slice(0, 4).map((p) => (
+        {products.slice(0, 12).map((p) => (
           <ProductCard
             key={p.id}
             product={p}

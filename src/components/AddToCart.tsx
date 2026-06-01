@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import TopBar from "@/components/layout/TopBar";
+// import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
@@ -153,7 +153,7 @@ export default function AddToCarts() {
 
   return (
     <>
-      <TopBar />
+      {/* <TopBar /> */}
       <Header />
 
       <div className="cart-container">

@@ -59,6 +59,16 @@ interface Order {
 export default function AdminManagementPage() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories">("dashboard");
 
+  // Auth states
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authTab, setAuthTab] = useState<"login" | "register">("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+
   // Data lists
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -68,6 +78,7 @@ export default function AdminManagementPage() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
   // Forms statuses
   const [productSubmitLoading, setProductSubmitLoading] = useState(false);
@@ -113,7 +124,7 @@ export default function AdminManagementPage() {
   const fetchProducts = async () => {
     setLoadingProducts(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/products/list/`);
+      const res = await fetch(`${BASE_URL}/api/products/list/?all=true`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
@@ -270,12 +281,141 @@ export default function AdminManagementPage() {
     }
   };
 
-  // Initial loading
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+    if (!username || !password) {
+      setAuthError("❌ Username and password are required!");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAuthSuccess("🎉 Login successful! Redirecting...");
+        localStorage.setItem("adminUser", JSON.stringify(data));
+        setTimeout(() => {
+          setIsLoggedIn(true);
+          setPassword("");
+          setAuthSuccess(null);
+        }, 1000);
+      } else {
+        setAuthError(`❌ ${data.error || "Login failed!"}`);
+      }
+    } catch (err) {
+      setAuthError("❌ Connection error to authentication API.");
+      console.error(err);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthSuccess(null);
+    if (!username || !password) {
+      setAuthError("❌ Username and password are required!");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/register/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAuthSuccess("🎉 Admin user created successfully! You can now log in.");
+        setTimeout(() => {
+          setAuthTab("login");
+          setPassword("");
+          setEmail("");
+          setAuthSuccess(null);
+        }, 1500);
+      } else {
+        setAuthError(`❌ ${data.error || "Registration failed!"}`);
+      }
+    } catch (err) {
+      setAuthError("❌ Connection error to authentication API.");
+      console.error(err);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminUser");
+    setIsLoggedIn(false);
+    setUsername("");
+    setPassword("");
+  };
+
+  const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await fetch(`${BASE_URL}/api/orders/${orderId}/update-status/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as any } : o))
+        );
+      } else {
+        alert("❌ Failed to update order status");
+      }
+    } catch (err) {
+      console.error("Error updating order status:", err);
+      alert("❌ Connection error while updating order status");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const handleDeleteProduct = async (prodId: number) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      const res = await fetch(`${BASE_URL}/api/products/${prodId}/delete/`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== prodId));
+      } else {
+        alert("❌ Failed to delete product");
+      }
+    } catch (err) {
+      console.error("Error deleting product:", err);
+      alert("❌ Connection error while deleting product");
+    }
+  };
+
+  // Check auth session
   useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-    fetchOrders();
+    const adminUser = localStorage.getItem("adminUser");
+    if (adminUser) {
+      setIsLoggedIn(true);
+    }
   }, []);
+
+  // Fetch only if logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchCategories();
+      fetchProducts();
+      fetchOrders();
+    }
+  }, [isLoggedIn]);
 
   // Stats Calculations
   const totalRevenue = orders.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
@@ -452,9 +592,76 @@ export default function AdminManagementPage() {
           grid-template-columns: 1fr 1fr;
           gap: 20px;
         }
+        .dashboard-grid {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 30px;
+        }
+        .status-select {
+          font-size: 12px;
+          font-weight: 700;
+          padding: 6px 12px;
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.15);
+          outline: none;
+          background: rgba(0,0,0,0.4);
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .status-select:focus {
+          border-color: var(--primary, #e8320a);
+        }
+        .status-select.pending {
+          color: #ffb74d;
+          border-color: rgba(255, 152, 0, 0.4);
+        }
+        .status-select.processing {
+          color: #64b5f6;
+          border-color: rgba(33, 150, 243, 0.4);
+        }
+        .status-select.completed {
+          color: #81c784;
+          border-color: rgba(76, 175, 80, 0.4);
+        }
+        .status-select.cancelled {
+          color: #e57373;
+          border-color: rgba(244, 67, 54, 0.4);
+        }
+
         @media(max-width: 900px) {
           .form-grid {
             grid-template-columns: 1fr;
+          }
+          .dashboard-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media(max-width: 768px) {
+          .admin-header {
+            padding: 12px 20px;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+          }
+          .admin-title {
+            font-size: 18px;
+            justify-content: center;
+          }
+          .dashboard-body {
+            padding: 20px 15px;
+          }
+          .tabs-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+          }
+          .tab-btn {
+            padding: 10px 16px;
+            font-size: 13px;
+            flex-shrink: 0;
           }
         }
         .form-group {
@@ -724,23 +931,199 @@ export default function AdminManagementPage() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+
+        /* Auth Screen Styles */
+        .auth-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: calc(80vh - 100px);
+          padding: 40px 20px;
+        }
+        .auth-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border-radius: 20px;
+          padding: 40px;
+          width: 100%;
+          max-width: 420px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .auth-tabs {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 25px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+        .auth-tab {
+          flex: 1;
+          background: none;
+          border: none;
+          color: #8a8a98;
+          font-weight: 700;
+          font-size: 15px;
+          padding: 12px;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          border-bottom: 2px solid transparent;
+        }
+        .auth-tab.active {
+          color: #fff;
+          border-bottom: 2px solid var(--primary, #e8320a);
+        }
+        .auth-description {
+          font-size: 13px;
+          color: #8a8a98;
+          text-align: center;
+          margin-bottom: 24px;
+        }
       `}</style>
 
       {/* ADMIN HEADER */}
       <header className="admin-header">
         <div className="admin-title">
-          <span>🛠️ Avaa e-Commerce Admin Panel</span>
+          <span> Dheer Dashboard</span>
           <span className="badge">Control Center</span>
         </div>
-        <Link href="/" className="home-link">
-          🏠 Visit Frontend Store
-        </Link>
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <Link href="/" className="home-link">
+            🏠 Visit Store
+          </Link>
+          {isLoggedIn && (
+            <button
+              onClick={handleLogout}
+              className="home-link"
+              style={{
+                background: "rgba(244, 67, 54, 0.2)",
+                color: "#ff8a80",
+                border: "1px solid rgba(244, 67, 54, 0.3)",
+                cursor: "pointer",
+              }}
+            >
+              Logout 🚪
+            </button>
+          )}
+        </div>
       </header>
 
       {/* DASHBOARD BODY */}
       <main className="dashboard-body">
-        {/* STATS OVERVIEW CARDS */}
-        <section className="stats-grid">
+        {!isLoggedIn ? (
+          <div className="auth-container">
+            <div className="auth-card">
+              <div className="auth-tabs">
+                <button
+                  type="button"
+                  className={`auth-tab ${authTab === "login" ? "active" : ""}`}
+                  onClick={() => {
+                    setAuthTab("login");
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  className={`auth-tab ${authTab === "register" ? "active" : ""}`}
+                  onClick={() => {
+                    setAuthTab("register");
+                    setAuthError(null);
+                    setAuthSuccess(null);
+                  }}
+                >
+                  Create Admin
+                </button>
+              </div>
+
+              <p className="auth-description">
+                {authTab === "login"
+                  ? "Access the administrative control center with your credentials."
+                  : "Register a new user profile with administrator permissions."}
+              </p>
+
+              {authError && <div className="msg-box error">{authError}</div>}
+              {authSuccess && <div className="msg-box success">{authSuccess}</div>}
+
+              {authTab === "login" ? (
+                <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Username</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter admin username"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter secret password"
+                      required
+                    />
+                  </div>
+                  <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
+                    {authLoading ? <div className="spinner"></div> : "Unlock Dashboard 🔒"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Username</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Choose username"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Email (Optional)</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="admin@example.com"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Choose strong password"
+                      required
+                    />
+                  </div>
+                  <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
+                    {authLoading ? <div className="spinner"></div> : "Create Account 🚀"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* STATS OVERVIEW CARDS */}
+            <section className="stats-grid">
           <div className="stat-card">
             <span className="stat-label">Total Revenue</span>
             <span className="stat-value">৳{totalRevenue.toLocaleString()}</span>
@@ -798,7 +1181,7 @@ export default function AdminManagementPage() {
         {/* 1. DASHBOARD TAB */}
         {activeTab === "dashboard" && (
           <div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }}>
+            <div className="dashboard-grid">
               <div className="form-panel">
                 <h3 className="form-title">Store Status Summary</h3>
                 <p style={{ color: "#aaa", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
@@ -920,7 +1303,17 @@ export default function AdminManagementPage() {
                           </strong>
                         </td>
                         <td>
-                          <span className={`status-badge ${order.status}`}>{order.status}</span>
+                          <select
+                            value={order.status}
+                            onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                            className={`status-select ${order.status}`}
+                            disabled={updatingOrderId === order.id}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
                         </td>
                         <td style={{ color: "#8a8a98", fontSize: "11px" }}>
                           {new Date(order.created_at).toLocaleString("en-GB", { hour12: true })}
@@ -1116,7 +1509,27 @@ export default function AdminManagementPage() {
               ) : (
                 <div className="list-grid">
                   {products.map((prod) => (
-                    <div key={prod.id} className="list-card">
+                    <div key={prod.id} className="list-card" style={{ position: "relative" }}>
+                      <button
+                        onClick={() => handleDeleteProduct(prod.id)}
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          right: "8px",
+                          background: "rgba(244, 67, 54, 0.25)",
+                          color: "#ff8a80",
+                          border: "1px solid rgba(244, 67, 54, 0.35)",
+                          borderRadius: "4px",
+                          padding: "4px 8px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          zIndex: 10,
+                          transition: "all 0.2s"
+                        }}
+                        title="Delete Product"
+                      >
+                        🗑️ Delete
+                      </button>
                       <div className="list-card-img">
                         {prod.image ? (
                           <img
@@ -1277,6 +1690,8 @@ export default function AdminManagementPage() {
             </div>
           </div>
         )}
+      </>
+    )}
       </main>
     </div>
   );
