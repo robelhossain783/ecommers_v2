@@ -236,7 +236,7 @@ export default function HeroBanner() {
                 color: "#fff",
               }}
             >
-              <span style={{ color: slide.accentColor, fontWeight: 600 }}>
+              <span style={{ color: slide.accentColor || slide.accent_color, fontWeight: 600 }}>
                 🔥 Latest Arrivals
               </span>
 
@@ -252,7 +252,7 @@ export default function HeroBanner() {
                   display: "inline-block",
                   marginTop: 15,
                   padding: "10px 18px",
-                  background: slide.accentColor,
+                  background: slide.accentColor || slide.accent_color,
                   color: "#fff",
                   borderRadius: 6,
                   textDecoration: "none",

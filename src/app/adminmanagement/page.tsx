@@ -57,8 +57,20 @@ interface Order {
   items: OrderItem[];
 }
 
+interface Banner {
+  id: number;
+  title: string;
+  subtitle: string;
+  image: string | null;
+  cta: string;
+  href: string;
+  accent_color: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export default function AdminManagementPage() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "banners">("dashboard");
 
   // Auth states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -74,19 +86,23 @@ export default function AdminManagementPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
 
   // Loading states
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingBanners, setLoadingBanners] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
   // Forms statuses
   const [productSubmitLoading, setProductSubmitLoading] = useState(false);
   const [categorySubmitLoading, setCategorySubmitLoading] = useState(false);
+  const [bannerSubmitLoading, setBannerSubmitLoading] = useState(false);
 
   const [productFormMsg, setProductFormMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [categoryFormMsg, setCategoryFormMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [bannerFormMsg, setBannerFormMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Category Form fields
   const [catName, setCatName] = useState("");
@@ -105,6 +121,16 @@ export default function AdminManagementPage() {
   const [prodActive, setProdActive] = useState(true);
   const [prodImageFile, setProdImageFile] = useState<File | null>(null);
   const [prodImagePreview, setProdImagePreview] = useState<string | null>(null);
+
+  // Banner Form fields
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerSubtitle, setBannerSubtitle] = useState("");
+  const [bannerCta, setBannerCta] = useState("Shop Now");
+  const [bannerHref, setBannerHref] = useState("/");
+  const [bannerAccentColor, setBannerAccentColor] = useState("#ff4d4d");
+  const [bannerActive, setBannerActive] = useState(true);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+  const [bannerImagePreview, setBannerImagePreview] = useState<string | null>(null);
 
   // Fetch functions
   const fetchCategories = async () => {
@@ -152,6 +178,22 @@ export default function AdminManagementPage() {
     }
   };
 
+  const fetchBanners = async () => {
+    setLoadingBanners(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api/banner/list/`);
+      if (res.ok) {
+        const data = await res.json();
+        setBanners(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch banners:", err);
+    } finally {
+      setLoadingBanners(false);
+    }
+  };
+
+
   // Auto-fill slug from name helpers
   const handleCatNameChange = (val: string) => {
     setCatName(val);
@@ -179,6 +221,15 @@ export default function AdminManagementPage() {
       setProdImagePreview(URL.createObjectURL(file));
     }
   };
+
+  const handleBannerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setBannerImageFile(file);
+      setBannerImagePreview(URL.createObjectURL(file));
+    }
+  };
+
 
   // Form Submissions
   const handleCreateCategory = async (e: React.FormEvent) => {
@@ -403,6 +454,74 @@ export default function AdminManagementPage() {
     }
   };
 
+  const handleCreateBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBannerFormMsg(null);
+
+    if (!bannerTitle || !bannerImageFile) {
+      setBannerFormMsg({ type: "error", text: "Title and Image are required!" });
+      return;
+    }
+
+    setBannerSubmitLoading(true);
+    const formData = new FormData();
+    formData.append("title", bannerTitle);
+    formData.append("subtitle", bannerSubtitle);
+    formData.append("cta", bannerCta);
+    formData.append("href", bannerHref);
+    formData.append("accent_color", bannerAccentColor);
+    formData.append("is_active", bannerActive ? "true" : "false");
+    formData.append("image", bannerImageFile);
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/banner/create/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const responseData = await res.json();
+      if (res.ok) {
+        setBannerFormMsg({ type: "success", text: "🎉 Banner created successfully!" });
+        // Reset form
+        setBannerTitle("");
+        setBannerSubtitle("");
+        setBannerCta("Shop Now");
+        setBannerHref("/");
+        setBannerAccentColor("#ff4d4d");
+        setBannerActive(true);
+        setBannerImageFile(null);
+        setBannerImagePreview(null);
+        // Refresh banners
+        fetchBanners();
+      } else {
+        const errorText = JSON.stringify(responseData);
+        setBannerFormMsg({ type: "error", text: `❌ Failed to create banner: ${errorText}` });
+      }
+    } catch (err) {
+      setBannerFormMsg({ type: "error", text: "❌ Connection error to backend API." });
+      console.error(err);
+    } finally {
+      setBannerSubmitLoading(false);
+    }
+  };
+
+  const handleDeleteBanner = async (bannerId: number) => {
+    if (!confirm("Are you sure you want to delete this banner?")) return;
+    try {
+      const res = await fetch(`${BASE_URL}/api/banner/${bannerId}/delete/`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setBanners((prev) => prev.filter((b) => b.id !== bannerId));
+      } else {
+        alert("❌ Failed to delete banner");
+      }
+    } catch (err) {
+      console.error("Error deleting banner:", err);
+      alert("❌ Connection error while deleting banner");
+    }
+  };
+
   // Check auth session
   useEffect(() => {
     const adminUser = localStorage.getItem("adminUser");
@@ -417,6 +536,7 @@ export default function AdminManagementPage() {
       fetchCategories();
       fetchProducts();
       fetchOrders();
+      fetchBanners();
     }
   }, [isLoggedIn]);
 
@@ -1149,6 +1269,11 @@ export default function AdminManagementPage() {
                 <span className="stat-value">{categories.length}</span>
                 <span className="stat-detail">Active product classifications</span>
               </div>
+              <div className="stat-card">
+                <span className="stat-label">Banners</span>
+                <span className="stat-value">{banners.length}</span>
+                <span className="stat-detail">Active promotional sliders</span>
+              </div>
             </section>
 
             {/* TABS NAVIGATION */}
@@ -1176,6 +1301,12 @@ export default function AdminManagementPage() {
                 className={`tab-btn ${activeTab === "categories" ? "active" : ""}`}
               >
                 📁 Categories ({categories.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("banners")}
+                className={`tab-btn ${activeTab === "banners" ? "active" : ""}`}
+              >
+                🖼️ Banners ({banners.length})
               </button>
             </section>
 
@@ -1685,6 +1816,238 @@ export default function AdminManagementPage() {
                             <span className="list-card-badge" style={{ marginTop: "4px" }}>
                               Active
                             </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 5. BANNERS TAB (LIST & FORM) */}
+            {activeTab === "banners" && (
+              <div>
+                {/* Create Banner Form */}
+                <div className="form-panel">
+                  <h3 className="form-title">🖼️ Add New Hero Banner</h3>
+
+                  {bannerFormMsg && (
+                    <div className={`msg-box ${bannerFormMsg.type}`}>
+                      {bannerFormMsg.text}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleCreateBanner} className="form-grid">
+                    {/* Banner Title */}
+                    <div className="form-group">
+                      <label className="form-label">Banner Title *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={bannerTitle}
+                        onChange={(e) => setBannerTitle(e.target.value)}
+                        placeholder="e.g. New Season Gadgets"
+                      />
+                    </div>
+
+                    {/* Subtitle */}
+                    <div className="form-group">
+                      <label className="form-label">Subtitle</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={bannerSubtitle}
+                        onChange={(e) => setBannerSubtitle(e.target.value)}
+                        placeholder="e.g. Best deals on tech products"
+                      />
+                    </div>
+
+                    {/* CTA text */}
+                    <div className="form-group">
+                      <label className="form-label">CTA Text (Button Label) *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={bannerCta}
+                        onChange={(e) => setBannerCta(e.target.value)}
+                        placeholder="e.g. Shop Now"
+                      />
+                    </div>
+
+                    {/* Target Link (href) */}
+                    <div className="form-group">
+                      <label className="form-label">Target Link (Href) *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={bannerHref}
+                        onChange={(e) => setBannerHref(e.target.value)}
+                        placeholder="e.g. /category/smartwatch or /product/x"
+                      />
+                    </div>
+
+                    {/* Accent Color picker/input */}
+                    <div className="form-group">
+                      <label className="form-label">Accent Color (Hex Code) *</label>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <input
+                          type="color"
+                          value={bannerAccentColor}
+                          onChange={(e) => setBannerAccentColor(e.target.value)}
+                          style={{
+                            width: "45px",
+                            height: "45px",
+                            border: "none",
+                            borderRadius: "8px",
+                            background: "none",
+                            cursor: "pointer",
+                          }}
+                        />
+                        <input
+                          type="text"
+                          required
+                          className="form-input"
+                          value={bannerAccentColor}
+                          onChange={(e) => setBannerAccentColor(e.target.value)}
+                          placeholder="#ff4d4d"
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Image file upload */}
+                    <div className="form-group">
+                      <label className="form-label">Banner Image *</label>
+                      <div className="image-upload-wrapper">
+                        <input
+                          type="file"
+                          required
+                          accept="image/*"
+                          onChange={handleBannerImageChange}
+                          style={{ fontSize: "12px" }}
+                        />
+                        <div className="image-preview" style={{ width: "120px", height: "80px" }}>
+                          {bannerImagePreview ? (
+                            <img src={bannerImagePreview} alt="Preview" />
+                          ) : (
+                            <span>Preview</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active check */}
+                    <div className="form-group" style={{ justifyContent: "center" }}>
+                      <label className="checkbox-container">
+                        <input
+                          type="checkbox"
+                          checked={bannerActive}
+                          onChange={(e) => setBannerActive(e.target.checked)}
+                        />
+                        <span>Make Active (Display on homepage hero slider)</span>
+                      </label>
+                    </div>
+
+                    {/* Submit button */}
+                    <div className="form-group full-width" style={{ marginTop: "10px" }}>
+                      <button
+                        type="submit"
+                        disabled={bannerSubmitLoading}
+                        className="form-button"
+                      >
+                        {bannerSubmitLoading ? (
+                          <>
+                            <div className="spinner"></div> Creating Banner...
+                          </>
+                        ) : (
+                          "🚀 Create Hero Banner"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Banners List */}
+                <div>
+                  <div className="data-list-header">
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Active Hero Banners ({banners.length})</h3>
+                    <button onClick={fetchBanners} className="refresh-btn">
+                      🔄 Refresh List
+                    </button>
+                  </div>
+
+                  {loadingBanners && banners.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                      <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
+                      <p style={{ color: "#aaa" }}>Loading active banners...</p>
+                    </div>
+                  ) : banners.length === 0 ? (
+                    <p style={{ color: "#777", fontStyle: "italic" }}>No banners created yet.</p>
+                  ) : (
+                    <div className="list-grid">
+                      {banners.map((slide) => (
+                        <div key={slide.id} className="list-card" style={{ position: "relative", flexDirection: "column", alignItems: "stretch", gap: "12px", padding: "16px" }}>
+                          <button
+                            onClick={() => handleDeleteBanner(slide.id)}
+                            style={{
+                              position: "absolute",
+                              top: "8px",
+                              right: "8px",
+                              background: "rgba(244, 67, 54, 0.25)",
+                              color: "#ff8a80",
+                              border: "1px solid rgba(244, 67, 54, 0.35)",
+                              borderRadius: "4px",
+                              padding: "4px 8px",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                              zIndex: 10,
+                              transition: "all 0.2s"
+                            }}
+                            title="Delete Banner"
+                          >
+                            🗑️ Delete
+                          </button>
+
+                          <div style={{ width: "100%", height: "120px", background: "#111", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
+                            {slide.image ? (
+                              <img
+                                src={slide.image.startsWith("http") ? slide.image : `${BASE_URL}${slide.image}`}
+                                alt={slide.title}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            ) : (
+                              <div style={{ display: "flex", height: "100%", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#444" }}>No Image</div>
+                            )}
+
+                            {/* Accent color bar */}
+                            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "4px", backgroundColor: slide.accent_color }} />
+                          </div>
+
+                          <div className="list-card-info" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                            <div className="list-card-title" style={{ fontSize: "15px", whiteSpace: "normal" }}>
+                              {slide.title}
+                            </div>
+                            {slide.subtitle && (
+                              <div className="list-card-subtitle" style={{ fontSize: "12px", whiteSpace: "normal" }}>
+                                {slide.subtitle}
+                              </div>
+                            )}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#bbb", marginTop: "4px" }}>
+                              <span>CTA: <strong>{slide.cta}</strong></span>
+                              <span>Link: <strong>{slide.href}</strong></span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
+                              <span style={{ fontSize: "10px", color: slide.accent_color, fontWeight: "bold", textTransform: "uppercase" }}>
+                                Accent: {slide.accent_color}
+                              </span>
+                              <span className="list-card-badge" style={{ background: slide.is_active ? "rgba(76, 175, 80, 0.15)" : "rgba(244, 67, 54, 0.15)", color: slide.is_active ? "#81c784" : "#e57373" }}>
+                                {slide.is_active ? "Active" : "Inactive"}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ))}
