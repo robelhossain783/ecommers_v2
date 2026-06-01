@@ -6,6 +6,7 @@ import Image from "next/image";
 
 // Backend base URL
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
+// const BASE_URL = "http://127.0.0.1:8000";
 // TypeScript Interfaces based on Django Backend structures
 interface Category {
   id: number;
@@ -297,6 +298,7 @@ export default function AdminManagementPage() {
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
+      console.log("resp:", data)
       if (res.ok) {
         setAuthSuccess("🎉 Login successful! Redirecting...");
         localStorage.setItem("adminUser", JSON.stringify(data));
@@ -311,6 +313,7 @@ export default function AdminManagementPage() {
     } catch (err) {
       setAuthError("❌ Connection error to authentication API.");
       console.error(err);
+      console.log("LOGIN URL:", `${BASE_URL}/api/auth/login/`);
     } finally {
       setAuthLoading(false);
     }
@@ -1124,98 +1127,563 @@ export default function AdminManagementPage() {
           <>
             {/* STATS OVERVIEW CARDS */}
             <section className="stats-grid">
-          <div className="stat-card">
-            <span className="stat-label">Total Revenue</span>
-            <span className="stat-value">৳{totalRevenue.toLocaleString()}</span>
-            <span className="stat-detail">Lifetime earnings from completed & pending orders</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Orders Placed</span>
-            <span className="stat-value">{orders.length}</span>
-            <span className="stat-detail">
-              <span>{pendingOrders}</span> pending action
-            </span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Active Products</span>
-            <span className="stat-value">{products.length}</span>
-            <span className="stat-detail">Listed in the e-commerce inventory</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Categories</span>
-            <span className="stat-value">{categories.length}</span>
-            <span className="stat-detail">Active product classifications</span>
-          </div>
-        </section>
+              <div className="stat-card">
+                <span className="stat-label">Total Revenue</span>
+                <span className="stat-value">৳{totalRevenue.toLocaleString()}</span>
+                <span className="stat-detail">Lifetime earnings from completed & pending orders</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Orders Placed</span>
+                <span className="stat-value">{orders.length}</span>
+                <span className="stat-detail">
+                  <span>{pendingOrders}</span> pending action
+                </span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Active Products</span>
+                <span className="stat-value">{products.length}</span>
+                <span className="stat-detail">Listed in the e-commerce inventory</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Categories</span>
+                <span className="stat-value">{categories.length}</span>
+                <span className="stat-detail">Active product classifications</span>
+              </div>
+            </section>
 
-        {/* TABS NAVIGATION */}
-        <section className="tabs-container">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`tab-btn ${activeTab === "dashboard" ? "active" : ""}`}
-          >
-            📊 Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab("orders")}
-            className={`tab-btn ${activeTab === "orders" ? "active" : ""}`}
-          >
-            📦 Orders ({orders.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("products")}
-            className={`tab-btn ${activeTab === "products" ? "active" : ""}`}
-          >
-            🏷️ Products ({products.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("categories")}
-            className={`tab-btn ${activeTab === "categories" ? "active" : ""}`}
-          >
-            📁 Categories ({categories.length})
-          </button>
-        </section>
+            {/* TABS NAVIGATION */}
+            <section className="tabs-container">
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className={`tab-btn ${activeTab === "dashboard" ? "active" : ""}`}
+              >
+                📊 Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab("orders")}
+                className={`tab-btn ${activeTab === "orders" ? "active" : ""}`}
+              >
+                📦 Orders ({orders.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("products")}
+                className={`tab-btn ${activeTab === "products" ? "active" : ""}`}
+              >
+                🏷️ Products ({products.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("categories")}
+                className={`tab-btn ${activeTab === "categories" ? "active" : ""}`}
+              >
+                📁 Categories ({categories.length})
+              </button>
+            </section>
 
-        {/* TAB CONTENTS */}
+            {/* TAB CONTENTS */}
 
-        {/* 1. DASHBOARD TAB */}
-        {activeTab === "dashboard" && (
-          <div>
-            <div className="dashboard-grid">
-              <div className="form-panel">
-                <h3 className="form-title">Store Status Summary</h3>
-                <p style={{ color: "#aaa", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
-                  Welcome back! Your shop is connected and running active operations. Total database metrics are loaded dynamically via Django REST Framework API endpoints. Use the tabs above to manage orders, products, and categories.
-                </p>
-                <div style={{ background: "rgba(0, 0, 0, 0.2)", borderRadius: "8px", padding: "16px" }}>
-                  <h4 style={{ color: "#fff", fontSize: "14px", marginBottom: "8px" }}>API Endpoints In-use:</h4>
-                  <ul style={{ color: "#8a8a98", fontSize: "12px", listStyle: "inside", display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <li><strong>Categories list:</strong> {BASE_URL}/api/categories/list/</li>
-                    <li><strong>Create category:</strong> {BASE_URL}/api/categories/create/</li>
-                    <li><strong>Products list:</strong> {BASE_URL}/api/products/list/</li>
-                    <li><strong>Create product:</strong> {BASE_URL}/api/products/create/</li>
-                    <li><strong>Orders list:</strong> {BASE_URL}/api/orders/list/</li>
-                  </ul>
+            {/* 1. DASHBOARD TAB */}
+            {activeTab === "dashboard" && (
+              <div>
+                <div className="dashboard-grid">
+                  <div className="form-panel">
+                    <h3 className="form-title">Store Status Summary</h3>
+                    <p style={{ color: "#aaa", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
+                      Welcome back! Your shop is connected and running active operations. Total database metrics are loaded dynamically via Django REST Framework API endpoints. Use the tabs above to manage orders, products, and categories.
+                    </p>
+                    <div style={{ background: "rgba(0, 0, 0, 0.2)", borderRadius: "8px", padding: "16px" }}>
+                      <h4 style={{ color: "#fff", fontSize: "14px", marginBottom: "8px" }}>API Endpoints In-use:</h4>
+                      <ul style={{ color: "#8a8a98", fontSize: "12px", listStyle: "inside", display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <li><strong>Categories list:</strong> {BASE_URL}/api/categories/list/</li>
+                        <li><strong>Create category:</strong> {BASE_URL}/api/categories/create/</li>
+                        <li><strong>Products list:</strong> {BASE_URL}/api/products/list/</li>
+                        <li><strong>Create product:</strong> {BASE_URL}/api/products/create/</li>
+                        <li><strong>Orders list:</strong> {BASE_URL}/api/orders/list/</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="form-panel" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                    <div>
+                      <h3 className="form-title">Recent Orders</h3>
+                      {orders.length === 0 ? (
+                        <p style={{ color: "#777", fontSize: "13px" }}>No orders placed yet.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                          {orders.slice(0, 4).map((order) => (
+                            <div key={order.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                              <div>
+                                <span style={{ fontWeight: "700", color: "#fff" }}>{order.full_name}</span>
+                                <span style={{ fontSize: "11px", color: "#888", display: "block" }}>{order.phone}</span>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <span style={{ color: "var(--primary, #e8320a)", fontWeight: "700" }}>৳{Number(order.amount).toLocaleString()}</span>
+                                <span className={`status-badge ${order.status}`} style={{ display: "block", fontSize: "9px", padding: "1px 6px", marginTop: "3px" }}>
+                                  {order.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => setActiveTab("orders")} style={{ color: "var(--primary, #e8320a)", fontWeight: "600", fontSize: "13px", marginTop: "16px", cursor: "pointer", textDecoration: "underline" }}>
+                      View All Orders →
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="form-panel" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            {/* 2. ORDERS LIST TAB */}
+            {activeTab === "orders" && (
+              <div>
+                <div className="data-list-header">
+                  <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Customer Orders List</h3>
+                  <button onClick={fetchOrders} className="refresh-btn">
+                    🔄 Refresh Orders ({loadingOrders ? "Loading..." : "Synced"})
+                  </button>
+                </div>
+
+                {loadingOrders && orders.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "60px 0" }}>
+                    <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
+                    <p style={{ color: "#aaa" }}>Fetching order records from Django API...</p>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "60px 0", background: "rgba(255, 255, 255, 0.01)", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.08)" }}>
+                    <span style={{ fontSize: "36px", display: "block", marginBottom: "12px" }}>📦</span>
+                    <h4 style={{ color: "#fff", marginBottom: "4px" }}>No Orders Found</h4>
+                    <p style={{ color: "#777", fontSize: "13px" }}>Orders submitted through Checkout/Buy Now forms will show up here.</p>
+                  </div>
+                ) : (
+                  <div className="order-table-container">
+                    <table className="order-table">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Customer Details</th>
+                          <th>Shipping Address</th>
+                          <th>Items Purchased</th>
+                          <th>Payment Method</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map((order) => (
+                          <tr key={order.id}>
+                            <td><strong>#{order.id}</strong></td>
+                            <td>
+                              <div style={{ fontWeight: "700", color: "#fff" }}>{order.full_name}</div>
+                              <div style={{ fontSize: "11px", color: "#8a8a98" }}>{order.phone}</div>
+                            </td>
+                            <td style={{ maxWidth: "200px" }}>
+                              <span style={{ fontSize: "12px", color: "#bbb", whiteSpace: "normal" }}>{order.address}</span>
+                            </td>
+                            <td>
+                              <div className="order-items-summary">
+                                {order.items && order.items.length > 0 ? (
+                                  order.items.map((item) => (
+                                    <div key={item.id} className="order-item-row">
+                                      <span>{item.product?.name || "Unnamed Product"} <strong style={{ color: "#fff" }}>x {item.quantity}</strong></span>
+                                      <span style={{ color: "#8a8a98", marginLeft: "10px" }}>৳{Number(item.price).toLocaleString()}</span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <span style={{ color: "#666", fontStyle: "italic" }}>No items found</span>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <span style={{ fontSize: "12px", fontWeight: "700", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px" }}>
+                                {order.payment_type}
+                              </span>
+                            </td>
+                            <td>
+                              <strong style={{ color: "var(--primary, #e8320a)", fontSize: "14px" }}>
+                                ৳{Number(order.amount).toLocaleString()}
+                              </strong>
+                            </td>
+                            <td>
+                              <select
+                                value={order.status}
+                                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                className={`status-select ${order.status}`}
+                                disabled={updatingOrderId === order.id}
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                              </select>
+                            </td>
+                            <td style={{ color: "#8a8a98", fontSize: "11px" }}>
+                              {new Date(order.created_at).toLocaleString("en-GB", { hour12: true })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. PRODUCTS TAB (LIST & FORM) */}
+            {activeTab === "products" && (
+              <div>
+                {/* Create Product Form */}
+                <div className="form-panel">
+                  <h3 className="form-title">⚡ Add New Product</h3>
+
+                  {productFormMsg && (
+                    <div className={`msg-box ${productFormMsg.type}`}>
+                      {productFormMsg.text}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleCreateProduct} className="form-grid">
+                    {/* Product Name */}
+                    <div className="form-group">
+                      <label className="form-label">Product Name *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={prodName}
+                        onChange={(e) => handleProdNameChange(e.target.value)}
+                        placeholder="e.g. Redmi Buds 5 Pro"
+                      />
+                    </div>
+
+                    {/* Slug */}
+                    <div className="form-group">
+                      <label className="form-label">URL Slug *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={prodSlug}
+                        onChange={(e) => setProdSlug(e.target.value)}
+                        placeholder="redmi-buds-5-pro"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div className="form-group full-width">
+                      <label className="form-label">Product Description</label>
+                      <textarea
+                        rows={4}
+                        className="form-textarea"
+                        value={prodDesc}
+                        onChange={(e) => setProdDesc(e.target.value)}
+                        placeholder="Describe product highlights, features, warranty..."
+                      />
+                    </div>
+
+                    {/* Category Selection */}
+                    <div className="form-group">
+                      <label className="form-label">Select Category *</label>
+                      <select
+                        required
+                        className="form-select"
+                        value={prodCategoryId}
+                        onChange={(e) => setProdCategoryId(e.target.value)}
+                      >
+                        <option value="">-- Choose Category --</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Stock Quantity */}
+                    <div className="form-group">
+                      <label className="form-label">Available Stock *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        required
+                        className="form-input"
+                        value={prodStock}
+                        onChange={(e) => setProdStock(e.target.value)}
+                        placeholder="e.g. 50"
+                      />
+                    </div>
+
+                    {/* Sell Price */}
+                    <div className="form-group">
+                      <label className="form-label">Sale Price (৳) *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        className="form-input"
+                        value={prodSellPrice}
+                        onChange={(e) => setProdSellPrice(e.target.value)}
+                        placeholder="Discounted price, e.g. 3500"
+                      />
+                    </div>
+
+                    {/* Regular Price */}
+                    <div className="form-group">
+                      <label className="form-label">Regular Price (৳)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-input"
+                        value={prodRegPrice}
+                        onChange={(e) => setProdRegPrice(e.target.value)}
+                        placeholder="Before discount, e.g. 4000"
+                      />
+                    </div>
+
+                    {/* Image file upload */}
+                    <div className="form-group">
+                      <label className="form-label">Product Thumbnail Image *</label>
+                      <div className="image-upload-wrapper">
+                        <input
+                          type="file"
+                          required
+                          accept="image/*"
+                          onChange={handleProdImageChange}
+                          style={{ fontSize: "12px" }}
+                        />
+                        <div className="image-preview">
+                          {prodImagePreview ? (
+                            <img src={prodImagePreview} alt="Preview" />
+                          ) : (
+                            <span>Preview</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Active check */}
+                    <div className="form-group" style={{ justifyContent: "center" }}>
+                      <label className="checkbox-container">
+                        <input
+                          type="checkbox"
+                          checked={prodActive}
+                          onChange={(e) => setProdActive(e.target.checked)}
+                        />
+                        <span>Publish & Make Active (Display on homepage)</span>
+                      </label>
+                    </div>
+
+                    {/* Submit button */}
+                    <div className="form-group full-width" style={{ marginTop: "10px" }}>
+                      <button
+                        type="submit"
+                        disabled={productSubmitLoading}
+                        className="form-button"
+                      >
+                        {productSubmitLoading ? (
+                          <>
+                            <div className="spinner"></div> Creating Product...
+                          </>
+                        ) : (
+                          "🚀 Publish Product to Catalog"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Products List */}
                 <div>
-                  <h3 className="form-title">Recent Orders</h3>
-                  {orders.length === 0 ? (
-                    <p style={{ color: "#777", fontSize: "13px" }}>No orders placed yet.</p>
+                  <div className="data-list-header">
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Catalog Products ({products.length})</h3>
+                    <button onClick={fetchProducts} className="refresh-btn">
+                      🔄 Refresh List
+                    </button>
+                  </div>
+
+                  {loadingProducts && products.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                      <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
+                      <p style={{ color: "#aaa" }}>Loading active catalog...</p>
+                    </div>
+                  ) : products.length === 0 ? (
+                    <p style={{ color: "#777", fontStyle: "italic" }}>No products created yet.</p>
                   ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {orders.slice(0, 4).map((order) => (
-                        <div key={order.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                          <div>
-                            <span style={{ fontWeight: "700", color: "#fff" }}>{order.full_name}</span>
-                            <span style={{ fontSize: "11px", color: "#888", display: "block" }}>{order.phone}</span>
+                    <div className="list-grid">
+                      {products.map((prod) => (
+                        <div key={prod.id} className="list-card" style={{ position: "relative" }}>
+                          <button
+                            onClick={() => handleDeleteProduct(prod.id)}
+                            style={{
+                              position: "absolute",
+                              top: "8px",
+                              right: "8px",
+                              background: "rgba(244, 67, 54, 0.25)",
+                              color: "#ff8a80",
+                              border: "1px solid rgba(244, 67, 54, 0.35)",
+                              borderRadius: "4px",
+                              padding: "4px 8px",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                              zIndex: 10,
+                              transition: "all 0.2s"
+                            }}
+                            title="Delete Product"
+                          >
+                            🗑️ Delete
+                          </button>
+                          <div className="list-card-img">
+                            {prod.image ? (
+                              <img
+                                src={prod.image.startsWith("http") ? prod.image : `${BASE_URL}${prod.image}`}
+                                alt={prod.name}
+                              />
+                            ) : (
+                              <span style={{ fontSize: "10px", color: "#666" }}>No Image</span>
+                            )}
                           </div>
-                          <div style={{ textAlign: "right" }}>
-                            <span style={{ color: "var(--primary, #e8320a)", fontWeight: "700" }}>৳{Number(order.amount).toLocaleString()}</span>
-                            <span className={`status-badge ${order.status}`} style={{ display: "block", fontSize: "9px", padding: "1px 6px", marginTop: "3px" }}>
-                              {order.status}
+                          <div className="list-card-info">
+                            <div className="list-card-title" title={prod.name}>
+                              {prod.name}
+                            </div>
+                            <div className="list-card-subtitle">
+                              Category: {typeof prod.category === "object" ? prod.category.name : `Cat ID ${prod.category}`}
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                              <strong style={{ color: "var(--primary, #e8320a)", fontSize: "13px" }}>
+                                ৳{Number(prod.sell_price).toLocaleString()}
+                              </strong>
+                              <span className="list-card-badge">Stock: {prod.stock}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 4. CATEGORIES TAB (LIST & FORM) */}
+            {activeTab === "categories" && (
+              <div>
+                {/* Create Category Form */}
+                <div className="form-panel">
+                  <h3 className="form-title">📁 Create Product Category</h3>
+
+                  {categoryFormMsg && (
+                    <div className={`msg-box ${categoryFormMsg.type}`}>
+                      {categoryFormMsg.text}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleCreateCategory} className="form-grid">
+                    {/* Category Name */}
+                    <div className="form-group">
+                      <label className="form-label">Category Name *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={catName}
+                        onChange={(e) => handleCatNameChange(e.target.value)}
+                        placeholder="e.g. Smart Watch"
+                      />
+                    </div>
+
+                    {/* Slug */}
+                    <div className="form-group">
+                      <label className="form-label">URL Slug *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-input"
+                        value={catSlug}
+                        onChange={(e) => setCatSlug(e.target.value)}
+                        placeholder="smart-watch"
+                      />
+                    </div>
+
+                    {/* Category Image upload */}
+                    <div className="form-group">
+                      <label className="form-label">Category Thumbnail / Icon Image</label>
+                      <div className="image-upload-wrapper">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCatImageChange}
+                          style={{ fontSize: "12px" }}
+                        />
+                        <div className="image-preview">
+                          {catImagePreview ? (
+                            <img src={catImagePreview} alt="Preview" />
+                          ) : (
+                            <span>Preview</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Empty group for spacing */}
+                    <div className="form-group"></div>
+
+                    {/* Submit button */}
+                    <div className="form-group full-width" style={{ marginTop: "10px" }}>
+                      <button
+                        type="submit"
+                        disabled={categorySubmitLoading}
+                        className="form-button"
+                      >
+                        {categorySubmitLoading ? (
+                          <>
+                            <div className="spinner"></div> Creating Category...
+                          </>
+                        ) : (
+                          "🚀 Create Category"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Categories List */}
+                <div>
+                  <div className="data-list-header">
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Product Categories ({categories.length})</h3>
+                    <button onClick={fetchCategories} className="refresh-btn">
+                      🔄 Refresh List
+                    </button>
+                  </div>
+
+                  {loadingCategories && categories.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 0" }}>
+                      <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
+                      <p style={{ color: "#aaa" }}>Loading categories...</p>
+                    </div>
+                  ) : categories.length === 0 ? (
+                    <p style={{ color: "#777", fontStyle: "italic" }}>No categories created yet.</p>
+                  ) : (
+                    <div className="list-grid">
+                      {categories.map((cat) => (
+                        <div key={cat.id} className="list-card">
+                          <div className="list-card-img" style={{ background: "#15151b" }}>
+                            {cat.image ? (
+                              <img
+                                src={cat.image.startsWith("http") ? cat.image : `${BASE_URL}${cat.image}`}
+                                alt={cat.name}
+                              />
+                            ) : (
+                              <span style={{ fontSize: "20px" }}>📁</span>
+                            )}
+                          </div>
+                          <div className="list-card-info">
+                            <div className="list-card-title">{cat.name}</div>
+                            <div className="list-card-subtitle" style={{ fontFamily: "monospace" }}>
+                              slug: {cat.slug}
+                            </div>
+                            <span className="list-card-badge" style={{ marginTop: "4px" }}>
+                              Active
                             </span>
                           </div>
                         </div>
@@ -1223,475 +1691,10 @@ export default function AdminManagementPage() {
                     </div>
                   )}
                 </div>
-                <button onClick={() => setActiveTab("orders")} style={{ color: "var(--primary, #e8320a)", fontWeight: "600", fontSize: "13px", marginTop: "16px", cursor: "pointer", textDecoration: "underline" }}>
-                  View All Orders →
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 2. ORDERS LIST TAB */}
-        {activeTab === "orders" && (
-          <div>
-            <div className="data-list-header">
-              <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Customer Orders List</h3>
-              <button onClick={fetchOrders} className="refresh-btn">
-                🔄 Refresh Orders ({loadingOrders ? "Loading..." : "Synced"})
-              </button>
-            </div>
-
-            {loadingOrders && orders.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 0" }}>
-                <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                <p style={{ color: "#aaa" }}>Fetching order records from Django API...</p>
-              </div>
-            ) : orders.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 0", background: "rgba(255, 255, 255, 0.01)", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.08)" }}>
-                <span style={{ fontSize: "36px", display: "block", marginBottom: "12px" }}>📦</span>
-                <h4 style={{ color: "#fff", marginBottom: "4px" }}>No Orders Found</h4>
-                <p style={{ color: "#777", fontSize: "13px" }}>Orders submitted through Checkout/Buy Now forms will show up here.</p>
-              </div>
-            ) : (
-              <div className="order-table-container">
-                <table className="order-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Customer Details</th>
-                      <th>Shipping Address</th>
-                      <th>Items Purchased</th>
-                      <th>Payment Method</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => (
-                      <tr key={order.id}>
-                        <td><strong>#{order.id}</strong></td>
-                        <td>
-                          <div style={{ fontWeight: "700", color: "#fff" }}>{order.full_name}</div>
-                          <div style={{ fontSize: "11px", color: "#8a8a98" }}>{order.phone}</div>
-                        </td>
-                        <td style={{ maxWidth: "200px" }}>
-                          <span style={{ fontSize: "12px", color: "#bbb", whiteSpace: "normal" }}>{order.address}</span>
-                        </td>
-                        <td>
-                          <div className="order-items-summary">
-                            {order.items && order.items.length > 0 ? (
-                              order.items.map((item) => (
-                                <div key={item.id} className="order-item-row">
-                                  <span>{item.product?.name || "Unnamed Product"} <strong style={{ color: "#fff" }}>x {item.quantity}</strong></span>
-                                  <span style={{ color: "#8a8a98", marginLeft: "10px" }}>৳{Number(item.price).toLocaleString()}</span>
-                                </div>
-                              ))
-                            ) : (
-                              <span style={{ color: "#666", fontStyle: "italic" }}>No items found</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <span style={{ fontSize: "12px", fontWeight: "700", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px" }}>
-                            {order.payment_type}
-                          </span>
-                        </td>
-                        <td>
-                          <strong style={{ color: "var(--primary, #e8320a)", fontSize: "14px" }}>
-                            ৳{Number(order.amount).toLocaleString()}
-                          </strong>
-                        </td>
-                        <td>
-                          <select
-                            value={order.status}
-                            onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                            className={`status-select ${order.status}`}
-                            disabled={updatingOrderId === order.id}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="processing">Processing</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                        </td>
-                        <td style={{ color: "#8a8a98", fontSize: "11px" }}>
-                          {new Date(order.created_at).toLocaleString("en-GB", { hour12: true })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             )}
-          </div>
+          </>
         )}
-
-        {/* 3. PRODUCTS TAB (LIST & FORM) */}
-        {activeTab === "products" && (
-          <div>
-            {/* Create Product Form */}
-            <div className="form-panel">
-              <h3 className="form-title">⚡ Add New Product</h3>
-
-              {productFormMsg && (
-                <div className={`msg-box ${productFormMsg.type}`}>
-                  {productFormMsg.text}
-                </div>
-              )}
-
-              <form onSubmit={handleCreateProduct} className="form-grid">
-                {/* Product Name */}
-                <div className="form-group">
-                  <label className="form-label">Product Name *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    value={prodName}
-                    onChange={(e) => handleProdNameChange(e.target.value)}
-                    placeholder="e.g. Redmi Buds 5 Pro"
-                  />
-                </div>
-
-                {/* Slug */}
-                <div className="form-group">
-                  <label className="form-label">URL Slug *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    value={prodSlug}
-                    onChange={(e) => setProdSlug(e.target.value)}
-                    placeholder="redmi-buds-5-pro"
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="form-group full-width">
-                  <label className="form-label">Product Description</label>
-                  <textarea
-                    rows={4}
-                    className="form-textarea"
-                    value={prodDesc}
-                    onChange={(e) => setProdDesc(e.target.value)}
-                    placeholder="Describe product highlights, features, warranty..."
-                  />
-                </div>
-
-                {/* Category Selection */}
-                <div className="form-group">
-                  <label className="form-label">Select Category *</label>
-                  <select
-                    required
-                    className="form-select"
-                    value={prodCategoryId}
-                    onChange={(e) => setProdCategoryId(e.target.value)}
-                  >
-                    <option value="">-- Choose Category --</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Stock Quantity */}
-                <div className="form-group">
-                  <label className="form-label">Available Stock *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    className="form-input"
-                    value={prodStock}
-                    onChange={(e) => setProdStock(e.target.value)}
-                    placeholder="e.g. 50"
-                  />
-                </div>
-
-                {/* Sell Price */}
-                <div className="form-group">
-                  <label className="form-label">Sale Price (৳) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    className="form-input"
-                    value={prodSellPrice}
-                    onChange={(e) => setProdSellPrice(e.target.value)}
-                    placeholder="Discounted price, e.g. 3500"
-                  />
-                </div>
-
-                {/* Regular Price */}
-                <div className="form-group">
-                  <label className="form-label">Regular Price (৳)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-input"
-                    value={prodRegPrice}
-                    onChange={(e) => setProdRegPrice(e.target.value)}
-                    placeholder="Before discount, e.g. 4000"
-                  />
-                </div>
-
-                {/* Image file upload */}
-                <div className="form-group">
-                  <label className="form-label">Product Thumbnail Image *</label>
-                  <div className="image-upload-wrapper">
-                    <input
-                      type="file"
-                      required
-                      accept="image/*"
-                      onChange={handleProdImageChange}
-                      style={{ fontSize: "12px" }}
-                    />
-                    <div className="image-preview">
-                      {prodImagePreview ? (
-                        <img src={prodImagePreview} alt="Preview" />
-                      ) : (
-                        <span>Preview</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Active check */}
-                <div className="form-group" style={{ justifyContent: "center" }}>
-                  <label className="checkbox-container">
-                    <input
-                      type="checkbox"
-                      checked={prodActive}
-                      onChange={(e) => setProdActive(e.target.checked)}
-                    />
-                    <span>Publish & Make Active (Display on homepage)</span>
-                  </label>
-                </div>
-
-                {/* Submit button */}
-                <div className="form-group full-width" style={{ marginTop: "10px" }}>
-                  <button
-                    type="submit"
-                    disabled={productSubmitLoading}
-                    className="form-button"
-                  >
-                    {productSubmitLoading ? (
-                      <>
-                        <div className="spinner"></div> Creating Product...
-                      </>
-                    ) : (
-                      "🚀 Publish Product to Catalog"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Products List */}
-            <div>
-              <div className="data-list-header">
-                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Catalog Products ({products.length})</h3>
-                <button onClick={fetchProducts} className="refresh-btn">
-                  🔄 Refresh List
-                </button>
-              </div>
-
-              {loadingProducts && products.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 0" }}>
-                  <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                  <p style={{ color: "#aaa" }}>Loading active catalog...</p>
-                </div>
-              ) : products.length === 0 ? (
-                <p style={{ color: "#777", fontStyle: "italic" }}>No products created yet.</p>
-              ) : (
-                <div className="list-grid">
-                  {products.map((prod) => (
-                    <div key={prod.id} className="list-card" style={{ position: "relative" }}>
-                      <button
-                        onClick={() => handleDeleteProduct(prod.id)}
-                        style={{
-                          position: "absolute",
-                          top: "8px",
-                          right: "8px",
-                          background: "rgba(244, 67, 54, 0.25)",
-                          color: "#ff8a80",
-                          border: "1px solid rgba(244, 67, 54, 0.35)",
-                          borderRadius: "4px",
-                          padding: "4px 8px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          zIndex: 10,
-                          transition: "all 0.2s"
-                        }}
-                        title="Delete Product"
-                      >
-                        🗑️ Delete
-                      </button>
-                      <div className="list-card-img">
-                        {prod.image ? (
-                          <img
-                            src={prod.image.startsWith("http") ? prod.image : `${BASE_URL}${prod.image}`}
-                            alt={prod.name}
-                          />
-                        ) : (
-                          <span style={{ fontSize: "10px", color: "#666" }}>No Image</span>
-                        )}
-                      </div>
-                      <div className="list-card-info">
-                        <div className="list-card-title" title={prod.name}>
-                          {prod.name}
-                        </div>
-                        <div className="list-card-subtitle">
-                          Category: {typeof prod.category === "object" ? prod.category.name : `Cat ID ${prod.category}`}
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
-                          <strong style={{ color: "var(--primary, #e8320a)", fontSize: "13px" }}>
-                            ৳{Number(prod.sell_price).toLocaleString()}
-                          </strong>
-                          <span className="list-card-badge">Stock: {prod.stock}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 4. CATEGORIES TAB (LIST & FORM) */}
-        {activeTab === "categories" && (
-          <div>
-            {/* Create Category Form */}
-            <div className="form-panel">
-              <h3 className="form-title">📁 Create Product Category</h3>
-
-              {categoryFormMsg && (
-                <div className={`msg-box ${categoryFormMsg.type}`}>
-                  {categoryFormMsg.text}
-                </div>
-              )}
-
-              <form onSubmit={handleCreateCategory} className="form-grid">
-                {/* Category Name */}
-                <div className="form-group">
-                  <label className="form-label">Category Name *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    value={catName}
-                    onChange={(e) => handleCatNameChange(e.target.value)}
-                    placeholder="e.g. Smart Watch"
-                  />
-                </div>
-
-                {/* Slug */}
-                <div className="form-group">
-                  <label className="form-label">URL Slug *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-input"
-                    value={catSlug}
-                    onChange={(e) => setCatSlug(e.target.value)}
-                    placeholder="smart-watch"
-                  />
-                </div>
-
-                {/* Category Image upload */}
-                <div className="form-group">
-                  <label className="form-label">Category Thumbnail / Icon Image</label>
-                  <div className="image-upload-wrapper">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCatImageChange}
-                      style={{ fontSize: "12px" }}
-                    />
-                    <div className="image-preview">
-                      {catImagePreview ? (
-                        <img src={catImagePreview} alt="Preview" />
-                      ) : (
-                        <span>Preview</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Empty group for spacing */}
-                <div className="form-group"></div>
-
-                {/* Submit button */}
-                <div className="form-group full-width" style={{ marginTop: "10px" }}>
-                  <button
-                    type="submit"
-                    disabled={categorySubmitLoading}
-                    className="form-button"
-                  >
-                    {categorySubmitLoading ? (
-                      <>
-                        <div className="spinner"></div> Creating Category...
-                      </>
-                    ) : (
-                      "🚀 Create Category"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Categories List */}
-            <div>
-              <div className="data-list-header">
-                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Product Categories ({categories.length})</h3>
-                <button onClick={fetchCategories} className="refresh-btn">
-                  🔄 Refresh List
-                </button>
-              </div>
-
-              {loadingCategories && categories.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 0" }}>
-                  <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                  <p style={{ color: "#aaa" }}>Loading categories...</p>
-                </div>
-              ) : categories.length === 0 ? (
-                <p style={{ color: "#777", fontStyle: "italic" }}>No categories created yet.</p>
-              ) : (
-                <div className="list-grid">
-                  {categories.map((cat) => (
-                    <div key={cat.id} className="list-card">
-                      <div className="list-card-img" style={{ background: "#15151b" }}>
-                        {cat.image ? (
-                          <img
-                            src={cat.image.startsWith("http") ? cat.image : `${BASE_URL}${cat.image}`}
-                            alt={cat.name}
-                          />
-                        ) : (
-                          <span style={{ fontSize: "20px" }}>📁</span>
-                        )}
-                      </div>
-                      <div className="list-card-info">
-                        <div className="list-card-title">{cat.name}</div>
-                        <div className="list-card-subtitle" style={{ fontFamily: "monospace" }}>
-                          slug: {cat.slug}
-                        </div>
-                        <span className="list-card-badge" style={{ marginTop: "4px" }}>
-                          Active
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </>
-    )}
       </main>
     </div>
   );
