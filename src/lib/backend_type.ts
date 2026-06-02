@@ -2,14 +2,14 @@
 export interface Category {
   id: number;
   name: string;
-//   icon: string;
+  //   icon: string;
   slug: string;
 }
 
-export interface Product{
+export interface Product {
   id: number;
 
-  category: Category;
+  category: string;
 
   name: string;
   slug: string;

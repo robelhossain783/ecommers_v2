@@ -62,7 +62,7 @@
 
 
 import { Product } from "@/lib/backend_type";
-import { newArrivals as staticArrivals, brandProductMap } from "@/data";
+// import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 
 // const getBaseUrl = () => {
 //   if (typeof window !== "undefined") {
@@ -92,34 +92,25 @@ export async function getNewArrivals(): Promise<Product[]> {
   }
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
-  // 1. Try to fetch from Django api
+export async function getProductBySlug(
+  slug: string
+): Promise<Product | null> {
   try {
     const res = await fetch(`${BASE_URL}/api/products/${slug}/`, {
-      cache: "no-store"
+      cache: "no-store",
     });
-    if (res.ok) {
-      const data: Product = await res.json();
-      return data;
+
+    if (!res.ok) {
+      return null;
     }
+
+    const data: Product = await res.json();
+    return data;
   } catch (error) {
     console.log("API Error while fetching product by slug:", error);
-  }
-
-  // 2. Fallback to local static data
-  try {
-    const allStatic = [
-      ...staticArrivals,
-      ...Object.values(brandProductMap).flat()
-    ];
-    const found = allStatic.find((p) => p.slug === slug);
-    return found || null;
-  } catch (error) {
-    console.log("Fallback matching failed:", error);
     return null;
   }
 }
-
 
 
 

@@ -74,279 +74,280 @@ export const featuredCategories: Category[] = [
 //   { id: 9, name: "MacBook Pro M5 Pro 14-Inch", slug: "macbook-pro-m5-pro-14-inch", salePrice: 282000, regularPrice: null, category: "laptop", brand: "Apple" },
 // ];
 
-export const featuredProducts: Product[] = [
-  { id: 10, name: "iPhone 16 Pro Max", slug: "iphone-16-pro-max", salePrice: 146000, regularPrice: 165000, category: "mobile-phone", brand: "Apple" },
-  { id: 11, name: "iPhone 17", slug: "iphone-17", salePrice: 96499, regularPrice: 102000, category: "mobile-phone", brand: "Apple" },
-  { id: 12, name: "Galaxy Buds Core", slug: "galaxy-buds-core", salePrice: 4500, regularPrice: 4800, category: "airpods", brand: "Samsung" },
-  { id: 13, name: "PHILIPS HD4929 Induction Cooker", slug: "philips-hd4929-induction-cooker", salePrice: 7000, regularPrice: 9450, category: "home-appliances", brand: "Philips" },
-  { id: 14, name: "Galaxy Tab A11", slug: "galaxy-tab-a11", salePrice: 15500, regularPrice: null, category: "tablet", brand: "Samsung" },
-  { id: 15, name: "Gree GS-18XCOA3V Cosmo Inverter AC", slug: "gree-gs-18xcoa3v", salePrice: 64500, regularPrice: 81890, category: "home-appliances", brand: "Gree" },
-  { id: 16, name: "Haier HSU-12TurboAqua Non Inverter AC", slug: "haier-hsu-12", salePrice: 42900, regularPrice: 50990, category: "home-appliances", brand: "Haier" },
-  { id: 17, name: "CMF Watch Pro 2 BT Calling Smart Watch", slug: "cmf-watch-pro-2", salePrice: 5750, regularPrice: 7500, category: "smart-watch", brand: "Nothing" },
-  { id: 18, name: "MacBook Air M5 15-Inch", slug: "macbook-air-m5-15-inch", salePrice: 171000, regularPrice: null, category: "laptop", brand: "Apple" },
-  { id: 19, name: "QCY MeloBuds N20 ANC TWS Earbuds", slug: "qcy-melobuds-n20", salePrice: 2250, regularPrice: null, category: "earbuds", brand: "QCY" },
-  { id: 20, name: "iPad 11th Gen - 2025", slug: "ipad-11th-gen", salePrice: 44500, regularPrice: 48000, category: "tablet", brand: "Apple" },
-  { id: 21, name: "MacBook Air M4 13-Inch", slug: "macbook-air-m4-13-inch", salePrice: 142500, regularPrice: 146000, category: "laptop", brand: "Apple" },
-  { id: 22, name: "Apple Mac mini M4", slug: "apple-mac-mini-m4", salePrice: 89999, regularPrice: null, category: "laptop", brand: "Apple" },
-  { id: 23, name: "Galaxy Watch8", slug: "galaxy-watch8", salePrice: 24600, regularPrice: null, category: "smart-watch", brand: "Samsung" },
-  { id: 24, name: "QCY HT15 Buds ANC TWS Earbuds", slug: "qcy-ht15-buds", salePrice: 1900, regularPrice: 2300, category: "earbuds", brand: "QCY" },
-  { id: 25, name: "OnePlus Bullets Wireless Z3", slug: "oneplus-bullets-z3", salePrice: 2200, regularPrice: null, category: "earphones", brand: "OnePlus" },
-];
 
-export const newArrivals: Product[] = [
-  {
-    id: 30,
-    name: "Anker Nano 45W Power Bank 10000mAh",
-    slug: "anker-nano-45w-powerbank",
+// export const featuredProducts: Product[] = [
+//   { id: 10, name: "iPhone 16 Pro Max", slug: "iphone-16-pro-max", salePrice: 146000, regularPrice: 165000, category: "mobile-phone", brand: "Apple" },
+//   { id: 11, name: "iPhone 17", slug: "iphone-17", salePrice: 96499, regularPrice: 102000, category: "mobile-phone", brand: "Apple" },
+//   { id: 12, name: "Galaxy Buds Core", slug: "galaxy-buds-core", salePrice: 4500, regularPrice: 4800, category: "airpods", brand: "Samsung" },
+//   { id: 13, name: "PHILIPS HD4929 Induction Cooker", slug: "philips-hd4929-induction-cooker", salePrice: 7000, regularPrice: 9450, category: "home-appliances", brand: "Philips" },
+//   { id: 14, name: "Galaxy Tab A11", slug: "galaxy-tab-a11", salePrice: 15500, regularPrice: null, category: "tablet", brand: "Samsung" },
+//   { id: 15, name: "Gree GS-18XCOA3V Cosmo Inverter AC", slug: "gree-gs-18xcoa3v", salePrice: 64500, regularPrice: 81890, category: "home-appliances", brand: "Gree" },
+//   { id: 16, name: "Haier HSU-12TurboAqua Non Inverter AC", slug: "haier-hsu-12", salePrice: 42900, regularPrice: 50990, category: "home-appliances", brand: "Haier" },
+//   { id: 17, name: "CMF Watch Pro 2 BT Calling Smart Watch", slug: "cmf-watch-pro-2", salePrice: 5750, regularPrice: 7500, category: "smart-watch", brand: "Nothing" },
+//   { id: 18, name: "MacBook Air M5 15-Inch", slug: "macbook-air-m5-15-inch", salePrice: 171000, regularPrice: null, category: "laptop", brand: "Apple" },
+//   { id: 19, name: "QCY MeloBuds N20 ANC TWS Earbuds", slug: "qcy-melobuds-n20", salePrice: 2250, regularPrice: null, category: "earbuds", brand: "QCY" },
+//   { id: 20, name: "iPad 11th Gen - 2025", slug: "ipad-11th-gen", salePrice: 44500, regularPrice: 48000, category: "tablet", brand: "Apple" },
+//   { id: 21, name: "MacBook Air M4 13-Inch", slug: "macbook-air-m4-13-inch", salePrice: 142500, regularPrice: 146000, category: "laptop", brand: "Apple" },
+//   { id: 22, name: "Apple Mac mini M4", slug: "apple-mac-mini-m4", salePrice: 89999, regularPrice: null, category: "laptop", brand: "Apple" },
+//   { id: 23, name: "Galaxy Watch8", slug: "galaxy-watch8", salePrice: 24600, regularPrice: null, category: "smart-watch", brand: "Samsung" },
+//   { id: 24, name: "QCY HT15 Buds ANC TWS Earbuds", slug: "qcy-ht15-buds", salePrice: 1900, regularPrice: 2300, category: "earbuds", brand: "QCY" },
+//   { id: 25, name: "OnePlus Bullets Wireless Z3", slug: "oneplus-bullets-z3", salePrice: 2200, regularPrice: null, category: "earphones", brand: "OnePlus" },
+// ];
 
-    image: null,
-    description: "Fast charging power bank",
+// export const newArrivals: Product[] = [
+//   {
+//     id: 30,
+//     name: "Anker Nano 45W Power Bank 10000mAh",
+//     slug: "anker-nano-45w-powerbank",
 
-    sell_price: "5000",
-    regular_price: "5500",
+//     image: null,
+//     description: "Fast charging power bank",
 
-    stock: 10,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "5000",
+//     regular_price: "5500",
 
-    category: {
-      id: 1,
-      name: "Accessories",
-      slug: "accessories",
-    },
-  },
-  {
-    id: 31,
-    name: "Apple Watch Series 11",
-    slug: "apple-watch-series-11",
+//     stock: 10,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Smart watch",
+//     category: {
+//       id: 1,
+//       name: "Accessories",
+//       slug: "accessories",
+//     },
+//   },
+//   {
+//     id: 31,
+//     name: "Apple Watch Series 11",
+//     slug: "apple-watch-series-11",
 
-    sell_price: "44000",
-    regular_price: "53500",
+//     image: null,
+//     description: "Smart watch",
 
-    stock: 5,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "44000",
+//     regular_price: "53500",
 
-    category: {
-      id: 2,
-      name: "Smart Watch",
-      slug: "smart-watch",
-    },
-  },
-  {
-    id: 32,
-    name: "Galaxy Buds4 Pro",
-    slug: "galaxy-buds4-pro",
+//     stock: 5,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Wireless earbuds",
+//     category: {
+//       id: 2,
+//       name: "Smart Watch",
+//       slug: "smart-watch",
+//     },
+//   },
+//   {
+//     id: 32,
+//     name: "Galaxy Buds4 Pro",
+//     slug: "galaxy-buds4-pro",
 
-    sell_price: "23500",
-    regular_price: "25500",
+//     image: null,
+//     description: "Wireless earbuds",
 
-    stock: 7,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "23500",
+//     regular_price: "25500",
 
-    category: {
-      id: 3,
-      name: "Earbuds",
-      slug: "earbuds",
-    },
-  },
-  {
-    id: 33,
-    name: "AirPods Pro 3",
-    slug: "airpods-pro-3",
+//     stock: 7,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Apple earbuds",
+//     category: {
+//       id: 3,
+//       name: "Earbuds",
+//       slug: "earbuds",
+//     },
+//   },
+//   {
+//     id: 33,
+//     name: "AirPods Pro 3",
+//     slug: "airpods-pro-3",
 
-    sell_price: "27500",
-    regular_price: "34000",
+//     image: null,
+//     description: "Apple earbuds",
 
-    stock: 4,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "27500",
+//     regular_price: "34000",
 
-    category: {
-      id: 4,
-      name: "AirPods",
-      slug: "airpods",
-    },
-  },
-  {
-    id: 34,
-    name: "Anker Soundcore Liberty 5 ANC",
-    slug: "anker-liberty-5",
+//     stock: 4,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Noise cancelling earbuds",
+//     category: {
+//       id: 4,
+//       name: "AirPods",
+//       slug: "airpods",
+//     },
+//   },
+//   {
+//     id: 34,
+//     name: "Anker Soundcore Liberty 5 ANC",
+//     slug: "anker-liberty-5",
 
-    sell_price: "7150",
-    regular_price: "8500",
+//     image: null,
+//     description: "Noise cancelling earbuds",
 
-    stock: 8,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "7150",
+//     regular_price: "8500",
 
-    category: {
-      id: 3,
-      name: "Earbuds",
-      slug: "earbuds",
-    },
-  },
-  {
-    id: 35,
-    name: "Apple Watch SE 3",
-    slug: "apple-watch-se-3",
+//     stock: 8,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Apple smart watch",
+//     category: {
+//       id: 3,
+//       name: "Earbuds",
+//       slug: "earbuds",
+//     },
+//   },
+//   {
+//     id: 35,
+//     name: "Apple Watch SE 3",
+//     slug: "apple-watch-se-3",
 
-    sell_price: "36000",
-    regular_price: "42000",
+//     image: null,
+//     description: "Apple smart watch",
 
-    stock: 6,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "36000",
+//     regular_price: "42000",
 
-    category: {
-      id: 2,
-      name: "Smart Watch",
-      slug: "smart-watch",
-    },
-  },
-  {
-    id: 36,
-    name: "Galaxy Watch8 Classic",
-    slug: "galaxy-watch8-classic",
+//     stock: 6,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Samsung watch",
+//     category: {
+//       id: 2,
+//       name: "Smart Watch",
+//       slug: "smart-watch",
+//     },
+//   },
+//   {
+//     id: 36,
+//     name: "Galaxy Watch8 Classic",
+//     slug: "galaxy-watch8-classic",
 
-    sell_price: "31500",
-    regular_price: "40500",
+//     image: null,
+//     description: "Samsung watch",
 
-    stock: 5,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "31500",
+//     regular_price: "40500",
 
-    category: {
-      id: 2,
-      name: "Smart Watch",
-      slug: "smart-watch",
-    },
-  },
-  {
-    id: 37,
-    name: "CMF by Nothing Watch 3 Pro",
-    slug: "cmf-watch-3-pro",
+//     stock: 5,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Budget smart watch",
+//     category: {
+//       id: 2,
+//       name: "Smart Watch",
+//       slug: "smart-watch",
+//     },
+//   },
+//   {
+//     id: 37,
+//     name: "CMF by Nothing Watch 3 Pro",
+//     slug: "cmf-watch-3-pro",
 
-    sell_price: "9400",
-    regular_price: null,
+//     image: null,
+//     description: "Budget smart watch",
 
-    stock: 12,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "9400",
+//     regular_price: null,
 
-    category: {
-      id: 2,
-      name: "Smart Watch",
-      slug: "smart-watch",
-    },
-  },
-  {
-    id: 38,
-    name: "realme Buds Air 8 ANC",
-    slug: "realme-buds-air-8",
+//     stock: 12,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "ANC earbuds",
+//     category: {
+//       id: 2,
+//       name: "Smart Watch",
+//       slug: "smart-watch",
+//     },
+//   },
+//   {
+//     id: 38,
+//     name: "realme Buds Air 8 ANC",
+//     slug: "realme-buds-air-8",
 
-    sell_price: "4750",
-    regular_price: "5500",
+//     image: null,
+//     description: "ANC earbuds",
 
-    stock: 15,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "4750",
+//     regular_price: "5500",
 
-    category: {
-      id: 3,
-      name: "Earbuds",
-      slug: "earbuds",
-    },
-  },
-  {
-    id: 39,
-    name: "JBL Boombox 4 Wireless Speaker",
-    slug: "jbl-boombox-4",
+//     stock: 15,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Premium speaker",
+//     category: {
+//       id: 3,
+//       name: "Earbuds",
+//       slug: "earbuds",
+//     },
+//   },
+//   {
+//     id: 39,
+//     name: "JBL Boombox 4 Wireless Speaker",
+//     slug: "jbl-boombox-4",
 
-    sell_price: "51500",
-    regular_price: null,
+//     image: null,
+//     description: "Premium speaker",
 
-    stock: 3,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "51500",
+//     regular_price: null,
 
-    category: {
-      id: 5,
-      name: "Speakers",
-      slug: "speakers",
-    },
-  },
-  {
-    id: 40,
-    name: "Harman Kardon Luna Speaker",
-    slug: "harman-kardon-luna",
+//     stock: 3,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Luxury speaker",
+//     category: {
+//       id: 5,
+//       name: "Speakers",
+//       slug: "speakers",
+//     },
+//   },
+//   {
+//     id: 40,
+//     name: "Harman Kardon Luna Speaker",
+//     slug: "harman-kardon-luna",
 
-    sell_price: "15000",
-    regular_price: "17000",
+//     image: null,
+//     description: "Luxury speaker",
 
-    stock: 4,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "15000",
+//     regular_price: "17000",
 
-    category: {
-      id: 5,
-      name: "Speakers",
-      slug: "speakers",
-    },
-  },
-  {
-    id: 41,
-    name: "Amazfit Active 3 Smart Watch Premium",
-    slug: "amazfit-active-3",
+//     stock: 4,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
 
-    image: null,
-    description: "Fitness watch",
+//     category: {
+//       id: 5,
+//       name: "Speakers",
+//       slug: "speakers",
+//     },
+//   },
+//   {
+//     id: 41,
+//     name: "Amazfit Active 3 Smart Watch Premium",
+//     slug: "amazfit-active-3",
 
-    sell_price: "20000",
-    regular_price: "21999",
+//     image: null,
+//     description: "Fitness watch",
 
-    stock: 9,
-    is_active: true,
-    created_at: new Date().toISOString(),
+//     sell_price: "20000",
+//     regular_price: "21999",
 
-    category: {
-      id: 2,
-      name: "Smart Watch",
-      slug: "smart-watch",
-    },
-  },
-];
+//     stock: 9,
+//     is_active: true,
+//     created_at: new Date().toISOString(),
+
+//     category: {
+//       id: 2,
+//       name: "Smart Watch",
+//       slug: "smart-watch",
+//     },
+//   },
+// ];
 // ------------------Api call for newArrival_product_list
 // export type Product = {
 //   id: number;
