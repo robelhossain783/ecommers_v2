@@ -4,7 +4,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import HeroBanner from "@/components/sections/HeroBanner";
-import TrustBadges from "@/components/sections/TrustBadges";
+// import TrustBadges from "@/components/sections/TrustBadges";
 import CategoriesSection from "@/components/sections/CategoriesSection";
 import NewTrends from "@/components/sections/NewTrends";
 // import FeaturedProducts from "@/components/sections/FeaturedProducts";
@@ -22,8 +22,8 @@ export default function HomeClient() {
 
       <main style={{ paddingTop: "24px", paddingBottom: "24px" }}>
         <HeroBanner />
-        <TrustBadges />
-        {/* <CategoriesSection /> */}
+        {/* <TrustBadges /> */}
+        <CategoriesSection />
         <NewTrends />
         {/* <FeaturedProducts /> */}
         {/* <PromoBanners /> */}

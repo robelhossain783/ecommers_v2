@@ -34,25 +34,25 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
         if (res.ok) {
           const data = await res.json();
           const ICON_MAPPING: Record<string, string> = {
-            "gadget": "🔌",
-            "gadgets": "🔌",
-            "mobile-phone": "📱",
-            "mobile": "📱",
-            "phone": "📱",
-            "phones": "📱",
-            "laptop": "💻",
-            "laptops": "💻",
-            "tablet": "📟",
-            "tablets": "📟",
-            "smart-watch": "⌚",
-            "smartwatch": "⌚",
-            "wallet": "💼",
-            "wallets": "💼",
-            "backpack": "🎒",
-            "backpacks": "🎒",
-            "airpods": "🎧",
-            "speakers": "🔊",
-            "home-appliances": "🏠",
+            // "gadget": "🔌",
+            // "gadgets": "🔌",
+            // "mobile-phone": "📱",
+            // "mobile": "📱",
+            // "phone": "📱",
+            // "phones": "📱",
+            // "laptop": "💻",
+            // "laptops": "💻",
+            // "tablet": "📟",
+            // "tablets": "📟",
+            // "smart-watch": "⌚",
+            // "smartwatch": "⌚",
+            // "wallet": "💼",
+            // "wallets": "💼",
+            // "backpack": "🎒",
+            // "backpacks": "🎒",
+            // "airpods": "🎧",
+            // "speakers": "🔊",
+            // "home-appliances": "🏠",
           };
           const mapped = data.map((cat: any) => {
             const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-");
@@ -79,7 +79,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           {/* Logo */}
           <a href="/" className="logo">
             <span className="logo-text">
-              <span>IZU</span>Mart.
+              <span>IZU</span>Mart
             </span>
           </a>
 
@@ -123,7 +123,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <a href="/" className="sub-nav-link">Offer</a>
             <Link href="/orders" className="sub-nav-link">Orders</Link>
             {/* <a href="/compare" className="sub-nav-link">Compare</a> */}
-            <a href="/" className="sub-nav-link">Track Order</a>
+            {/* <a href="/" className="sub-nav-link">Track Order</a> */}
             {/* <a href="/outlets" className="sub-nav-link">Outlets</a>
             <a href="/contact-us" className="sub-nav-link">Contact</a> */}
           </div>

@@ -1,3 +1,5 @@
+import { FaFacebookF, FaInstagram, FaWhatsapp, FaEnvelope } from "react-icons/fa";
+
 export default function Footer() {
   return (
     <footer className="footer">
@@ -9,23 +11,24 @@ export default function Footer() {
               <span style={{ color: "var(--primary)" }}>IZU</span>Mart
             </span>
             <p className="footer-desc">
-              Bangladesh&apos;s trusted tech e-commerce store for phones, gadgets &amp; accessories. Authentic products, fast delivery.
+              Bangladesh&apos;s trusted e-commerce store for phones, gadgets &amp; accessories. <br />
+              Authentic products, fast delivery.
             </p>
             <div className="footer-contact">
-              <p>📞 <a href="tel:09678148148">01607005806</a></p>
-              <p>✉️ <a href="rubel.defy2@gmail.com">contact@izumartbd.com</a></p>
+              <p><FaWhatsapp /> <a href="tel:01303750286">01303750286</a></p>
+              <p>< FaEnvelope /> <a href="mailto:rubel.defy2@gmail.com">contact@izumartbd.com</a></p>
             </div>
           </div>
 
-          {/* Category */}
-          <div className="footer-col">
+          {/*Category*/}
+          {/* <div className="footer-col">
             <h4>Categories</h4>
             <ul className="footer-links">
               {["Gadget", "Waletts", "Speakers", "Phone", "Laptop", "Tablet"].map((item) => (
                 <li key={item}><a href={`/category/phones-tablets/${item.toLowerCase()}`}>{item}</a></li>
               ))}
             </ul>
-          </div>
+          </div> */}
 
           {/* Accessories
           <div className="footer-col">
@@ -41,38 +44,38 @@ export default function Footer() {
           <div className="footer-col">
             <h4>About Us</h4>
             <ul className="footer-links">
-              {["About Us", "Corporate", "Order Tracking", "Blog", "Press Coverage", "Careers", "Complain / Advice", "Contact Us", "FAQs"].map((item) => (
+              {["About Us", "Corporate", "Order Tracking", "Careers", "Contact Us"].map((item) => (
                 <li key={item}><a href={`/${item.toLowerCase().replace(/ \/ /g, "-").replace(/ /g, "-")}`}>{item}</a></li>
               ))}
             </ul>
           </div>
 
-          {/* Policy */}
+          {/* Policy
           <div className="footer-col">
             <h4>Policy</h4>
             <ul className="footer-links">
-              {["Privacy Policy", "EMI and Payment Policy", "Warranty Policy", "Exchange Policy", "Delivery Policy", "Pre-Order Policy", "Refund Policy", "Return Policy"].map((item) => (
+              {["Privacy Policy", "Warranty Policy", "Exchange Policy", "Delivery Policy", "Pre-Order Policy", "Refund Policy", "Return Policy"].map((item) => (
                 <li key={item}><a href={`/page/${item.toLowerCase().replace(/ /g, "-")}`}>{item}</a></li>
               ))}
             </ul>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom */}
         <div className="footer-bottom">
           <p>© 2026 IZU MART Bangladesh | All rights reserved</p>
           <div className="social-links">
-            <a href="https://wa.me/+8801607005806" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">💬</a>
-            <a href="https://facebook.com/Izu_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook">f</a>
-            <a href="https://instagram.com/Ico_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">📷</a>
+            <a href="https://wa.me/+8801303750286" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a>
+            <a href="https://facebook.com/Izu_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebookF /></a>
+            <a href="https://instagram.com/Ico_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
           </div>
         </div>
       </div>
 
       {/* WhatsApp Float */}
-      <a href="https://wa.me/+8801607005806" className="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-        💬
+      <a href="https://wa.me/+8801303750286" className="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+        <FaWhatsapp />
       </a>
-    </footer>
+    </footer >
   );
 }
