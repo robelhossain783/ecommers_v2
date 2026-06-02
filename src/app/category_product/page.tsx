@@ -10,7 +10,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
-// import { newArrivals as staticArrivals, brandProductMap } from "@/data";
+import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 
 const ICON_MAPPING: Record<string, string> = {
   // "gadget": "🔌",
@@ -82,36 +82,25 @@ function CategoryProductsContent() {
         const apiProducts = await getNewArrivals();
 
         // Fallbacks
-        // const staticList = [
-        //   ...staticArrivals,
-        //   ...Object.values(brandProductMap).flat()
-        // ];
-        // const allProducts = apiProducts.length > 0 ? apiProducts : staticList;
+        const staticList = [
+          ...staticArrivals,
+          ...Object.values(brandProductMap).flat()
+        ];
+        const allProducts = apiProducts.length > 0 ? apiProducts : staticList;
 
         // Filter by slug
-        // const filtered = apiProducts.filter((product) => {
-        //   if (!product.category) return false;
-
-        //   const prodCatSlug = typeof product.category === "object"
-        //     ? product.category.slug?.toLowerCase()
-        //     : "";
-        //   const prodCatName = typeof product.category === "object"
-        //     ? product.category.name?.toLowerCase().replace(/\s+/g, "-")
-        //     : "";
-
-        //   return prodCatSlug === categorySlug.toLowerCase() || prodCatName === categorySlug.toLowerCase();
-        // });
-        const filtered = apiProducts.filter((product) => {
+        const filtered = allProducts.filter((product) => {
           if (!product.category) return false;
 
-          const slug = categorySlug.toLowerCase();
+          const prodCatSlug = typeof product.category === "object"
+            ? product.category.slug?.toLowerCase()
+            : "";
+          const prodCatName = typeof product.category === "object"
+            ? product.category.name?.toLowerCase().replace(/\s+/g, "-")
+            : "";
 
-          const prodCatSlug = product.category?.slug?.toLowerCase() || "";
-          const prodCatName =
-            product.category?.name?.toLowerCase().replace(/\s+/g, "-") || "";
-
-          return prodCatSlug === slug || prodCatName === slug;
-        })
+          return prodCatSlug === categorySlug.toLowerCase() || prodCatName === categorySlug.toLowerCase();
+        });
 
         setProducts(filtered);
       } catch (error) {
