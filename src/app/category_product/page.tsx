@@ -89,18 +89,29 @@ function CategoryProductsContent() {
         // const allProducts = apiProducts.length > 0 ? apiProducts : staticList;
 
         // Filter by slug
+        // const filtered = apiProducts.filter((product) => {
+        //   if (!product.category) return false;
+
+        //   const prodCatSlug = typeof product.category === "object"
+        //     ? product.category.slug?.toLowerCase()
+        //     : "";
+        //   const prodCatName = typeof product.category === "object"
+        //     ? product.category.name?.toLowerCase().replace(/\s+/g, "-")
+        //     : "";
+
+        //   return prodCatSlug === categorySlug.toLowerCase() || prodCatName === categorySlug.toLowerCase();
+        // });
         const filtered = apiProducts.filter((product) => {
           if (!product.category) return false;
 
-          const prodCatSlug = typeof product.category === "object"
-            ? product.category.slug?.toLowerCase()
-            : "";
-          const prodCatName = typeof product.category === "object"
-            ? product.category.name?.toLowerCase().replace(/\s+/g, "-")
-            : "";
+          const slug = categorySlug.toLowerCase();
 
-          return prodCatSlug === categorySlug.toLowerCase() || prodCatName === categorySlug.toLowerCase();
-        });
+          const prodCatSlug = product.category?.slug?.toLowerCase() || "";
+          const prodCatName =
+            product.category?.name?.toLowerCase().replace(/\s+/g, "-") || "";
+
+          return prodCatSlug === slug || prodCatName === slug;
+        })
 
         setProducts(filtered);
       } catch (error) {
