@@ -74,24 +74,24 @@ export const featuredCategories: Category[] = [
 //   { id: 9, name: "MacBook Pro M5 Pro 14-Inch", slug: "macbook-pro-m5-pro-14-inch", salePrice: 282000, regularPrice: null, category: "laptop", brand: "Apple" },
 // ];
 
-// export const featuredProducts: Product[] = [
-//   { id: 10, name: "iPhone 16 Pro Max", slug: "iphone-16-pro-max", salePrice: 146000, regularPrice: 165000, category: "mobile-phone", brand: "Apple" },
-//   { id: 11, name: "iPhone 17", slug: "iphone-17", salePrice: 96499, regularPrice: 102000, category: "mobile-phone", brand: "Apple" },
-//   { id: 12, name: "Galaxy Buds Core", slug: "galaxy-buds-core", salePrice: 4500, regularPrice: 4800, category: "airpods", brand: "Samsung" },
-//   { id: 13, name: "PHILIPS HD4929 Induction Cooker", slug: "philips-hd4929-induction-cooker", salePrice: 7000, regularPrice: 9450, category: "home-appliances", brand: "Philips" },
-//   { id: 14, name: "Galaxy Tab A11", slug: "galaxy-tab-a11", salePrice: 15500, regularPrice: null, category: "tablet", brand: "Samsung" },
-//   { id: 15, name: "Gree GS-18XCOA3V Cosmo Inverter AC", slug: "gree-gs-18xcoa3v", salePrice: 64500, regularPrice: 81890, category: "home-appliances", brand: "Gree" },
-//   { id: 16, name: "Haier HSU-12TurboAqua Non Inverter AC", slug: "haier-hsu-12", salePrice: 42900, regularPrice: 50990, category: "home-appliances", brand: "Haier" },
-//   { id: 17, name: "CMF Watch Pro 2 BT Calling Smart Watch", slug: "cmf-watch-pro-2", salePrice: 5750, regularPrice: 7500, category: "smart-watch", brand: "Nothing" },
-//   { id: 18, name: "MacBook Air M5 15-Inch", slug: "macbook-air-m5-15-inch", salePrice: 171000, regularPrice: null, category: "laptop", brand: "Apple" },
-//   { id: 19, name: "QCY MeloBuds N20 ANC TWS Earbuds", slug: "qcy-melobuds-n20", salePrice: 2250, regularPrice: null, category: "earbuds", brand: "QCY" },
-//   { id: 20, name: "iPad 11th Gen - 2025", slug: "ipad-11th-gen", salePrice: 44500, regularPrice: 48000, category: "tablet", brand: "Apple" },
-//   { id: 21, name: "MacBook Air M4 13-Inch", slug: "macbook-air-m4-13-inch", salePrice: 142500, regularPrice: 146000, category: "laptop", brand: "Apple" },
-//   { id: 22, name: "Apple Mac mini M4", slug: "apple-mac-mini-m4", salePrice: 89999, regularPrice: null, category: "laptop", brand: "Apple" },
-//   { id: 23, name: "Galaxy Watch8", slug: "galaxy-watch8", salePrice: 24600, regularPrice: null, category: "smart-watch", brand: "Samsung" },
-//   { id: 24, name: "QCY HT15 Buds ANC TWS Earbuds", slug: "qcy-ht15-buds", salePrice: 1900, regularPrice: 2300, category: "earbuds", brand: "QCY" },
-//   { id: 25, name: "OnePlus Bullets Wireless Z3", slug: "oneplus-bullets-z3", salePrice: 2200, regularPrice: null, category: "earphones", brand: "OnePlus" },
-// ];
+export const featuredProducts: Product[] = [
+  { id: 10, name: "iPhone 16 Pro Max", slug: "iphone-16-pro-max", salePrice: 146000, regularPrice: 165000, category: "mobile-phone", brand: "Apple" },
+  { id: 11, name: "iPhone 17", slug: "iphone-17", salePrice: 96499, regularPrice: 102000, category: "mobile-phone", brand: "Apple" },
+  { id: 12, name: "Galaxy Buds Core", slug: "galaxy-buds-core", salePrice: 4500, regularPrice: 4800, category: "airpods", brand: "Samsung" },
+  { id: 13, name: "PHILIPS HD4929 Induction Cooker", slug: "philips-hd4929-induction-cooker", salePrice: 7000, regularPrice: 9450, category: "home-appliances", brand: "Philips" },
+  { id: 14, name: "Galaxy Tab A11", slug: "galaxy-tab-a11", salePrice: 15500, regularPrice: null, category: "tablet", brand: "Samsung" },
+  { id: 15, name: "Gree GS-18XCOA3V Cosmo Inverter AC", slug: "gree-gs-18xcoa3v", salePrice: 64500, regularPrice: 81890, category: "home-appliances", brand: "Gree" },
+  { id: 16, name: "Haier HSU-12TurboAqua Non Inverter AC", slug: "haier-hsu-12", salePrice: 42900, regularPrice: 50990, category: "home-appliances", brand: "Haier" },
+  { id: 17, name: "CMF Watch Pro 2 BT Calling Smart Watch", slug: "cmf-watch-pro-2", salePrice: 5750, regularPrice: 7500, category: "smart-watch", brand: "Nothing" },
+  { id: 18, name: "MacBook Air M5 15-Inch", slug: "macbook-air-m5-15-inch", salePrice: 171000, regularPrice: null, category: "laptop", brand: "Apple" },
+  { id: 19, name: "QCY MeloBuds N20 ANC TWS Earbuds", slug: "qcy-melobuds-n20", salePrice: 2250, regularPrice: null, category: "earbuds", brand: "QCY" },
+  { id: 20, name: "iPad 11th Gen - 2025", slug: "ipad-11th-gen", salePrice: 44500, regularPrice: 48000, category: "tablet", brand: "Apple" },
+  { id: 21, name: "MacBook Air M4 13-Inch", slug: "macbook-air-m4-13-inch", salePrice: 142500, regularPrice: 146000, category: "laptop", brand: "Apple" },
+  { id: 22, name: "Apple Mac mini M4", slug: "apple-mac-mini-m4", salePrice: 89999, regularPrice: null, category: "laptop", brand: "Apple" },
+  { id: 23, name: "Galaxy Watch8", slug: "galaxy-watch8", salePrice: 24600, regularPrice: null, category: "smart-watch", brand: "Samsung" },
+  { id: 24, name: "QCY HT15 Buds ANC TWS Earbuds", slug: "qcy-ht15-buds", salePrice: 1900, regularPrice: 2300, category: "earbuds", brand: "QCY" },
+  { id: 25, name: "OnePlus Bullets Wireless Z3", slug: "oneplus-bullets-z3", salePrice: 2200, regularPrice: null, category: "earphones", brand: "OnePlus" },
+];
 
 export const newArrivals: Product[] = [
   {
