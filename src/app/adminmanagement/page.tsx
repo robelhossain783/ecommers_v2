@@ -454,6 +454,34 @@ export default function AdminManagementPage() {
     }
   };
 
+
+  const handleDeleteCategory = async (categoryId: number) => {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/categories/${categoryId}/delete/`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+        setCategories((prev) =>
+          prev.filter((cat) => cat.id !== categoryId)
+        );
+      } else {
+        alert("❌ Failed to delete category");
+      }
+    } catch (err) {
+      console.error("Error deleting category:", err);
+      alert("❌ Connection error while deleting category");
+    }
+  };
+
+
+
+
   const handleCreateBanner = async (e: React.FormEvent) => {
     e.preventDefault();
     setBannerFormMsg(null);
@@ -1797,23 +1825,63 @@ export default function AdminManagementPage() {
                   ) : (
                     <div className="list-grid">
                       {categories.map((cat) => (
-                        <div key={cat.id} className="list-card">
-                          <div className="list-card-img" style={{ background: "#15151b" }}>
+                        <div
+                          key={cat.id}
+                          className="list-card"
+                          style={{ position: "relative" }}
+                        >
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDeleteCategory(cat.id)}
+                            style={{
+                              position: "absolute",
+                              top: "8px",
+                              right: "8px",
+                              background: "#ef4444",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "6px",
+                              padding: "6px 10px",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                              zIndex: 10,
+                            }}
+                          >
+                            🗑 Delete
+                          </button>
+
+                          <div
+                            className="list-card-img"
+                            style={{ background: "#15151b" }}
+                          >
                             {cat.image ? (
                               <img
-                                src={cat.image.startsWith("http") ? cat.image : `${BASE_URL}${cat.image}`}
+                                src={
+                                  cat.image.startsWith("http")
+                                    ? cat.image
+                                    : `${BASE_URL}${cat.image}`
+                                }
                                 alt={cat.name}
                               />
                             ) : (
                               <span style={{ fontSize: "20px" }}>📁</span>
                             )}
                           </div>
+
                           <div className="list-card-info">
                             <div className="list-card-title">{cat.name}</div>
-                            <div className="list-card-subtitle" style={{ fontFamily: "monospace" }}>
+
+                            <div
+                              className="list-card-subtitle"
+                              style={{ fontFamily: "monospace" }}
+                            >
                               slug: {cat.slug}
                             </div>
-                            <span className="list-card-badge" style={{ marginTop: "4px" }}>
+
+                            <span
+                              className="list-card-badge"
+                              style={{ marginTop: "4px" }}
+                            >
                               Active
                             </span>
                           </div>
