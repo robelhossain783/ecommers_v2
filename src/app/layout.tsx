@@ -3,7 +3,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 
 export const metadata: Metadata = {
-  title: "Smartphones, Gadgets & Premium Accessories | Apple Gadgets BD",
+  title: "IZUMart",
   description:
     "Apple Gadgets is one of the biggest tech retail chains in Bangladesh. Shop the latest gadgets, devices, and smart electronics and get fast delivery.",
   keywords: "iPhone Bangladesh, MacBook Bangladesh, Samsung Galaxy, gadgets BD, Apple Gadgets",
