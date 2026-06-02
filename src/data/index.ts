@@ -1,66 +1,66 @@
-import { Product, Category } from "@/lib/backend_type";
-export const bannerSlides = [
-  {
-    id: 1,
-    title: "Smart Fitness Watch Pro",
-    subtitle: "Track your health, heart rate & sleep with 7 days battery life",
-    cta: "Shop Smartwatch",
-    href: "/category/smartwatch",
-    image:
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1600&q=80",
-    accentColor: "#00b4d8",
-  },
-  {
-    id: 2,
-    title: "Samsung Galaxy S26 Ultra",
-    subtitle: "Save up to ৳11,000 — Limited Time Offer",
-    cta: "Explore Galaxy",
-    href: "/product/galaxy-s26-ultra-5g",
-    image:
-      "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?auto=format&fit=crop&w=1600&q=80",
-    accentColor: "#4fc3f7",
-  },
-  {
-    id: 3,
-    title: "MacBook Pro M3 Max",
-    subtitle: "Power meets performance for creators",
-    cta: "Buy MacBook",
-    href: "/category/macbook",
-    image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&q=80",
-    accentColor: "#a8e6cf",
-  },
-  {
-    id: 2,
-    title: "Portable Bluetooth Speaker Xtreme",
-    subtitle: "Deep bass, waterproof design & 12 hours playtime",
-    cta: "Shop Speaker",
-    href: "/category/speaker",
-    image:
-      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=1600&q=80",
-    accentColor: "#ff6b6b",
-  },
-  {
-    id: 4,
-    title: "Wireless Neckband Earphones",
-    subtitle: "Crystal clear sound with 20 hours battery backup",
-    cta: "Shop Neckband",
-    href: "/category/neckband",
-    image:
-      "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=1600&q=80",
-    accentColor: "#4fc3f7",
-  },
-];
-export const featuredCategories: Category[] = [
-  { id: 1, name: "Mobile Phone", slug: "mobile-phone" },
-  { id: 2, name: "Laptop", slug: "laptops" },
-  { id: 3, name: "Tablet", slug: "tablet" },
-  { id: 4, name: "Smart Watch", slug: "smart-watch" },
-  { id: 5, name: "AirPods", slug: "airpods" },
-  { id: 6, name: "Speakers", slug: "speakers" },
-  { id: 7, name: "Home Appliances", slug: "home-appliances" },
+// import { Product, Category } from "@/lib/backend_type";
+// export const bannerSlides = [
+//   {
+//     id: 1,
+//     title: "Smart Fitness Watch Pro",
+//     subtitle: "Track your health, heart rate & sleep with 7 days battery life",
+//     cta: "Shop Smartwatch",
+//     href: "/category/smartwatch",
+//     image:
+//       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1600&q=80",
+//     accentColor: "#00b4d8",
+//   },
+//   {
+//     id: 2,
+//     title: "Samsung Galaxy S26 Ultra",
+//     subtitle: "Save up to ৳11,000 — Limited Time Offer",
+//     cta: "Explore Galaxy",
+//     href: "/product/galaxy-s26-ultra-5g",
+//     image:
+//       "https://images.unsplash.com/photo-1610792516307-ea5acd9c3b00?auto=format&fit=crop&w=1600&q=80",
+//     accentColor: "#4fc3f7",
+//   },
+//   {
+//     id: 3,
+//     title: "MacBook Pro M3 Max",
+//     subtitle: "Power meets performance for creators",
+//     cta: "Buy MacBook",
+//     href: "/category/macbook",
+//     image:
+//       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&q=80",
+//     accentColor: "#a8e6cf",
+//   },
+//   {
+//     id: 2,
+//     title: "Portable Bluetooth Speaker Xtreme",
+//     subtitle: "Deep bass, waterproof design & 12 hours playtime",
+//     cta: "Shop Speaker",
+//     href: "/category/speaker",
+//     image:
+//       "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=1600&q=80",
+//     accentColor: "#ff6b6b",
+//   },
+//   {
+//     id: 4,
+//     title: "Wireless Neckband Earphones",
+//     subtitle: "Crystal clear sound with 20 hours battery backup",
+//     cta: "Shop Neckband",
+//     href: "/category/neckband",
+//     image:
+//       "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=1600&q=80",
+//     accentColor: "#4fc3f7",
+//   },
+// ];
+// export const featuredCategories: Category[] = [
+//   { id: 1, name: "Mobile Phone", slug: "mobile-phone" },
+//   { id: 2, name: "Laptop", slug: "laptops" },
+//   { id: 3, name: "Tablet", slug: "tablet" },
+//   { id: 4, name: "Smart Watch", slug: "smart-watch" },
+//   { id: 5, name: "AirPods", slug: "airpods" },
+//   { id: 6, name: "Speakers", slug: "speakers" },
+//   { id: 7, name: "Home Appliances", slug: "home-appliances" },
 
-];
+// ];
 
 // export const newTrends: Product[] = [
 //   { id: 1, name: "Galaxy S26 Ultra 5G", slug: "galaxy-s26-ultra-5g", salePrice: "125000", regularPrice: 136000, brand: "Samsung" },
@@ -406,76 +406,76 @@ export const featuredCategories: Category[] = [
 //   { id: 54, name: "Midea MSI-18CRN Inverter AC - 1.5 TON", slug: "midea-msi-18crn", salePrice: 53000, regularPrice: 73900, category: "ac", brand: "Midea" },
 // ];
 
-export const brandProductMap: Record<string, Product[]> = {
-  Xiaomi: [
-    {
-      id: 60,
-      name: "Xiaomi Pad 7 Pro",
-      slug: "xiaomi-pad-7-pro",
+// export const brandProductMap: Record<string, Product[]> = {
+//   Xiaomi: [
+//     {
+//       id: 60,
+//       name: "Xiaomi Pad 7 Pro",
+//       slug: "xiaomi-pad-7-pro",
 
-      image: null,
-      description: "Premium Xiaomi tablet",
+//       image: null,
+//       description: "Premium Xiaomi tablet",
 
-      sell_price: "38500",
-      regular_price: "42000",
+//       sell_price: "38500",
+//       regular_price: "42000",
 
-      stock: 10,
-      is_active: true,
-      created_at: new Date().toISOString(),
+//       stock: 10,
+//       is_active: true,
+//       created_at: new Date().toISOString(),
 
-      category: {
-        id: 1,
-        name: "Tablet",
-        slug: "tablet",
-      },
-    },
-  ],
+//       category: {
+//         id: 1,
+//         name: "Tablet",
+//         slug: "tablet",
+//       },
+//     },
+//   ],
 
-  JBL: [
-    {
-      id: 61,
-      name: "JBL Flip 7 Portable Wireless Speaker",
-      slug: "jbl-flip-7",
+//   JBL: [
+//     {
+//       id: 61,
+//       name: "JBL Flip 7 Portable Wireless Speaker",
+//       slug: "jbl-flip-7",
 
-      image: null,
-      description: "Portable Bluetooth speaker",
+//       image: null,
+//       description: "Portable Bluetooth speaker",
 
-      sell_price: "11000",
-      regular_price: null,
+//       sell_price: "11000",
+//       regular_price: null,
 
-      stock: 7,
-      is_active: true,
-      created_at: new Date().toISOString(),
+//       stock: 7,
+//       is_active: true,
+//       created_at: new Date().toISOString(),
 
-      category: {
-        id: 2,
-        name: "Speakers",
-        slug: "speakers",
-      },
-    },
-  ],
+//       category: {
+//         id: 2,
+//         name: "Speakers",
+//         slug: "speakers",
+//       },
+//     },
+//   ],
 
-  Anker: [
-    {
-      id: 62,
-      name: "Anker Soundcore Flare 2",
-      slug: "anker-flare-2",
+//   Anker: [
+//     {
+//       id: 62,
+//       name: "Anker Soundcore Flare 2",
+//       slug: "anker-flare-2",
 
-      image: null,
-      description: "Portable speaker with LED",
+//       image: null,
+//       description: "Portable speaker with LED",
 
-      sell_price: "5900",
-      regular_price: "7500",
+//       sell_price: "5900",
+//       regular_price: "7500",
 
-      stock: 12,
-      is_active: true,
-      created_at: new Date().toISOString(),
+//       stock: 12,
+//       is_active: true,
+//       created_at: new Date().toISOString(),
 
-      category: {
-        id: 2,
-        name: "Speakers",
-        slug: "speakers",
-      },
-    },
-  ],
-};
+//       category: {
+//         id: 2,
+//         name: "Speakers",
+//         slug: "speakers",
+//       },
+//     },
+//   ],
+// };
