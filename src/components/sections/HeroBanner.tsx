@@ -1,295 +1,214 @@
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import Image from "next/image";
-// import { bannerSlides } from "@/data";
-
-// export default function HeroBanner() {
-//   const [active, setActive] = useState(0);
-//   // Todo- fetch hero banner from api, and update the bannerSlides array
-
-//   // api response:  [
-//   //   {
-//   //     "id": 1,
-//   //     "title": "New Season Gadgets",
-//   //     "subtitle": "Best deals on tech products",
-//   //     "image": "https://res.cloudinary.com/xxx/image/upload/abc.jpg",
-//   //     "cta": "Shop Now",
-//   //     "href": "/shop",
-//   //     "accentColor": "#ff4d4d"
-//   //   }
-//   // ]
-
-//   useEffect(() => {
-//     const timer = setInterval(() => {
-//       setActive((prev) => (prev + 1) % bannerSlides.length);
-//     }, 4500);
-
-//     return () => clearInterval(timer);
-//   }, []);
-
-//   return (
-//     <section className="hero-section container">
-//       <div
-//         style={{
-//           position: "relative",
-//           height: "420px",
-//           borderRadius: "12px",
-//           overflow: "hidden",
-//         }}
-//       >
-//         {bannerSlides.map((slide, i) => (
-//           <div
-//             key={slide.id}
-//             style={{
-//               position: "absolute",
-//               inset: 0,
-//               opacity: i === active ? 1 : 0,
-//               transition: "opacity 0.7s ease",
-//             }}
-//           >
-//             {/* IMAGE */}
-//             <Image
-//               src={slide.image}
-//               alt={slide.title}
-//               fill
-//               style={{ objectFit: "cover" }}
-//               priority
-//             />
-
-//             {/* OVERLAY */}
-//             <div
-//               style={{
-//                 position: "absolute",
-//                 inset: 0,
-//                 background: "rgba(0,0,0,0.45)",
-//               }}
-//             />
-
-//             {/* CONTENT */}
-//             <div
-//               style={{
-//                 position: "absolute",
-//                 top: "50%",
-//                 left: "60px",
-//                 transform: "translateY(-50%)",
-//                 color: "#fff",
-//               }}
-//             >
-//               <span style={{ color: slide.accentColor, fontWeight: 600 }}>
-//                 🔥 Latest Arrivals
-//               </span>
-
-//               <h2 style={{ fontSize: 44, margin: "10px 0" }}>
-//                 {slide.title}
-//               </h2>
-
-//               <p style={{ opacity: 0.85 }}>{slide.subtitle}</p>
-
-//               <a
-//                 href={slide.href}
-//                 style={{
-//                   display: "inline-block",
-//                   marginTop: 15,
-//                   padding: "10px 18px",
-//                   background: slide.accentColor,
-//                   color: "#fff",
-//                   borderRadius: 6,
-//                   textDecoration: "none",
-//                 }}
-//               >
-//                 {slide.cta} →
-//               </a>
-//             </div>
-//           </div>
-//         ))}
-
-//         {/* DOTS */}
-//         <div
-//           style={{
-//             position: "absolute",
-//             bottom: 15,
-//             width: "100%",
-//             display: "flex",
-//             justifyContent: "center",
-//             gap: 8,
-//           }}
-//         >
-//           {bannerSlides.map((_, i) => (
-//             <button
-//               key={i}
-//               onClick={() => setActive(i)}
-//               style={{
-//                 width: 10,
-//                 height: 10,
-//                 borderRadius: "50%",
-//                 border: "none",
-//                 background: i === active ? "#fff" : "rgba(255,255,255,0.4)",
-//                 cursor: "pointer",
-//               }}
-//             />
-//           ))}
-//         </div>
-//       </div>
-//     </section>
-//   );
-// }
-
-
-
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { bannerSlides as mockBanners } from "@/data";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
   "http://127.0.0.1:8000";
 
+interface BannerSlide {
+  id: number;
+  title?: string;
+  subtitle?: string;
+  image: string;
+  cta?: string;
+  href: string;
+  accent_color?: string;
+  accentColor?: string;
+}
 
 export default function HeroBanner() {
   const [active, setActive] = useState(0);
-  const [bannerSlides, setBannerSlides] = useState([]);
+  const [bannerSlides, setBannerSlides] = useState<BannerSlide[]>([]);
+  const autoPlayRef = useRef<(() => void) | null>(null);
 
+  // Swipe gesture state variables
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-  // FETCH API
+  // Minimum distance to trigger a swipe
+  const minSwipeDistance = 50;
+
+  // FETCH BANNER IMAGES
   useEffect(() => {
     const fetchBanners = async () => {
       try {
         const res = await fetch(`${BASE_URL}/api/banner/list/`);
-        const data = await res.json();
-        setBannerSlides(data);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Normalize properties to handle camelCase and snake_case
+            const normalized = data.map((b: any) => ({
+              id: b.id,
+              image: b.image,
+              href: b.href || "/",
+              cta: b.cta || "Shop Now",
+            }));
+            setBannerSlides(normalized);
+            return;
+          }
+        }
       } catch (error) {
         console.log("Banner fetch error:", error);
       }
+      
+      // Fallback to local mockup data if fetch fails or is empty
+      const normalizedMock = mockBanners.map((b: any) => ({
+        id: b.id,
+        image: b.image,
+        href: b.href || "/",
+        cta: b.cta || "Shop Now",
+      }));
+      setBannerSlides(normalizedMock);
     };
 
     fetchBanners();
   }, []);
 
-  // auto slide
-  useEffect(() => {
+  const nextSlide = () => {
     if (bannerSlides.length === 0) return;
+    setActive((prev) => (prev + 1) % bannerSlides.length);
+  };
 
-    const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % bannerSlides.length);
-    }, 4500);
+  const prevSlide = () => {
+    if (bannerSlides.length === 0) return;
+    setActive((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length);
+  };
 
+  // Keep autoPlay callback updated
+  useEffect(() => {
+    autoPlayRef.current = nextSlide;
+  });
+
+  // Auto-play timer
+  useEffect(() => {
+    if (bannerSlides.length <= 1) return;
+
+    const play = () => {
+      if (autoPlayRef.current) autoPlayRef.current();
+    };
+
+    const timer = setInterval(play, 5000);
     return () => clearInterval(timer);
   }, [bannerSlides]);
 
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+  };
+
   if (bannerSlides.length === 0) {
     return (
-      <div style={{ height: 420, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        Loading banners...
-      </div>
+      <section className="hero-banner-container container">
+        <div className="hero-banner-slider" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>Loading banners...</span>
+        </div>
+      </section>
     );
   }
 
   return (
-    <section className="hero-section container">
-      <div
-        style={{
-          position: "relative",
-          height: "420px",
-          borderRadius: "12px",
-          overflow: "hidden",
-        }}
+    <section className="hero-banner-container container">
+      <div 
+        className="hero-banner-slider"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        {bannerSlides.map((slide, i) => (
-          <div
-            key={slide.id}
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: i === active ? 1 : 0,
-              transition: "opacity 0.7s ease",
-            }}
-          >
-            {/* IMAGE */}
-            <Image
-              src={slide.image}
-              alt={slide.title}
-              fill
-              style={{ objectFit: "cover" }}
-              priority
-            />
-
-            {/* OVERLAY */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "rgba(0,0,0,0.45)",
-              }}
-            />
-
-            {/* CONTENT */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "60px",
-                transform: "translateY(-50%)",
-                color: "#fff",
-              }}
-            >
-              <span style={{ color: slide.accentColor || slide.accent_color, fontWeight: 600 }}>
-                🔥 Latest Arrivals
-              </span>
-
-              <h2 style={{ fontSize: 44, margin: "10px 0" }}>
-                {slide.title}
-              </h2>
-
-              <p style={{ opacity: 0.85 }}>{slide.subtitle}</p>
-
-              <a
-                href={slide.href}
-                style={{
-                  display: "inline-block",
-                  marginTop: 15,
-                  padding: "10px 18px",
-                  background: slide.accentColor || slide.accent_color,
-                  color: "#fff",
-                  borderRadius: 6,
-                  textDecoration: "none",
-                }}
-              >
-                {slide.cta} →
-              </a>
-            </div>
-          </div>
-        ))}
-
-        {/* DOTS */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 15,
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            gap: 8,
-          }}
+        {/* Banner sliding track */}
+        <div 
+          className="hero-banner-track"
+          style={{ transform: `translateX(-${active * 100}%)` }}
         >
-          {bannerSlides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                border: "none",
-                background: i === active ? "#fff" : "rgba(255,255,255,0.4)",
-                cursor: "pointer",
-              }}
-            />
+          {bannerSlides.map((slide) => (
+            <Link 
+              href={slide.href} 
+              key={slide.id} 
+              className="hero-banner-slide"
+            >
+              <div className="hero-banner-image-wrapper">
+                <Image
+                  src={slide.image}
+                  alt="Hero Banner Image"
+                  fill
+                  style={{ objectFit: "cover" }}
+                  priority
+                />
+              </div>
+
+              {/* Shop Now Button overlay */}
+              <div className="hero-banner-button">
+                {slide.cta || "Shop Now"}
+                <ChevronRight size={16} />
+              </div>
+            </Link>
           ))}
         </div>
+
+        {/* Navigation Dots */}
+        {bannerSlides.length > 1 && (
+          <div className="hero-banner-dots">
+            {bannerSlides.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActive(i);
+                }}
+                className={`hero-banner-dot ${i === active ? "active" : ""}`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Arrow Navigation (Desktop only) */}
+        {bannerSlides.length > 1 && (
+          <>
+            <button 
+              className="hero-banner-arrow prev" 
+              onClick={(e) => {
+                e.preventDefault();
+                prevSlide();
+              }}
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button 
+              className="hero-banner-arrow next" 
+              onClick={(e) => {
+                e.preventDefault();
+                nextSlide();
+              }}
+              aria-label="Next slide"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </>
+        )}
       </div>
     </section>
   );
