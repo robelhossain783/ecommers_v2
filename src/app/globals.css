@@ -1800,6 +1800,19 @@ img {
   .product-detail-grid {
     grid-template-columns: 1fr;
     gap: 24px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-details-container {
+    padding: 24px 12px;
+  }
+  .product-detail-grid {
+    padding: 16px;
+    gap: 16px;
+  }
+  .product-detail-image-sec {
     padding: 16px;
   }
 }
@@ -1851,6 +1864,12 @@ img {
   color: var(--text-primary);
   line-height: 1.25;
   margin-bottom: 12px;
+}
+
+@media (max-width: 480px) {
+  .product-detail-title {
+    font-size: 22px;
+  }
 }
 
 .product-detail-stock-badge {
@@ -1919,6 +1938,7 @@ img {
   .product-detail-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 }
 
@@ -1930,6 +1950,13 @@ img {
   overflow: hidden;
   height: 44px;
   width: fit-content;
+}
+
+@media (max-width: 480px) {
+  .quantity-control {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .quantity-control-btn {
@@ -2015,6 +2042,12 @@ img {
   display: flex;
   border-bottom: 2px solid var(--border);
   margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs-header::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for tabs */
 }
 
 .tab-btn {
@@ -2028,6 +2061,7 @@ img {
   background: transparent;
   border: none;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tab-btn.active,
