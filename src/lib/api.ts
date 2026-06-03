@@ -92,6 +92,24 @@ export async function getNewArrivals(): Promise<Product[]> {
   }
 }
 
+export async function searchProducts(query: string): Promise<Product[]> {
+  if (!query.trim()) return [];
+  try {
+    const res = await fetch(
+      `${BASE_URL}/api/products/list/?search=${encodeURIComponent(query.trim())}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) throw new Error("Search API failed");
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.results)) return data.results;
+    return [];
+  } catch (error) {
+    console.log("SEARCH ERROR:", error);
+    return [];
+  }
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   // 1. Try to fetch from Django api
   try {
