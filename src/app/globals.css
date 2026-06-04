@@ -2581,6 +2581,14 @@ img {
   overflow: hidden;
 }
 
+/* .category-products-header {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+} */
+
 .category-products-header::after {
   content: '';
   position: absolute;
@@ -2592,6 +2600,7 @@ img {
 }
 
 .category-products-title {
+  text-align: center;
   font-size: 24px;
   font-weight: 850;
   color: var(--text-primary);

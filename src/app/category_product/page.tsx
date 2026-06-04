@@ -139,10 +139,13 @@ function CategoryProductsContent() {
       {/* Category Header Banner */}
       <div className="category-products-header">
         <h1 className="category-products-title">{categoryTitle}</h1>
+      </div>
+      {/* <div className="category-products-header">
+        <h1 className="category-products-title">{categoryTitle}</h1>
         <p className="category-products-count">
           Showing <strong>{products.length}</strong> dynamic items in this category
         </p>
-      </div>
+      </div> */}
 
       {/* Product Display Grid or Empty State */}
       {products.length > 0 ? (

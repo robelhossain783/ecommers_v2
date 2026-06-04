@@ -206,7 +206,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </button>
 
                 <button onClick={handleBuyNow} className="product-detail-buy-btn">
-                  ⚡ Buy Now
+                  Buy Now
                 </button>
               </div>
             ) : (
