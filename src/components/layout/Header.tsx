@@ -143,12 +143,26 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
       <header className="site-header">
         <div className="header-inner">
 
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="category-menu-btn"
+            aria-label="Open Category Sidebar"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
           {/* ── Logo ── */}
-          <a href="/" className="logo" aria-label="IZUMart Home">
+          <a href="/" className="logo" aria-label="BuyFest Home">
             <span className="logo-text">
-              <span className="logo-accent">Buy</span>Fest
+              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
             </span>
           </a>
+
 
           {/* ── DESKTOP: always-visible search bar ── */}
           <div className="header-desktop-search" ref={desktopSearchRef}>
@@ -238,13 +252,18 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
         <div className="sub-nav">
           <div className="sub-nav-inner">
             <a href="/" className="sub-nav-link active">Home</a>
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="sub-nav-link"
-              style={{ background: "none", border: "none", cursor: "pointer", outline: "none" }}
-            >
-              Category ▾
-            </button>
+            <div className="sub-nav-dropdown">
+              <span className="sub-nav-link">Category ▾</span>
+              <div className="sub-nav-dropdown-menu">
+                {categoriesList.map((cat) => (
+                  <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="sub-nav-dropdown-item">
+                    <span className="cat-icon">{cat.icon || "📁"}</span>
+                    <span className="cat-name">{cat.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             <a href="/" className="sub-nav-link">Offer</a>
             <Link href="/orders" className="sub-nav-link">Orders</Link>
           </div>

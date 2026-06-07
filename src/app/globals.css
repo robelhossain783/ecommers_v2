@@ -2,6 +2,8 @@
   --primary: #e8320a;
   --primary-dark: #c42a07;
   --primary-light: #ff5500;
+  --logo-blue: #2f64cf;
+  --logo-orange: #f05a28;
   --bg-page: #f5f5f5;
   --bg-white: #ffffff;
   --bg-dark: #111111;
@@ -19,6 +21,7 @@
   --navbar-height: 56px;
   --topbar-height: 36px;
 }
+
 
 * {
   margin: 0;
@@ -3101,4 +3104,96 @@ img {
   .tab-content {
     padding: 16px !important;
   }
+}
+
+/* BRAND LOGO STYLES */
+.logo-buy {
+  color: var(--logo-blue);
+  font-weight: 900;
+}
+
+.logo-fest {
+  color: var(--logo-orange);
+  font-weight: 900;
+}
+
+/* Category menu button next to logo */
+.category-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.category-menu-btn:hover {
+  background: #f5f5f5;
+  color: var(--primary);
+}
+
+.category-menu-btn:active {
+  transform: scale(0.95);
+}
+
+/* SUB NAVIGATION CATEGORY DROPDOWN */
+.sub-nav-dropdown {
+  position: relative;
+  height: 100%;
+}
+
+.sub-nav-dropdown .sub-nav-link {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.sub-nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: var(--shadow-md);
+  min-width: 200px;
+  padding: 8px 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1100;
+}
+
+.sub-nav-dropdown:hover .sub-nav-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.sub-nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.sub-nav-dropdown-item:hover {
+  background: #fff5f2;
+  color: var(--primary);
+}
+
+.sub-nav-dropdown-item .cat-icon {
+  font-size: 15px;
 }

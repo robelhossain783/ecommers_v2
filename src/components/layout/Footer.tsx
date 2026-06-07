@@ -8,8 +8,9 @@ export default function Footer() {
           {/* Brand */}
           <div className="footer-brand">
             <span className="logo-text">
-              <span style={{ color: "var(--primary)" }}>Buy</span>Fest
+              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
             </span>
+
             <p className="footer-desc">
               Bangladesh&apos;s trusted e-commerce store for phones, gadgets &amp; accessories. <br />
               Authentic products, fast delivery.
