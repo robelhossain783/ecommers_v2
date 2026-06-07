@@ -146,7 +146,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           {/* ── Logo ── */}
           <a href="/" className="logo" aria-label="IZUMart Home">
             <span className="logo-text">
-              <span className="logo-accent">IZU</span>Mart
+              <span className="logo-accent">Buy</span>Fest
             </span>
           </a>
 

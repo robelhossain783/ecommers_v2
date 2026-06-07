@@ -8,15 +8,16 @@ export default function Footer() {
           {/* Brand */}
           <div className="footer-brand">
             <span className="logo-text">
-              <span style={{ color: "var(--primary)" }}>IZU</span>Mart
+              <span style={{ color: "var(--primary)" }}>Buy</span>Fest
             </span>
             <p className="footer-desc">
               Bangladesh&apos;s trusted e-commerce store for phones, gadgets &amp; accessories. <br />
               Authentic products, fast delivery.
             </p>
             <div className="footer-contact">
-              <p><FaWhatsapp /> <a href="tel:01303750286">01303750286</a></p>
-              <p>< FaEnvelope /> <a href="mailto:rubel.defy2@gmail.com">contact@izumartbd.com</a></p>
+              <p><FaWhatsapp /> <a href="tel:01635275630">01635275630</a></p>
+              <p>< FaEnvelope /> <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a></p>
+              {/* <p>< FaEnvelope /> <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a></p> */}
             </div>
           </div>
 
@@ -63,17 +64,17 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="footer-bottom">
-          <p>© 2026 IZU MART Bangladesh | All rights reserved</p>
+          <p>© 2026 BuyFest Bangladesh | All rights reserved</p>
           <div className="social-links">
-            <a href="https://wa.me/+8801303750286" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a>
-            <a href="https://facebook.com/Izu_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebookF /></a>
-            <a href="https://instagram.com/Ico_mart" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
+            <a href="https://wa.me/+8801635275630" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a>
+            <a href="https://facebook.com/buyfestbd" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebookF /></a>
+            <a href="https://instagram.com/buyfestbd" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a>
           </div>
         </div>
       </div>
 
       {/* WhatsApp Float */}
-      <a href="https://wa.me/+8801303750286" className="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+      <a href="https://wa.me/+8801635275630" className="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
         <FaWhatsapp />
       </a>
     </footer >
