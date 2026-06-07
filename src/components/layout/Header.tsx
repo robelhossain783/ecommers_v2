@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -15,8 +16,35 @@ interface HeaderProps {
 
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const { cartCount: contextCartCount } = useCart();
+  const { user, login, register, logout } = useAuth();
   const cartCount = propCartCount ?? contextCartCount;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"login" | "register">("login");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Login form
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  // Register form
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regUsername, setRegUsername] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regPassword2, setRegPassword2] = useState("");
 
   // Desktop search state (always-visible bar)
   const [desktopQuery, setDesktopQuery] = useState("");
@@ -123,7 +151,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
   // Close mobile search on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") { closeMobileSearch(); setShowDesktopDropdown(false); } };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") { closeMobileSearch(); setShowDesktopDropdown(false); setIsAuthModalOpen(false); } };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [closeMobileSearch]);
@@ -137,6 +165,78 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [isMobileSearchOpen, closeMobileSearch]);
+
+  // Close user dropdown menu on outside click
+  useEffect(() => {
+    if (!showUserMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showUserMenu]);
+
+  // Reset auth forms when modal closes
+  const openAuthModal = (tab: "login" | "register" = "login") => {
+    setAuthTab(tab);
+    setAuthError("");
+    setAuthSuccess("");
+    setLoginUsername("");
+    setLoginPassword("");
+    setRegFirstName("");
+    setRegLastName("");
+    setRegEmail("");
+    setRegUsername("");
+    setRegPassword("");
+    setRegPassword2("");
+    setIsAuthModalOpen(true);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+    const result = await login(loginUsername, loginPassword);
+    setAuthLoading(false);
+    if (result.success) {
+      setIsAuthModalOpen(false);
+    } else {
+      setAuthError(result.error || "Login failed");
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    if (regPassword !== regPassword2) {
+      setAuthError("Passwords do not match");
+      return;
+    }
+    setAuthLoading(true);
+    const result = await register({
+      username: regUsername,
+      password: regPassword,
+      email: regEmail,
+      first_name: regFirstName,
+      last_name: regLastName,
+    });
+    setAuthLoading(false);
+    if (result.success) {
+      setIsAuthModalOpen(false);
+    } else {
+      setAuthError(result.error || "Registration failed");
+    }
+  };
+
+  const getInitials = () => {
+    if (!user) return "";
+    if (user.first_name && user.first_name.trim().length > 0) return user.first_name[0].toUpperCase();
+    if (user.username && user.username.trim().length > 0) return user.username[0].toUpperCase();
+    if (user.email && user.email.trim().length > 0) return user.email[0].toUpperCase();
+    return "U";
+  };
 
   return (
     <>
@@ -240,7 +340,54 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               )}
             </div>
 
-            <Link href="/orders" className="nav-link">Orders</Link>
+            {/* ── Account Button ── */}
+            {mounted && (user ? (
+              <div className="account-btn-wrap" ref={userMenuRef}>
+                <button
+                  className="account-avatar-btn"
+                  onClick={() => setShowUserMenu(v => !v)}
+                  aria-label="Account menu"
+                  id="account-avatar-btn"
+                >
+                  <span className="account-avatar-initials">{getInitials()}</span>
+                </button>
+                {showUserMenu && (
+                  <div className="account-dropdown">
+                    <div className="account-dropdown-header">
+                      <div className="account-dropdown-avatar">{getInitials()}</div>
+                      <div>
+                        <div className="account-dropdown-name">
+                          {user.first_name ? `${user.first_name} ${user.last_name}`.trim() : user.username}
+                        </div>
+                        <div className="account-dropdown-email">{user.email || user.username}</div>
+                      </div>
+                    </div>
+                    <div className="account-dropdown-divider" />
+                    <Link href="/orders" className="account-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>
+                      My Orders
+                    </Link>
+                    <button className="account-dropdown-item account-logout-btn" onClick={() => { logout(); setShowUserMenu(false); }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                className="account-login-btn"
+                onClick={() => openAuthModal("login")}
+                aria-label="Login / Register"
+                id="account-login-btn"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </button>
+            ))}
+
             <Link href="/cart" className="cart-btn" aria-label="Cart" style={{ textDecoration: "none" }}>
               🛒
               <span className="cart-count">{cartCount}</span>
@@ -297,6 +444,123 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           <div className="category-sidebar-footer"><p>Premium E-commerce Experience</p></div>
         </div>
       </div>
+
+      {/* ── Auth Modal ── */}
+      {isAuthModalOpen && (
+        <div className="auth-modal-overlay" onClick={() => setIsAuthModalOpen(false)}>
+          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="auth-modal-close" onClick={() => setIsAuthModalOpen(false)} aria-label="Close">✕</button>
+
+            {/* Logo */}
+            <div className="auth-modal-brand">
+              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+            </div>
+
+            {/* Tabs */}
+            <div className="auth-modal-tabs">
+              <button
+                className={`auth-tab-btn ${authTab === "login" ? "active" : ""}`}
+                onClick={() => { setAuthTab("login"); setAuthError(""); }}
+                id="auth-tab-login"
+              >Login</button>
+              <button
+                className={`auth-tab-btn ${authTab === "register" ? "active" : ""}`}
+                onClick={() => { setAuthTab("register"); setAuthError(""); }}
+                id="auth-tab-register"
+              >Register</button>
+            </div>
+
+            {authError && <div className="auth-error-msg">{authError}</div>}
+            {authSuccess && <div className="auth-success-msg">{authSuccess}</div>}
+
+            {/* Login Form */}
+            {authTab === "login" && (
+              <form className="auth-form" onSubmit={handleLogin} id="auth-login-form">
+                <div className="auth-field">
+                  <label className="auth-label">Username</label>
+                  <input
+                    className="auth-input"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    required
+                    autoComplete="username"
+                    id="auth-login-username"
+                  />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Password</label>
+                  <input
+                    className="auth-input"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    id="auth-login-password"
+                  />
+                </div>
+                <button className="auth-submit-btn" type="submit" disabled={authLoading} id="auth-login-submit">
+                  {authLoading ? <span className="auth-spinner" /> : "Login"}
+                </button>
+                <p className="auth-switch-text">
+                  Don&apos;t have an account?{" "}
+                  <button type="button" className="auth-switch-link" onClick={() => { setAuthTab("register"); setAuthError(""); }}>
+                    Register here
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {/* Register Form */}
+            {authTab === "register" && (
+              <form className="auth-form" onSubmit={handleRegister} id="auth-register-form">
+                <div className="auth-field-row">
+                  <div className="auth-field">
+                    <label className="auth-label">First Name</label>
+                    <input className="auth-input" type="text" placeholder="First name" value={regFirstName} onChange={(e) => setRegFirstName(e.target.value)} autoComplete="given-name" id="auth-reg-firstname" />
+                  </div>
+                  <div className="auth-field">
+                    <label className="auth-label">Last Name</label>
+                    <input className="auth-input" type="text" placeholder="Last name" value={regLastName} onChange={(e) => setRegLastName(e.target.value)} autoComplete="family-name" id="auth-reg-lastname" />
+                  </div>
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Email <span className="auth-optional">(optional)</span></label>
+                  <input className="auth-input" type="email" placeholder="your@email.com" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} autoComplete="email" id="auth-reg-email" />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Username <span className="auth-required">*</span></label>
+                  <input className="auth-input" type="text" placeholder="Choose a username" value={regUsername} onChange={(e) => setRegUsername(e.target.value)} required autoComplete="username" id="auth-reg-username" />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Password <span className="auth-required">*</span></label>
+                  <input className="auth-input" type="password" placeholder="Create a password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required autoComplete="new-password" id="auth-reg-password" />
+                </div>
+                <div className="auth-field">
+                  <label className="auth-label">Confirm Password <span className="auth-required">*</span></label>
+                  <input className="auth-input" type="password" placeholder="Confirm your password" value={regPassword2} onChange={(e) => setRegPassword2(e.target.value)} required autoComplete="new-password" id="auth-reg-password2" />
+                </div>
+                <button className="auth-submit-btn" type="submit" disabled={authLoading} id="auth-register-submit">
+                  {authLoading ? <span className="auth-spinner" /> : "Create Account"}
+                </button>
+                <p className="auth-switch-text">
+                  Already have an account?{" "}
+                  <button type="button" className="auth-switch-link" onClick={() => { setAuthTab("login"); setAuthError(""); }}>
+                    Login here
+                  </button>
+                </p>
+              </form>
+            )}
+
+            <p className="auth-guest-note">
+              💡 You can also <Link href="/orders" className="auth-guest-link" onClick={() => setIsAuthModalOpen(false)}>track orders</Link> without an account
+            </p>
+          </div>
+        </div>
+      )}
     </>
   );
 }
