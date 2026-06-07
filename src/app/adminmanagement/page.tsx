@@ -70,7 +70,20 @@ interface Banner {
 }
 
 export default function AdminManagementPage() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "banners">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "banners" | "admins">("dashboard");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("adminTheme") as "dark" | "light" | null;
+    if (saved) setTheme(saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("adminTheme", next);
+  };
 
   // Auth states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -94,6 +107,11 @@ export default function AdminManagementPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingBanners, setLoadingBanners] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [tempStatus, setTempStatus] = useState<Record<number, string>>({});
+
+  // Orders filters and pagination
+  const [orderDateFilter, setOrderDateFilter] = useState<"all" | "today" | "yesterday" | "week" | "month">("all");
+  const [visibleOrdersCount, setVisibleOrdersCount] = useState(20);
 
   // Forms statuses
   const [productSubmitLoading, setProductSubmitLoading] = useState(false);
@@ -349,22 +367,23 @@ export default function AdminManagementPage() {
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
-      console.log("resp:", data)
       if (res.ok) {
+        // Store JWT tokens
+        localStorage.setItem("adminAccessToken", data.access);
+        localStorage.setItem("adminRefreshToken", data.refresh);
+        localStorage.setItem("adminUser", JSON.stringify({ username: data.username, is_staff: data.is_staff }));
         setAuthSuccess("🎉 Login successful! Redirecting...");
-        localStorage.setItem("adminUser", JSON.stringify(data));
         setTimeout(() => {
           setIsLoggedIn(true);
           setPassword("");
           setAuthSuccess(null);
-        }, 1000);
+        }, 800);
       } else {
         setAuthError(`❌ ${data.error || "Login failed!"}`);
       }
     } catch (err) {
       setAuthError("❌ Connection error to authentication API.");
       console.error(err);
-      console.log("LOGIN URL:", `${BASE_URL}/api/auth/login/`);
     } finally {
       setAuthLoading(false);
     }
@@ -380,20 +399,24 @@ export default function AdminManagementPage() {
     }
     setAuthLoading(true);
     try {
+      const token = localStorage.getItem("adminAccessToken");
       const res = await fetch(`${BASE_URL}/api/auth/register/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ username, password, email })
       });
       const data = await res.json();
       if (res.ok) {
-        setAuthSuccess("🎉 Admin user created successfully! You can now log in.");
+        setAuthSuccess("🎉 Admin user created successfully!");
+        setUsername("");
+        setPassword("");
+        setEmail("");
         setTimeout(() => {
-          setAuthTab("login");
-          setPassword("");
-          setEmail("");
           setAuthSuccess(null);
-        }, 1500);
+        }, 3000);
       } else {
         setAuthError(`❌ ${data.error || "Registration failed!"}`);
       }
@@ -406,26 +429,40 @@ export default function AdminManagementPage() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("adminAccessToken");
+    localStorage.removeItem("adminRefreshToken");
     localStorage.removeItem("adminUser");
     setIsLoggedIn(false);
     setUsername("");
     setPassword("");
   };
 
+  // Helper to get auth headers
+  const getAuthHeaders = () => ({
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("adminAccessToken") || ""}`
+  });
+
   const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
     setUpdatingOrderId(orderId);
     try {
       const res = await fetch(`${BASE_URL}/api/orders/${orderId}/update-status/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
         setOrders((prev) =>
           prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as any } : o))
         );
+        setTempStatus((prev) => {
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+      } else if (res.status === 401) {
+        alert("⚠️ Session expired. Please log in again.");
+        handleLogout();
       } else {
         alert("❌ Failed to update order status");
       }
@@ -550,10 +587,11 @@ export default function AdminManagementPage() {
     }
   };
 
-  // Check auth session
+  // Check auth session on mount — validate JWT token exists
   useEffect(() => {
+    const token = localStorage.getItem("adminAccessToken");
     const adminUser = localStorage.getItem("adminUser");
-    if (adminUser) {
+    if (token && adminUser) {
       setIsLoggedIn(true);
     }
   }, []);
@@ -572,14 +610,162 @@ export default function AdminManagementPage() {
   const totalRevenue = orders.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
   const pendingOrders = orders.filter((o) => o.status === "pending").length;
 
+  // Filtered Orders for Date Filter
+  const filteredOrders = orders.filter((order) => {
+    if (orderDateFilter === "all") return true;
+    if (!order.created_at) return false;
+    const orderDate = new Date(order.created_at);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (orderDateFilter === "today") {
+      return orderDate >= startOfToday;
+    } else if (orderDateFilter === "yesterday") {
+      const startOfYesterday = new Date(startOfToday);
+      startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+      return orderDate >= startOfYesterday && orderDate < startOfToday;
+    } else if (orderDateFilter === "week") {
+      const sevenDaysAgo = new Date(startOfToday);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      return orderDate >= sevenDaysAgo;
+    } else if (orderDateFilter === "month") {
+      const thirtyDaysAgo = new Date(startOfToday);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return orderDate >= thirtyDaysAgo;
+    }
+    return true;
+  });
+
+  const ordersToShow = filteredOrders.slice(0, visibleOrdersCount);
+
   return (
-    <div className="admin-dashboard-container">
+    <div className={`admin-dashboard-container theme-${theme}`}>
       {/* Dynamic embedded styles for glassmorphism, responsive grid and modern layout */}
       <style>{`
+        /* ========== THEME VARIABLES ========== */
+        .theme-dark {
+          --bg-main: radial-gradient(circle at 10% 20%, #1e1e24 0%, #111115 90%);
+          --bg-header: rgba(255, 255, 255, 0.04);
+          --bg-header-border: rgba(255, 255, 255, 0.08);
+          --text-main: #f0f0fa;
+          --text-muted: #a0a0b0;
+          --text-strong: #ffffff;
+          --bg-card: rgba(255, 255, 255, 0.05);
+          --bg-card-hover: rgba(255, 255, 255, 0.08);
+          --border-card: rgba(255, 255, 255, 0.08);
+          --border-hover: rgba(255, 255, 255, 0.18);
+          --bg-form-panel: rgba(255, 255, 255, 0.04);
+          --bg-input: rgba(0, 0, 0, 0.35);
+          --border-input: rgba(255, 255, 255, 0.12);
+          --text-input: #ffffff;
+          --bg-table-th: rgba(255, 255, 255, 0.05);
+          --border-table: rgba(255, 255, 255, 0.08);
+          --bg-td-hover: rgba(255, 255, 255, 0.02);
+          --text-td: #e8e8f0;
+          --bg-status-select: rgba(0,0,0,0.5);
+          --text-status-select: #ffffff;
+          --border-status-select: rgba(255,255,255,0.2);
+          --bg-home-link: rgba(255, 255, 255, 0.1);
+          --text-home-link: #f0f0fa;
+          --bg-home-link-hover: #fff;
+          --text-home-link-hover: #111;
+          --bg-refresh-btn: rgba(255, 255, 255, 0.07);
+          --border-refresh-btn: rgba(255, 255, 255, 0.08);
+          --bg-order-items: rgba(0, 0, 0, 0.25);
+          --border-order-item-row: rgba(255, 255, 255, 0.05);
+          --bg-auth-card: rgba(255, 255, 255, 0.05);
+          --border-auth-card: rgba(255, 255, 255, 0.1);
+          --shadow-auth-card: 0 20px 40px rgba(0, 0, 0, 0.5);
+          --bg-auth-tab-border: rgba(255, 255, 255, 0.1);
+          --text-auth-tab: #a0a0b0;
+          --bg-spinner-border: rgba(255, 255, 255, 0.3);
+          --bg-order-table-container: rgba(255, 255, 255, 0.02);
+          --bg-list-card: rgba(255, 255, 255, 0.04);
+          --border-list-card: rgba(255, 255, 255, 0.07);
+          --bg-toggle-btn: rgba(255, 255, 255, 0.1);
+          --border-toggle-btn: rgba(255, 255, 255, 0.15);
+          --text-toggle-btn: #f0f0fa;
+          --bg-toggle-hover: rgba(255, 255, 255, 0.18);
+          --stat-detail-color: #7a7a8a;
+          --tab-border: rgba(255, 255, 255, 0.1);
+          --form-title-border: rgba(255, 255, 255, 0.08);
+          --bg-sub-card: rgba(255, 255, 255, 0.03);
+          --border-sub-card: rgba(255, 255, 255, 0.08);
+          --status-pending-bg: rgba(255, 152, 0, 0.08);
+          --status-pending-text: #ffa726;
+          --status-processing-bg: rgba(33, 150, 243, 0.08);
+          --status-processing-text: #29b6f6;
+          --status-completed-bg: rgba(76, 175, 80, 0.08);
+          --status-completed-text: #66bb6a;
+          --status-cancelled-bg: rgba(244, 67, 54, 0.08);
+          --status-cancelled-text: #ef5350;
+          --badge-success-bg: rgba(76, 175, 80, 0.15);
+          --badge-success-text: #81c784;
+        }
+        .theme-light {
+          --bg-main: linear-gradient(135deg, #eef0f4 0%, #e2e6ed 100%);
+          --bg-header: rgba(255, 255, 255, 0.95);
+          --bg-header-border: rgba(0, 0, 0, 0.12);
+          --text-main: #0f1117;
+          --text-muted: #4b5563;
+          --text-strong: #0f1117;
+          --bg-card: rgba(255, 255, 255, 0.95);
+          --bg-card-hover: #ffffff;
+          --border-card: rgba(0, 0, 0, 0.1);
+          --border-hover: rgba(0, 0, 0, 0.2);
+          --bg-form-panel: rgba(255, 255, 255, 0.92);
+          --bg-input: #ffffff;
+          --border-input: rgba(0, 0, 0, 0.18);
+          --text-input: #0f1117;
+          --bg-table-th: rgba(0, 0, 0, 0.05);
+          --border-table: rgba(0, 0, 0, 0.09);
+          --bg-td-hover: rgba(0, 0, 0, 0.02);
+          --text-td: #1f2937;
+          --bg-status-select: #ffffff;
+          --text-status-select: #0f1117;
+          --border-status-select: rgba(0,0,0,0.2);
+          --bg-home-link: rgba(0, 0, 0, 0.07);
+          --text-home-link: #1f2937;
+          --bg-home-link-hover: #111827;
+          --text-home-link-hover: #fff;
+          --bg-refresh-btn: rgba(0, 0, 0, 0.06);
+          --border-refresh-btn: rgba(0, 0, 0, 0.1);
+          --bg-order-items: rgba(0, 0, 0, 0.05);
+          --border-order-item-row: rgba(0, 0, 0, 0.07);
+          --bg-auth-card: #ffffff;
+          --border-auth-card: rgba(0, 0, 0, 0.12);
+          --shadow-auth-card: 0 20px 40px rgba(0, 0, 0, 0.15);
+          --bg-auth-tab-border: rgba(0, 0, 0, 0.1);
+          --text-auth-tab: #4b5563;
+          --bg-spinner-border: rgba(0, 0, 0, 0.2);
+          --bg-order-table-container: rgba(255, 255, 255, 0.95);
+          --bg-list-card: #ffffff;
+          --border-list-card: rgba(0, 0, 0, 0.09);
+          --bg-toggle-btn: rgba(0, 0, 0, 0.08);
+          --border-toggle-btn: rgba(0, 0, 0, 0.13);
+          --text-toggle-btn: #1f2937;
+          --bg-toggle-hover: rgba(0, 0, 0, 0.14);
+          --stat-detail-color: #6b7280;
+          --tab-border: rgba(0, 0, 0, 0.1);
+          --form-title-border: rgba(0, 0, 0, 0.1);
+          --bg-sub-card: rgba(0, 0, 0, 0.02);
+          --border-sub-card: rgba(0, 0, 0, 0.06);
+          --status-pending-bg: rgba(217, 119, 6, 0.08);
+          --status-pending-text: #b45309;
+          --status-processing-bg: rgba(2, 132, 199, 0.08);
+          --status-processing-text: #0369a1;
+          --status-completed-bg: rgba(22, 163, 74, 0.08);
+          --status-completed-text: #15803d;
+          --status-cancelled-bg: rgba(220, 38, 38, 0.08);
+          --status-cancelled-text: #b91c1c;
+          --badge-success-bg: rgba(46, 125, 50, 0.1);
+          --badge-success-text: #2e7d32;
+        }
+
         .admin-dashboard-container {
           min-height: 100vh;
-          background: radial-gradient(circle at 10% 20%, #1e1e24 0%, #111115 90%);
-          color: #f5f5fa;
+          background: var(--bg-main);
+          color: var(--text-main);
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           padding: 0;
           margin: 0;
@@ -588,9 +774,9 @@ export default function AdminManagementPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--bg-header);
           backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          border-bottom: 1px solid var(--bg-header-border);
           padding: 16px 40px;
           position: sticky;
           top: 0;
@@ -598,12 +784,17 @@ export default function AdminManagementPage() {
         }
         .admin-title {
           font-size: 22px;
-          fontWeight: 800;
+          font-weight: 800;
           letter-spacing: -0.5px;
           display: flex;
           align-items: center;
           gap: 10px;
-          color: #fff;
+          color: var(--text-strong);
+        }
+        .admin-title a.logo {
+          text-decoration: none;
+          display: flex;
+          align-items: center;
         }
         .admin-title span.badge {
           background: var(--primary, #e8320a);
@@ -615,18 +806,36 @@ export default function AdminManagementPage() {
           text-transform: uppercase;
         }
         .home-link {
-          background: rgba(255, 255, 255, 0.08);
-          color: #eee;
+          background: var(--bg-home-link);
+          color: var(--text-home-link);
           padding: 8px 18px;
           border-radius: 30px;
           font-size: 13px;
           font-weight: 600;
           transition: all 0.25s ease;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border-card);
         }
         .home-link:hover {
-          background: #fff;
-          color: #111;
+          background: var(--bg-home-link-hover);
+          color: var(--text-home-link-hover);
+          transform: translateY(-1px);
+        }
+        .theme-toggle-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: var(--bg-toggle-btn);
+          color: var(--text-toggle-btn);
+          border: 1px solid var(--border-toggle-btn);
+          padding: 8px 14px;
+          border-radius: 30px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+        .theme-toggle-btn:hover {
+          background: var(--bg-toggle-hover);
           transform: translateY(-1px);
         }
         .dashboard-body {
@@ -643,8 +852,8 @@ export default function AdminManagementPage() {
           margin-bottom: 40px;
         }
         .stat-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--bg-card);
+          border: 1px solid var(--border-card);
           border-radius: 16px;
           padding: 24px;
           display: flex;
@@ -655,8 +864,8 @@ export default function AdminManagementPage() {
         }
         .stat-card:hover {
           transform: translateY(-3px);
-          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+          border-color: var(--border-hover);
         }
         .stat-card::before {
           content: "";
@@ -667,7 +876,7 @@ export default function AdminManagementPage() {
         }
         .stat-label {
           font-size: 13px;
-          color: #8a8a98;
+          color: var(--text-muted);
           font-weight: 500;
           text-transform: uppercase;
           margin-bottom: 8px;
@@ -675,12 +884,12 @@ export default function AdminManagementPage() {
         .stat-value {
           font-size: 32px;
           font-weight: 800;
-          color: #fff;
+          color: var(--text-strong);
           margin-bottom: 4px;
         }
         .stat-detail {
           font-size: 12px;
-          color: #555566;
+          color: var(--stat-detail-color);
         }
         .stat-detail span {
           color: #4caf50;
@@ -691,12 +900,12 @@ export default function AdminManagementPage() {
         .tabs-container {
           display: flex;
           gap: 12px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          border-bottom: 1px solid var(--tab-border);
           margin-bottom: 30px;
           padding-bottom: 1px;
         }
         .tab-btn {
-          color: #8a8a98;
+          color: var(--text-muted);
           font-size: 14px;
           font-weight: 600;
           padding: 12px 24px;
@@ -705,11 +914,11 @@ export default function AdminManagementPage() {
           transition: all 0.2s ease;
         }
         .tab-btn:hover {
-          color: #fff;
+          color: var(--text-strong);
         }
         .tab-btn.active {
-          color: #fff;
-          background: rgba(255, 255, 255, 0.04);
+          color: var(--text-strong);
+          background: var(--bg-card-hover);
         }
         .tab-btn.active::after {
           content: "";
@@ -721,8 +930,8 @@ export default function AdminManagementPage() {
 
         /* Forms Styling */
         .form-panel {
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--bg-form-panel);
+          border: 1px solid var(--border-card);
           border-radius: 16px;
           padding: 30px;
           margin-bottom: 30px;
@@ -731,8 +940,8 @@ export default function AdminManagementPage() {
           font-size: 18px;
           font-weight: 700;
           margin-bottom: 20px;
-          color: #fff;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          color: var(--text-strong);
+          border-bottom: 1px solid var(--form-title-border);
           padding-bottom: 12px;
           display: flex;
           align-items: center;
@@ -753,10 +962,10 @@ export default function AdminManagementPage() {
           font-weight: 700;
           padding: 6px 12px;
           border-radius: 20px;
-          border: 1px solid rgba(255,255,255,0.15);
+          border: 1px solid var(--border-status-select);
           outline: none;
-          background: rgba(0,0,0,0.4);
-          color: #fff;
+          background: var(--bg-status-select);
+          color: var(--text-status-select);
           cursor: pointer;
           transition: all 0.2s;
         }
@@ -826,14 +1035,14 @@ export default function AdminManagementPage() {
         .form-label {
           font-size: 13px;
           font-weight: 600;
-          color: #bbb;
+          color: var(--text-muted);
         }
         .form-input, .form-textarea, .form-select {
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--bg-input);
+          border: 1px solid var(--border-input);
           border-radius: 8px;
           padding: 12px 16px;
-          color: #fff;
+          color: var(--text-input);
           font-size: 14px;
           outline: none;
           transition: border-color 0.2s;
@@ -847,7 +1056,7 @@ export default function AdminManagementPage() {
           gap: 8px;
           cursor: pointer;
           user-select: none;
-          color: #bbb;
+          color: var(--text-muted);
           font-size: 14px;
         }
         .checkbox-container input {
@@ -934,18 +1143,18 @@ export default function AdminManagementPage() {
           margin-bottom: 20px;
         }
         .refresh-btn {
-          background: rgba(255, 255, 255, 0.05);
-          color: #bbb;
+          background: var(--bg-refresh-btn);
+          color: var(--text-muted);
           padding: 6px 12px;
           border-radius: 6px;
           font-size: 12px;
           font-weight: 600;
           transition: all 0.2s;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border-refresh-btn);
         }
         .refresh-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: #fff;
+          background: var(--bg-card-hover);
+          color: var(--text-strong);
         }
         .list-grid {
           display: grid;
@@ -953,8 +1162,8 @@ export default function AdminManagementPage() {
           gap: 20px;
         }
         .list-card {
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.04);
+          background: var(--bg-list-card);
+          border: 1px solid var(--border-list-card);
           border-radius: 12px;
           padding: 16px;
           display: flex;
@@ -979,7 +1188,7 @@ export default function AdminManagementPage() {
         .list-card-title {
           font-size: 14px;
           font-weight: 700;
-          color: #fff;
+          color: var(--text-strong);
           margin-bottom: 4px;
           white-space: nowrap;
           overflow: hidden;
@@ -987,7 +1196,7 @@ export default function AdminManagementPage() {
         }
         .list-card-subtitle {
           font-size: 12px;
-          color: #7a7a88;
+          color: var(--text-muted);
           margin-bottom: 4px;
         }
         .list-card-badge {
@@ -996,14 +1205,14 @@ export default function AdminManagementPage() {
           font-weight: bold;
           padding: 2px 6px;
           border-radius: 4px;
-          background: rgba(76, 175, 80, 0.15);
-          color: #81c784;
+          background: var(--badge-success-bg);
+          color: var(--badge-success-text);
         }
 
         /* Order Data Table Styling */
         .order-table-container {
-          background: rgba(255, 255, 255, 0.01);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--bg-order-table-container);
+          border: 1px solid var(--border-card);
           border-radius: 16px;
           overflow-x: auto;
         }
@@ -1014,19 +1223,19 @@ export default function AdminManagementPage() {
           font-size: 13px;
         }
         .order-table th {
-          background: rgba(255, 255, 255, 0.03);
-          color: #8a8a98;
+          background: var(--bg-table-th);
+          color: var(--text-muted);
           font-weight: 600;
           padding: 16px 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          border-bottom: 1px solid var(--border-table);
         }
         .order-table td {
           padding: 16px 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-          color: #e0e0ea;
+          border-bottom: 1px solid var(--border-table);
+          color: var(--text-td);
         }
         .order-table tr:hover td {
-          background: rgba(255, 255, 255, 0.01);
+          background: var(--bg-td-hover);
         }
         .status-badge {
           display: inline-block;
@@ -1054,7 +1263,7 @@ export default function AdminManagementPage() {
         }
         .order-items-summary {
           font-size: 12px;
-          background: rgba(0, 0, 0, 0.2);
+          background: var(--bg-order-items);
           border-radius: 8px;
           padding: 8px 12px;
           margin-top: 6px;
@@ -1063,7 +1272,7 @@ export default function AdminManagementPage() {
           display: flex;
           justify-content: space-between;
           padding: 3px 0;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+          border-bottom: 1px solid var(--border-order-item-row);
         }
         .order-item-row:last-child {
           border-bottom: none;
@@ -1073,8 +1282,8 @@ export default function AdminManagementPage() {
         .spinner {
           width: 20px;
           height: 20px;
-          border: 2.5px solid rgba(255, 255, 255, 0.3);
-          border-top: 2.5px solid #fff;
+          border: 2.5px solid var(--bg-spinner-border);
+          border-top: 2.5px solid var(--text-strong);
           border-radius: 50%;
           animation: spin 1s linear infinite;
         }
@@ -1092,14 +1301,14 @@ export default function AdminManagementPage() {
           padding: 40px 20px;
         }
         .auth-card {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: var(--bg-auth-card);
+          border: 1px solid var(--border-auth-card);
           backdrop-filter: blur(20px);
           border-radius: 20px;
           padding: 40px;
           width: 100%;
           max-width: 420px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          box-shadow: var(--shadow-auth-card);
           animation: fadeIn 0.4s ease-out;
         }
         @keyframes fadeIn {
@@ -1110,13 +1319,13 @@ export default function AdminManagementPage() {
           display: flex;
           gap: 10px;
           margin-bottom: 25px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+          border-bottom: 1px solid var(--bg-auth-tab-border);
         }
         .auth-tab {
           flex: 1;
           background: none;
           border: none;
-          color: #8a8a98;
+          color: var(--text-auth-tab);
           font-weight: 700;
           font-size: 15px;
           padding: 12px;
@@ -1125,12 +1334,12 @@ export default function AdminManagementPage() {
           border-bottom: 2px solid transparent;
         }
         .auth-tab.active {
-          color: #fff;
+          color: var(--text-strong);
           border-bottom: 2px solid var(--primary, #e8320a);
         }
         .auth-description {
           font-size: 13px;
-          color: #8a8a98;
+          color: var(--text-muted);
           text-align: center;
           margin-bottom: 24px;
         }
@@ -1139,13 +1348,25 @@ export default function AdminManagementPage() {
       {/* ADMIN HEADER */}
       <header className="admin-header">
         <div className="admin-title">
-          <span> Dheer Dashboard</span>
+          <Link href="/adminmanagement" className="logo" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+            <span className="logo-text">
+              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+            </span>
+          </Link>
+          <span style={{ fontSize: "16px", fontWeight: "600", color: "var(--text-muted)", marginLeft: "4px" }}>Dashboard</span>
           <span className="badge">Control Center</span>
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <Link href="/" className="home-link">
             🏠 Visit Store
           </Link>
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          >
+            {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+          </button>
           {isLoggedIn && (
             <button
               onClick={handleLogout}
@@ -1168,107 +1389,43 @@ export default function AdminManagementPage() {
         {!isLoggedIn ? (
           <div className="auth-container">
             <div className="auth-card">
-              <div className="auth-tabs">
-                <button
-                  type="button"
-                  className={`auth-tab ${authTab === "login" ? "active" : ""}`}
-                  onClick={() => {
-                    setAuthTab("login");
-                    setAuthError(null);
-                    setAuthSuccess(null);
-                  }}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  className={`auth-tab ${authTab === "register" ? "active" : ""}`}
-                  onClick={() => {
-                    setAuthTab("register");
-                    setAuthError(null);
-                    setAuthSuccess(null);
-                  }}
-                >
-                  Create Admin
-                </button>
-              </div>
-
-              <p className="auth-description">
-                {authTab === "login"
-                  ? "Access the administrative control center with your credentials."
-                  : "Register a new user profile with administrator permissions."}
+              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text-strong)", textAlign: "center", marginBottom: "8px" }}>
+                Admin Portal Sign In
+              </h2>
+              <p className="auth-description" style={{ textAlign: "center", marginBottom: "24px" }}>
+                Access the administrative control center with your credentials.
               </p>
 
               {authError && <div className="msg-box error">{authError}</div>}
               {authSuccess && <div className="msg-box success">{authSuccess}</div>}
 
-              {authTab === "login" ? (
-                <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-                  <div className="form-group">
-                    <label className="form-label">Username</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter admin username"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Password</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter secret password"
-                      required
-                    />
-                  </div>
-                  <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
-                    {authLoading ? <div className="spinner"></div> : "Unlock Dashboard 🔒"}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-                  <div className="form-group">
-                    <label className="form-label">Username</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Choose username"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Email (Optional)</label>
-                    <input
-                      type="email"
-                      className="form-input"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@example.com"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Password</label>
-                    <input
-                      type="password"
-                      className="form-input"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Choose strong password"
-                      required
-                    />
-                  </div>
-                  <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
-                    {authLoading ? <div className="spinner"></div> : "Create Account 🚀"}
-                  </button>
-                </form>
-              )}
+              <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                <div className="form-group">
+                  <label className="form-label">Username</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter admin username"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter secret password"
+                    required
+                  />
+                </div>
+                <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
+                  {authLoading ? <div className="spinner"></div> : "Unlock Dashboard 🔒"}
+                </button>
+              </form>
             </div>
           </div>
         ) : (
@@ -1336,6 +1493,19 @@ export default function AdminManagementPage() {
               >
                 🖼️ Banners ({banners.length})
               </button>
+              <button
+                onClick={() => {
+                  setActiveTab("admins");
+                  setAuthError(null);
+                  setAuthSuccess(null);
+                  setUsername("");
+                  setPassword("");
+                  setEmail("");
+                }}
+                className={`tab-btn ${activeTab === "admins" ? "active" : ""}`}
+              >
+                🔑 Manage Admins
+              </button>
             </section>
 
             {/* TAB CONTENTS */}
@@ -1345,19 +1515,94 @@ export default function AdminManagementPage() {
               <div>
                 <div className="dashboard-grid">
                   <div className="form-panel">
-                    <h3 className="form-title">Store Status Summary</h3>
-                    <p style={{ color: "#aaa", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
-                      Welcome back! Your shop is connected and running active operations. Total database metrics are loaded dynamically via Django REST Framework API endpoints. Use the tabs above to manage orders, products, and categories.
+                    <h3 className="form-title">📊 Store Status Summary</h3>
+                    <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6", marginBottom: "20px" }}>
+                      Welcome back! Your shop is connected and running active operations. Here is a live breakdown of your database metrics across products, categories, orders, and banners.
                     </p>
-                    <div style={{ background: "rgba(0, 0, 0, 0.2)", borderRadius: "8px", padding: "16px" }}>
-                      <h4 style={{ color: "#fff", fontSize: "14px", marginBottom: "8px" }}>API Endpoints In-use:</h4>
-                      <ul style={{ color: "#8a8a98", fontSize: "12px", listStyle: "inside", display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <li><strong>Categories list:</strong> {BASE_URL}/api/categories/list/</li>
-                        <li><strong>Create category:</strong> {BASE_URL}/api/categories/create/</li>
-                        <li><strong>Products list:</strong> {BASE_URL}/api/products/list/</li>
-                        <li><strong>Create product:</strong> {BASE_URL}/api/products/create/</li>
-                        <li><strong>Orders list:</strong> {BASE_URL}/api/orders/list/</li>
-                      </ul>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                      {/* 1. Orders Status Breakdown */}
+                      <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
+                        <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "12px" }}>
+                          📦 Order Status Breakdown ({orders.length} Total)
+                        </h4>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: "12px" }}>
+                          <div style={{ background: "var(--status-pending-bg)", borderLeft: "3px solid #ff9800", padding: "8px 12px", borderRadius: "4px" }}>
+                            <div style={{ fontSize: "11px", color: "var(--status-pending-text)", textTransform: "uppercase", fontWeight: "600" }}>Pending</div>
+                            <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--text-strong)", marginTop: "2px" }}>
+                              {orders.filter(o => o.status === "pending").length}
+                            </div>
+                          </div>
+                          <div style={{ background: "var(--status-processing-bg)", borderLeft: "3px solid #2196f3", padding: "8px 12px", borderRadius: "4px" }}>
+                            <div style={{ fontSize: "11px", color: "var(--status-processing-text)", textTransform: "uppercase", fontWeight: "600" }}>Processing</div>
+                            <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--text-strong)", marginTop: "2px" }}>
+                              {orders.filter(o => o.status === "processing").length}
+                            </div>
+                          </div>
+                          <div style={{ background: "var(--status-completed-bg)", borderLeft: "3px solid #4caf50", padding: "8px 12px", borderRadius: "4px" }}>
+                            <div style={{ fontSize: "11px", color: "var(--status-completed-text)", textTransform: "uppercase", fontWeight: "600" }}>Completed</div>
+                            <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--text-strong)", marginTop: "2px" }}>
+                              {orders.filter(o => o.status === "completed").length}
+                            </div>
+                          </div>
+                          <div style={{ background: "var(--status-cancelled-bg)", borderLeft: "3px solid #f44336", padding: "8px 12px", borderRadius: "4px" }}>
+                            <div style={{ fontSize: "11px", color: "var(--status-cancelled-text)", textTransform: "uppercase", fontWeight: "600" }}>Cancelled</div>
+                            <div style={{ fontSize: "20px", fontWeight: "bold", color: "var(--text-strong)", marginTop: "2px" }}>
+                              {orders.filter(o => o.status === "cancelled").length}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. Products Inventory Health */}
+                      <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
+                        <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "12px" }}>
+                          🏷️ Products & Inventory ({products.length} Total)
+                        </h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                            <span style={{ color: "var(--text-muted)" }}>Active (Listed) Products:</span>
+                            <span style={{ color: "var(--text-strong)", fontWeight: "600" }}>
+                              {products.filter(p => p.is_active).length} / {products.length}
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                            <span style={{ color: "var(--text-muted)" }}>Out of Stock:</span>
+                            <span style={{ color: products.filter(p => p.stock === 0).length > 0 ? "#ff8a80" : "#66bb6a", fontWeight: "600" }}>
+                              {products.filter(p => p.stock === 0).length} products
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                            <span style={{ color: "var(--text-muted)" }}>Low Stock Alert (&lt; 5 units):</span>
+                            <span style={{ color: products.filter(p => p.stock > 0 && p.stock < 5).length > 0 ? "#ffa726" : "#66bb6a", fontWeight: "600" }}>
+                              {products.filter(p => p.stock > 0 && p.stock < 5).length} products
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Categories & Banners */}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                        <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
+                          <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "8px" }}>📁 Categories</h4>
+                          <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--text-strong)" }}>
+                            {categories.length}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                            {categories.filter(c => c.is_active).length} active categories
+                          </div>
+                        </div>
+
+                        <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
+                          <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "8px" }}>🖼️ Slider Banners</h4>
+                          <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--text-strong)" }}>
+                            {banners.length}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                            {banners.filter(b => b.is_active).length} active sliders
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1365,14 +1610,14 @@ export default function AdminManagementPage() {
                     <div>
                       <h3 className="form-title">Recent Orders</h3>
                       {orders.length === 0 ? (
-                        <p style={{ color: "#777", fontSize: "13px" }}>No orders placed yet.</p>
+                        <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>No orders placed yet.</p>
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                           {orders.slice(0, 4).map((order) => (
-                            <div key={order.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                            <div key={order.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border-order-item-row)" }}>
                               <div>
-                                <span style={{ fontWeight: "700", color: "#fff" }}>{order.full_name}</span>
-                                <span style={{ fontSize: "11px", color: "#888", display: "block" }}>{order.phone}</span>
+                                <span style={{ fontWeight: "700", color: "var(--text-strong)" }}>{order.full_name}</span>
+                                <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block" }}>{order.phone}</span>
                               </div>
                               <div style={{ textAlign: "right" }}>
                                 <span style={{ color: "var(--primary, #e8320a)", fontWeight: "700" }}>৳{Number(order.amount).toLocaleString()}</span>
@@ -1397,93 +1642,181 @@ export default function AdminManagementPage() {
             {activeTab === "orders" && (
               <div>
                 <div className="data-list-header">
-                  <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Customer Orders List</h3>
-                  <button onClick={fetchOrders} className="refresh-btn">
-                    🔄 Refresh Orders ({loadingOrders ? "Loading..." : "Synced"})
-                  </button>
+                  <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)" }}>Customer Orders List</h3>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: "500" }}>Date Range:</span>
+                      <select
+                        value={orderDateFilter}
+                        onChange={(e) => {
+                          setOrderDateFilter(e.target.value as any);
+                          setVisibleOrdersCount(20);
+                        }}
+                        style={{
+                          background: "var(--bg-status-select, rgba(0,0,0,0.5))",
+                          color: "var(--text-status-select, #fff)",
+                          border: "1px solid var(--border-status-select, rgba(255,255,255,0.2))",
+                          borderRadius: "6px",
+                          padding: "6px 12px",
+                          fontSize: "12px",
+                          fontWeight: "500",
+                          cursor: "pointer",
+                          outline: "none",
+                        }}
+                      >
+                        <option value="all">All Dates</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="week">Last 7 Days</option>
+                        <option value="month">Last 30 Days</option>
+                      </select>
+                    </div>
+                    <button onClick={fetchOrders} className="refresh-btn">
+                      🔄 Refresh Orders ({loadingOrders ? "Loading..." : "Synced"})
+                    </button>
+                  </div>
                 </div>
 
                 {loadingOrders && orders.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "60px 0" }}>
                     <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                    <p style={{ color: "#aaa" }}>Fetching order records from Django API...</p>
+                    <p style={{ color: "var(--text-muted)" }}>Fetching order records from Django API...</p>
                   </div>
                 ) : orders.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "60px 0", background: "rgba(255, 255, 255, 0.01)", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.08)" }}>
+                  <div style={{ textAlign: "center", padding: "60px 0", background: "var(--bg-order-table-container)", borderRadius: "12px", border: "1px dashed var(--border-table)" }}>
                     <span style={{ fontSize: "36px", display: "block", marginBottom: "12px" }}>📦</span>
-                    <h4 style={{ color: "#fff", marginBottom: "4px" }}>No Orders Found</h4>
-                    <p style={{ color: "#777", fontSize: "13px" }}>Orders submitted through Checkout/Buy Now forms will show up here.</p>
+                    <h4 style={{ color: "var(--text-strong)", marginBottom: "4px" }}>No Orders Found</h4>
+                    <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>Orders submitted through Checkout/Buy Now forms will show up here.</p>
+                  </div>
+                ) : filteredOrders.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "60px 0", background: "var(--bg-order-table-container)", borderRadius: "12px", border: "1px dashed var(--border-table)" }}>
+                    <span style={{ fontSize: "36px", display: "block", marginBottom: "12px" }}>🔍</span>
+                    <h4 style={{ color: "var(--text-strong)", marginBottom: "4px" }}>No Orders Found for this Filter</h4>
+                    <p style={{ color: "var(--text-muted)", fontSize: "13px" }}>No order was created during the selected date range. Try choosing a different filter.</p>
                   </div>
                 ) : (
-                  <div className="order-table-container">
-                    <table className="order-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Customer Details</th>
-                          <th>Shipping Address</th>
-                          <th>Items Purchased</th>
-                          <th>Payment Method</th>
-                          <th>Amount</th>
-                          <th>Status</th>
-                          <th>Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders.map((order) => (
-                          <tr key={order.id}>
-                            <td><strong>#{order.id}</strong></td>
-                            <td>
-                              <div style={{ fontWeight: "700", color: "#fff" }}>{order.full_name}</div>
-                              <div style={{ fontSize: "11px", color: "#8a8a98" }}>{order.phone}</div>
-                            </td>
-                            <td style={{ maxWidth: "200px" }}>
-                              <span style={{ fontSize: "12px", color: "#bbb", whiteSpace: "normal" }}>{order.address}</span>
-                            </td>
-                            <td>
-                              <div className="order-items-summary">
-                                {order.items && order.items.length > 0 ? (
-                                  order.items.map((item) => (
-                                    <div key={item.id} className="order-item-row">
-                                      <span>{item.product?.name || "Unnamed Product"} <strong style={{ color: "#fff" }}>x {item.quantity}</strong></span>
-                                      <span style={{ color: "#8a8a98", marginLeft: "10px" }}>৳{Number(item.price).toLocaleString()}</span>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <span style={{ color: "#666", fontStyle: "italic" }}>No items found</span>
-                                )}
-                              </div>
-                            </td>
-                            <td>
-                              <span style={{ fontSize: "12px", fontWeight: "700", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px" }}>
-                                {order.payment_type}
-                              </span>
-                            </td>
-                            <td>
-                              <strong style={{ color: "var(--primary, #e8320a)", fontSize: "14px" }}>
-                                ৳{Number(order.amount).toLocaleString()}
-                              </strong>
-                            </td>
-                            <td>
-                              <select
-                                value={order.status}
-                                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                                className={`status-select ${order.status}`}
-                                disabled={updatingOrderId === order.id}
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="processing">Processing</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                              </select>
-                            </td>
-                            <td style={{ color: "#8a8a98", fontSize: "11px" }}>
-                              {new Date(order.created_at).toLocaleString("en-GB", { hour12: true })}
-                            </td>
+                  <div>
+                    <div className="order-table-container">
+                      <table className="order-table">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Customer Details</th>
+                            <th>Shipping Address</th>
+                            <th>Items Purchased</th>
+                            <th>Payment Method</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {ordersToShow.map((order) => (
+                            <tr key={order.id}>
+                              <td><strong>#{order.id}</strong></td>
+                              <td>
+                                <div style={{ fontWeight: "700", color: "var(--text-strong)" }}>{order.full_name}</div>
+                                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{order.phone}</div>
+                              </td>
+                              <td style={{ maxWidth: "200px" }}>
+                                <span style={{ fontSize: "12px", color: "var(--text-main)", whiteSpace: "normal" }}>{order.address}</span>
+                              </td>
+                              <td>
+                                <div className="order-items-summary">
+                                  {order.items && order.items.length > 0 ? (
+                                    order.items.map((item) => (
+                                      <div key={item.id} className="order-item-row">
+                                        <span>{item.product?.name || "Unnamed Product"} <strong style={{ color: "var(--text-strong)" }}>x {item.quantity}</strong></span>
+                                        <span style={{ color: "var(--text-muted)", marginLeft: "10px" }}>৳{Number(item.price).toLocaleString()}</span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No items found</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td>
+                                <span style={{ fontSize: "12px", fontWeight: "700", background: "var(--bg-toggle-btn)", padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--border-toggle-btn)" }}>
+                                  {order.payment_type}
+                                </span>
+                              </td>
+                              <td>
+                                <strong style={{ color: "var(--primary, #e8320a)", fontSize: "14px" }}>
+                                  ৳{Number(order.amount).toLocaleString()}
+                                </strong>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <select
+                                    value={tempStatus[order.id] !== undefined ? tempStatus[order.id] : order.status}
+                                    onChange={(e) => setTempStatus(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                    className={`status-select ${tempStatus[order.id] !== undefined ? tempStatus[order.id] : order.status}`}
+                                    disabled={updatingOrderId === order.id}
+                                    style={{ flex: 1, minWidth: "100px" }}
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                  </select>
+                                  {(tempStatus[order.id] !== undefined && tempStatus[order.id] !== order.status) && (
+                                    <button
+                                      onClick={() => handleUpdateOrderStatus(order.id, tempStatus[order.id]!)}
+                                      disabled={updatingOrderId === order.id}
+                                      style={{
+                                        background: "var(--primary, #e8320a)",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: "4px",
+                                        padding: "6px 8px",
+                                        fontSize: "11px",
+                                        cursor: "pointer",
+                                        fontWeight: "bold",
+                                        whiteSpace: "nowrap"
+                                      }}
+                                    >
+                                      {updatingOrderId === order.id ? "..." : "Save"}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ color: "var(--text-muted)", fontSize: "11px" }}>
+                                {new Date(order.created_at).toLocaleString("en-GB", { hour12: true })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {filteredOrders.length > visibleOrdersCount && (
+                      <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+                        <button
+                          onClick={() => setVisibleOrdersCount(prev => prev + 20)}
+                          style={{
+                            background: "var(--bg-toggle-btn, rgba(255,255,255,0.1))",
+                            color: "var(--text-toggle-btn, #fff)",
+                            border: "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                            borderRadius: "8px",
+                            padding: "10px 24px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            transition: "all 0.25s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "var(--bg-toggle-hover, rgba(255,255,255,0.18))";
+                            e.currentTarget.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "var(--bg-toggle-btn, rgba(255,255,255,0.1))";
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }}
+                        >
+                          See More Orders (Showing {visibleOrdersCount} of {filteredOrders.length}) 👇
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1655,7 +1988,7 @@ export default function AdminManagementPage() {
                 {/* Products List */}
                 <div>
                   <div className="data-list-header">
-                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Catalog Products ({products.length})</h3>
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)" }}>Catalog Products ({products.length})</h3>
                     <button onClick={fetchProducts} className="refresh-btn">
                       🔄 Refresh List
                     </button>
@@ -1664,10 +1997,10 @@ export default function AdminManagementPage() {
                   {loadingProducts && products.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "40px 0" }}>
                       <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                      <p style={{ color: "#aaa" }}>Loading active catalog...</p>
+                      <p style={{ color: "var(--text-muted)" }}>Loading active catalog...</p>
                     </div>
                   ) : products.length === 0 ? (
-                    <p style={{ color: "#777", fontStyle: "italic" }}>No products created yet.</p>
+                    <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No products created yet.</p>
                   ) : (
                     <div className="list-grid">
                       {products.map((prod) => (
@@ -1809,7 +2142,7 @@ export default function AdminManagementPage() {
                 {/* Categories List */}
                 <div>
                   <div className="data-list-header">
-                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Product Categories ({categories.length})</h3>
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)" }}>Product Categories ({categories.length})</h3>
                     <button onClick={fetchCategories} className="refresh-btn">
                       🔄 Refresh List
                     </button>
@@ -1818,10 +2151,10 @@ export default function AdminManagementPage() {
                   {loadingCategories && categories.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "40px 0" }}>
                       <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                      <p style={{ color: "#aaa" }}>Loading categories...</p>
+                      <p style={{ color: "var(--text-muted)" }}>Loading categories...</p>
                     </div>
                   ) : categories.length === 0 ? (
-                    <p style={{ color: "#777", fontStyle: "italic" }}>No categories created yet.</p>
+                    <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No categories created yet.</p>
                   ) : (
                     <div className="list-grid">
                       {categories.map((cat) => (
@@ -2042,7 +2375,7 @@ export default function AdminManagementPage() {
                 {/* Banners List */}
                 <div>
                   <div className="data-list-header">
-                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#fff" }}>Active Hero Banners ({banners.length})</h3>
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)" }}>Active Hero Banners ({banners.length})</h3>
                     <button onClick={fetchBanners} className="refresh-btn">
                       🔄 Refresh List
                     </button>
@@ -2051,10 +2384,10 @@ export default function AdminManagementPage() {
                   {loadingBanners && banners.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "40px 0" }}>
                       <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
-                      <p style={{ color: "#aaa" }}>Loading active banners...</p>
+                      <p style={{ color: "var(--text-muted)" }}>Loading active banners...</p>
                     </div>
                   ) : banners.length === 0 ? (
-                    <p style={{ color: "#777", fontStyle: "italic" }}>No banners created yet.</p>
+                    <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No banners created yet.</p>
                   ) : (
                     <div className="list-grid">
                       {banners.map((slide) => (
@@ -2104,7 +2437,7 @@ export default function AdminManagementPage() {
                                 {slide.subtitle}
                               </div>
                             )}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#bbb", marginTop: "4px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
                               <span>CTA: <strong>{slide.cta}</strong></span>
                               <span>Link: <strong>{slide.href}</strong></span>
                             </div>
@@ -2112,7 +2445,7 @@ export default function AdminManagementPage() {
                               <span style={{ fontSize: "10px", color: slide.accent_color, fontWeight: "bold", textTransform: "uppercase" }}>
                                 Accent: {slide.accent_color}
                               </span>
-                              <span className="list-card-badge" style={{ background: slide.is_active ? "rgba(76, 175, 80, 0.15)" : "rgba(244, 67, 54, 0.15)", color: slide.is_active ? "#81c784" : "#e57373" }}>
+                              <span className="list-card-badge" style={{ background: slide.is_active ? "var(--badge-success-bg)" : "rgba(244, 67, 54, 0.15)", color: slide.is_active ? "var(--badge-success-text)" : "#e57373" }}>
                                 {slide.is_active ? "Active" : "Inactive"}
                               </span>
                             </div>
@@ -2121,6 +2454,59 @@ export default function AdminManagementPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* 6. ADMINS TAB (CREATE ADMIN USER) */}
+            {activeTab === "admins" && (
+              <div>
+                <div className="form-panel">
+                  <h3 className="form-title">🔑 Register New Administrator</h3>
+                  <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6", marginBottom: "16px" }}>
+                    Create a new administrative user. The user will be created with <code style={{ color: "var(--primary, #e8320a)", fontWeight: "600" }}>is_staff = True</code> and will be able to log in to this management panel.
+                  </p>
+
+                  {authError && <div className="msg-box error">{authError}</div>}
+                  {authSuccess && <div className="msg-box success">{authSuccess}</div>}
+
+                  <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "18px", maxWidth: "500px" }}>
+                    <div className="form-group">
+                      <label className="form-label">Username</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Choose username"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Email (Optional)</label>
+                      <input
+                        type="email"
+                        className="form-input"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="admin@example.com"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Password</label>
+                      <input
+                        type="password"
+                        className="form-input"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Choose strong password"
+                        required
+                      />
+                    </div>
+                    <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
+                      {authLoading ? <div className="spinner"></div> : "Create Admin User 🚀"}
+                    </button>
+                  </form>
                 </div>
               </div>
             )}
