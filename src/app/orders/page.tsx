@@ -317,6 +317,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { useAuth } from "@/context/AuthContext";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
@@ -336,6 +337,7 @@ interface OrderItem {
 }
 
 export default function MyOrdersPage() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -345,20 +347,21 @@ export default function MyOrdersPage() {
   const [searching, setSearching] = useState(false);
   const [searchMsg, setSearchMsg] = useState("");
 
-  // ── Fetch ALL orders from API on mount ──────────────────────────────────────
+  // ── Fetch orders on mount ──────────────────────────────────────
   useEffect(() => {
     const fetchOrders = async () => {
+      if (!user) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setLoadError("");
       try {
-        const response = await fetch(`${BASE_URL}/api/orders/list/`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${typeof window !== "undefined"
-              ? localStorage.getItem("token")
-              : ""
-              }`,
-          },
+        const endpoint = `${BASE_URL}/api/orders/customer/?user_id=${user.id}`;
+
+        const response = await fetch(endpoint, {
+          headers: { "Content-Type": "application/json" },
           cache: "no-store",
         });
 
@@ -398,7 +401,7 @@ export default function MyOrdersPage() {
     };
 
     fetchOrders();
-  }, []);
+  }, [user]);
 
   // ── Search: filter purely from already-fetched API data ─────────────────────
   const handleSearch = async (e: React.FormEvent) => {
@@ -523,7 +526,11 @@ export default function MyOrdersPage() {
         {/* Header Section */}
         <div className="orders-title-sec">
           <div>
-            <h1>Order History &amp; Tracking</h1>
+            <h1>
+              {user
+                ? `${user.first_name ? user.first_name + "'s " : ""}Order History`
+                : "Order History & Tracking"}
+            </h1>
             <p
               style={{
                 color: "var(--text-secondary)",
@@ -531,8 +538,9 @@ export default function MyOrdersPage() {
                 fontSize: "13px",
               }}
             >
-              Track placed orders, view shipping details, and check real-time
-              status.
+              {user
+                ? `Welcome back, ${user.first_name || user.username}! Here are all your orders.`
+                : "Track placed orders, view shipping details, and check real-time status."}
             </p>
           </div>
 
@@ -782,6 +790,61 @@ export default function MyOrdersPage() {
                   );
                 })}
               </div>
+            ) : !user && searchResults === null ? (
+              <div
+                style={{
+                  background: "var(--bg-white)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "80px 32px",
+                  textAlign: "center",
+                  boxShadow: "var(--shadow-sm)",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "72px",
+                    display: "block",
+                    marginBottom: "16px",
+                  }}
+                >
+                  🔍
+                </span>
+                <h2
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: "800",
+                    marginBottom: "12px",
+                  }}
+                >
+                  Track Your Order
+                </h2>
+                <p
+                  style={{
+                    color: "var(--text-secondary)",
+                    maxWidth: "480px",
+                    margin: "0 auto 32px",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  Please enter your <strong>Mobile Number</strong> or <strong>Order Reference</strong> in the search bar above to trace your order status and details.
+                </p>
+                <Link
+                  href="/"
+                  className="continue-shopping"
+                  style={{
+                    background: "var(--primary)",
+                    color: "#fff",
+                    padding: "12px 32px",
+                    borderRadius: "30px",
+                    fontWeight: "700",
+                    textDecoration: "none",
+                    display: "inline-block",
+                  }}
+                >
+                  Shop Hot Gadgets Now
+                </Link>
+              </div>
             ) : (
               <div
                 style={{
@@ -819,10 +882,7 @@ export default function MyOrdersPage() {
                     lineHeight: "1.6",
                   }}
                 >
-                  No orders were found on your account. If you've placed an
-                  order, search using your{" "}
-                  <strong>Mobile Number</strong> or{" "}
-                  <strong>Order Reference</strong> above.
+                  No matching orders were found. If you've placed an order, please double check your <strong>Mobile Number</strong> or <strong>Order Reference</strong> above.
                 </p>
                 <Link
                   href="/"
@@ -833,6 +893,8 @@ export default function MyOrdersPage() {
                     padding: "12px 32px",
                     borderRadius: "30px",
                     fontWeight: "700",
+                    textDecoration: "none",
+                    display: "inline-block",
                   }}
                 >
                   Shop Hot Gadgets Now

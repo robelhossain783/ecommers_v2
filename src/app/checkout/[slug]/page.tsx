@@ -10,6 +10,7 @@ import Footer from "@/components/layout/Footer";
 import { getProductBySlug } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
@@ -21,6 +22,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { clearCart } = useCart();
+  const { user } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,6 +152,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
           phone: mobileNumber,
           address: `${address}, ${district}`,
           payment_type: paymentMethod.toUpperCase(),
+          ...(user ? { user_id: user.id } : {}),
         }),
       });
 
