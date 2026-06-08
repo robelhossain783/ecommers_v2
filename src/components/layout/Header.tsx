@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname } from "next/navigation";
+import { Home, Menu as MenuIcon, ShoppingCart, ClipboardList, User } from "lucide-react";
 import { searchProducts } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 
@@ -33,6 +35,11 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [authSuccess, setAuthSuccess] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Mobile states & refs
+  const pathname = usePathname();
+  const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
+  const mbUserMenuRef = useRef<HTMLDivElement>(null);
 
   // Login form
   const [loginUsername, setLoginUsername] = useState("");
@@ -177,6 +184,18 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showUserMenu]);
+
+  // Close mobile user dropdown on outside click
+  useEffect(() => {
+    if (!showMobileUserMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (mbUserMenuRef.current && !mbUserMenuRef.current.contains(e.target as Node)) {
+        setShowMobileUserMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showMobileUserMenu]);
 
   // Reset auth forms when modal closes
   const openAuthModal = (tab: "login" | "register" = "login") => {
@@ -416,6 +435,62 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           </div>
         </div>
       </header>
+
+      {/* Mobile Sticky Bottom Navigation */}
+      {mounted && (
+        <div className="mobile-bottom-nav">
+          <Link href="/" className={`mb-nav-item ${pathname === "/" ? "active" : ""}`}>
+            <Home size={20} />
+            <span>Home</span>
+          </Link>
+          <button onClick={() => setIsSidebarOpen(true)} className="mb-nav-item">
+            <MenuIcon size={20} />
+            <span>Menu</span>
+          </button>
+          <Link href="/cart" className={`mb-nav-item ${pathname === "/cart" ? "active" : ""}`}>
+            <div className="mb-cart-icon-wrap">
+              <ShoppingCart size={20} />
+              {cartCount > 0 && <span className="mb-cart-count">{cartCount}</span>}
+            </div>
+            <span>Cart</span>
+          </Link>
+          <Link href="/orders" className={`mb-nav-item ${pathname === "/orders" ? "active" : ""}`}>
+            <ClipboardList size={20} />
+            <span>Orders</span>
+          </Link>
+          {user ? (
+            <div className="mb-account-wrap" ref={mbUserMenuRef}>
+              <button onClick={() => setShowMobileUserMenu(v => !v)} className={`mb-nav-item ${showMobileUserMenu ? "active" : ""}`}>
+                <User size={20} />
+                <span>Account</span>
+              </button>
+              {showMobileUserMenu && (
+                <div className="mb-account-dropdown">
+                  <div className="mb-account-dropdown-header">
+                    <span className="mb-avatar-initials">{getInitials()}</span>
+                    <div className="mb-user-info">
+                      <div className="mb-user-name">{user.first_name ? `${user.first_name} ${user.last_name}`.trim() : user.username}</div>
+                      <div className="mb-user-email">{user.email || user.username}</div>
+                    </div>
+                  </div>
+                  <div className="mb-dropdown-divider" />
+                  <Link href="/orders" className="mb-dropdown-item" onClick={() => setShowMobileUserMenu(false)}>
+                    My Orders
+                  </Link>
+                  <button className="mb-dropdown-item mb-logout-btn" onClick={() => { logout(); setShowMobileUserMenu(false); }}>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => openAuthModal("login")} className="mb-nav-item">
+              <User size={20} />
+              <span>Account</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Mobile search backdrop */}
       {isMobileSearchOpen && (

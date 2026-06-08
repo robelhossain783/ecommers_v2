@@ -3652,3 +3652,199 @@ img {
     padding: 26px 20px 20px;
   }
 }
+
+/* ==========================================
+   MOBILE STICKY BOTTOM NAVIGATION
+   ========================================== */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+
+  /* Offset page content so sticky footer doesn't block it */
+  body {
+    padding-bottom: 75px !important;
+  }
+
+  /* Hide header cart, account avatar, and sub-navigation links on mobile view */
+  .site-header .account-btn-wrap,
+  .site-header .account-login-btn,
+  .site-header .cart-btn,
+  .sub-nav {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--bg-white, #ffffff);
+    border-top: 1px solid var(--border-light, #eaeaea);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mb-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #666666);
+    font-size: 10px;
+    font-weight: 600;
+    gap: 4px;
+    padding: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    flex: 1;
+    transition: color 0.2s ease;
+    outline: none;
+  }
+
+  .mb-nav-item:hover,
+  .mb-nav-item.active {
+    color: var(--primary, #e8320a);
+  }
+
+  .mb-cart-icon-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .mb-cart-count {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: var(--primary, #e8320a);
+    color: #fff;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .mb-account-wrap {
+    position: relative;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .mb-account-dropdown {
+    position: absolute;
+    bottom: 65px;
+    right: 10px;
+    background: var(--bg-white, #ffffff);
+    border: 1px solid var(--border-light, #eaeaea);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 220px;
+    padding: 12px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    animation: mbSlideUp 0.2s ease-out;
+  }
+
+  @keyframes mbSlideUp {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .mb-account-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mb-avatar-initials {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary, #e8320a);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mb-user-info {
+    min-width: 0;
+  }
+
+  .mb-user-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary, #333333);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mb-user-email {
+    font-size: 10px;
+    color: var(--text-secondary, #666666);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mb-dropdown-divider {
+    height: 1px;
+    background: var(--border-light, #eaeaea);
+    margin: 4px 0;
+  }
+
+  .mb-dropdown-item {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #666666);
+    padding: 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .mb-dropdown-item:hover {
+    background: #fff5f2;
+    color: var(--primary, #e8320a);
+  }
+
+  .mb-logout-btn {
+    color: #ef4444;
+  }
+
+  .mb-logout-btn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+}
