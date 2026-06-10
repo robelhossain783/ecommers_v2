@@ -14,6 +14,8 @@ import NewArrivals from "@/components/sections/NewArrivals";
 // import TopBrandProducts from "@/components/sections/TopBrandProducts";
 import SeoSection from "@/components/sections/SeoSection";
 
+import NotificationBanner from "./sections/NotificationBanner";
+
 export default function HomeClient() {
   return (
     <>
@@ -27,6 +29,7 @@ export default function HomeClient() {
         <NewTrends />
         {/* <FeaturedProducts /> */}
         {/* <PromoBanners /> */}
+        <NotificationBanner />
         <NewArrivals />
         {/* <AcSection /> */}
         {/* <TopBrandProducts /> */}

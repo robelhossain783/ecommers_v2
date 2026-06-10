@@ -69,8 +69,23 @@ interface Banner {
   created_at: string;
 }
 
+
+
+interface NotificationBanner {
+  id: number;
+  title: string;
+  image: string;
+  target_url: string;
+  is_active: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+}
+
+
+
 export default function AdminManagementPage() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "banners" | "admins">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "banners" | "notification_banners" | "admins">("dashboard");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   // Load theme from localStorage on mount
@@ -603,6 +618,7 @@ export default function AdminManagementPage() {
       fetchProducts();
       fetchOrders();
       fetchBanners();
+      fetchNotificationBanners();
     }
   }, [isLoggedIn]);
 
@@ -635,6 +651,203 @@ export default function AdminManagementPage() {
     }
     return true;
   });
+
+
+
+
+  // ----------------------------------
+  const [notificationBanners, setNotificationBanners] = useState<NotificationBanner[]>([]);
+  const [loadingNotificationBanners, setLoadingNotificationBanners] = useState(false);
+
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyTargetUrl, setNotifyTargetUrl] = useState("/");
+  const [notifyActive, setNotifyActive] = useState(true);
+
+  const [notifyImageFile, setNotifyImageFile] = useState<File | null>(null);
+  const [notifyImagePreview, setNotifyImagePreview] = useState<string | null>(null);
+
+  const [notifySubmitLoading, setNotifySubmitLoading] = useState(false);
+
+  const [notifyFormMsg, setNotifyFormMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+
+
+
+
+  const handleNotifyImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setNotifyImageFile(file);
+    setNotifyImagePreview(URL.createObjectURL(file));
+  };
+
+
+
+
+  const fetchNotificationBanners = async () => {
+    setLoadingNotificationBanners(true);
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/banner/notification-banner/list/`
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setNotificationBanners(data.data || []);
+        
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingNotificationBanners(false);
+    }
+  };
+
+
+
+
+  const handleCreateNotificationBanner = async (
+    e: React.FormEvent
+  ) => {
+    e.preventDefault();
+
+    setNotifyFormMsg(null);
+
+    if (!notifyTitle || !notifyImageFile) {
+      setNotifyFormMsg({
+        type: "error",
+        text: "Title and Image required",
+      });
+      return;
+    }
+
+    setNotifySubmitLoading(true);
+
+    const formData = new FormData();
+
+    formData.append("title", notifyTitle);
+    formData.append("target_url", notifyTargetUrl);
+    formData.append(
+      "is_active",
+      notifyActive ? "true" : "false"
+    );
+
+    formData.append("image", notifyImageFile);
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/banner/notification-banner/create/`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setNotifyFormMsg({
+          type: "success",
+          text: "Notification Banner Created",
+        });
+
+        setNotifyTitle("");
+        setNotifyTargetUrl("/");
+        setNotifyActive(true);
+
+        setNotifyImageFile(null);
+        setNotifyImagePreview(null);
+
+        fetchNotificationBanners();
+      } else {
+        setNotifyFormMsg({
+          type: "error",
+          text: JSON.stringify(data),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setNotifySubmitLoading(false);
+    }
+  };
+
+
+
+
+  const handleNotificationBannerStatus = async (
+    bannerId: number,
+    currentStatus: boolean
+  ) => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/banner/notification-banner/${bannerId}/status/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            is_active: !currentStatus,
+          }),
+        }
+      );
+
+      if (res.ok) {
+        setNotificationBanners((prev) =>
+          prev.map((banner) =>
+            banner.id === bannerId
+              ? {
+                ...banner,
+                is_active: !currentStatus,
+              }
+              : banner
+          )
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+
+
+  const handleDeleteNotificationBanner = async (
+    bannerId: number
+  ) => {
+    if (!confirm("Delete this notification banner?"))
+      return;
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/banner/notification-banner/${bannerId}/delete/`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+        setNotificationBanners((prev) =>
+          prev.filter((b) => b.id !== bannerId)
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+
 
   const ordersToShow = filteredOrders.slice(0, visibleOrdersCount);
 
@@ -1343,6 +1556,241 @@ export default function AdminManagementPage() {
           text-align: center;
           margin-bottom: 24px;
         }
+
+
+
+
+
+
+        /* =========================
+   Notification Banner Section
+========================= */
+
+.notification-preview {
+  margin-top: 12px;
+}
+
+.notification-preview img {
+  width: 220px;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border-card);
+}
+
+.notification-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.notification-card {
+  background: var(--bg-list-card);
+  border: 1px solid var(--border-list-card);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.notification-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.notify-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.notification-info {
+  padding: 16px;
+}
+
+.notification-info h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0 0 8px;
+}
+
+.notification-info p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+  word-break: break-word;
+}
+
+.notify-status-active {
+  display: inline-block;
+  background: var(--badge-success-bg);
+  color: var(--badge-success-text);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.notify-status-inactive {
+  display: inline-block;
+  background: rgba(244, 67, 54, 0.15);
+  color: #ef5350;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.notify-action-btn {
+  flex: 1;
+  background: var(--bg-toggle-btn);
+  color: var(--text-toggle-btn);
+  border: 1px solid var(--border-toggle-btn);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notify-action-btn:hover {
+  background: var(--bg-toggle-hover);
+  transform: translateY(-1px);
+}
+
+.notify-action-btn.danger {
+  background: rgba(244, 67, 54, 0.15);
+  color: #ef5350;
+  border: 1px solid rgba(244, 67, 54, 0.25);
+}
+
+.notify-action-btn.danger:hover {
+  background: rgba(244, 67, 54, 0.22);
+}
+
+/* Notification Form Styling */
+
+.banner-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.banner-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.banner-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.banner-form input[type="text"],
+.banner-form input[type="file"] {
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--text-input);
+  font-size: 14px;
+  outline: none;
+}
+
+.banner-form input[type="text"]:focus {
+  border-color: var(--primary, #e8320a);
+}
+
+.banner-form button {
+  background: var(--primary, #e8320a);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.banner-form button:hover {
+  filter: brightness(1.08);
+}
+
+.banner-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success-message {
+  background: rgba(76, 175, 80, 0.15);
+  color: #81c784;
+  border: 1px solid rgba(76, 175, 80, 0.25);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.error-message {
+  background: rgba(244, 67, 54, 0.15);
+  color: #e57373;
+  border: 1px solid rgba(244, 67, 54, 0.25);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* Section Header */
+
+.content-card {
+  background: var(--bg-form-panel);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 30px;
+}
+
+.section-header {
+  margin-bottom: 24px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+  .banner-form {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-actions {
+    flex-direction: column;
+  }
+
+  .notification-preview img {
+    width: 100%;
+  }
+}
+
+
       `}</style>
 
       {/* ADMIN HEADER */}
@@ -1473,26 +1921,41 @@ export default function AdminManagementPage() {
                 onClick={() => setActiveTab("orders")}
                 className={`tab-btn ${activeTab === "orders" ? "active" : ""}`}
               >
-                📦 Orders ({orders.length})
+                Orders ({orders.length})
               </button>
               <button
                 onClick={() => setActiveTab("products")}
                 className={`tab-btn ${activeTab === "products" ? "active" : ""}`}
               >
-                🏷️ Products ({products.length})
+                Products ({products.length})
               </button>
               <button
                 onClick={() => setActiveTab("categories")}
                 className={`tab-btn ${activeTab === "categories" ? "active" : ""}`}
               >
-                📁 Categories ({categories.length})
+                Categories ({categories.length})
               </button>
               <button
                 onClick={() => setActiveTab("banners")}
                 className={`tab-btn ${activeTab === "banners" ? "active" : ""}`}
               >
-                🖼️ Banners ({banners.length})
+                Banners ({banners.length})
               </button>
+
+
+              <button
+                onClick={() =>
+                  setActiveTab("notification_banners")
+                }
+                className={`tab-btn ${activeTab === "notification_banners"
+                  ? "active"
+                  : ""
+                  }`}
+              >
+                 Notification Banner ({notificationBanners.length})
+              </button>
+
+
               <button
                 onClick={() => {
                   setActiveTab("admins");
@@ -1504,7 +1967,7 @@ export default function AdminManagementPage() {
                 }}
                 className={`tab-btn ${activeTab === "admins" ? "active" : ""}`}
               >
-                🔑 Manage Admins
+                 Manage Admins
               </button>
             </section>
 
@@ -2457,6 +2920,185 @@ export default function AdminManagementPage() {
                 </div>
               </div>
             )}
+
+
+
+
+
+
+            {activeTab === "notification_banners" && (
+              <section className="content-card">
+                <div className="section-header">
+                  <h2>🔔 Notification Banner Management</h2>
+                </div>
+
+                {/* Create Form */}
+
+                <form
+                  onSubmit={handleCreateNotificationBanner}
+                  className="banner-form"
+                >
+                  <div className="form-group">
+                    <label>Title</label>
+                    <input
+                      type="text"
+                      value={notifyTitle}
+                      onChange={(e) =>
+                        setNotifyTitle(e.target.value)
+                      }
+                      placeholder="Banner title"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Target URL</label>
+                    <input
+                      type="text"
+                      value={notifyTargetUrl}
+                      onChange={(e) =>
+                        setNotifyTargetUrl(e.target.value)
+                      }
+                      placeholder="/products"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Banner Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleNotifyImageChange}
+                    />
+                  </div>
+
+                  {notifyImagePreview && (
+                    <div className="notification-preview">
+                      <img
+                        src={notifyImagePreview}
+                        alt="Preview"
+                      />
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={notifyActive}
+                        onChange={(e) =>
+                          setNotifyActive(e.target.checked)
+                        }
+                      />
+                      Active Banner
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={notifySubmitLoading}
+                  >
+                    {notifySubmitLoading
+                      ? "Creating..."
+                      : "Create Notification Banner"}
+                  </button>
+
+                  {notifyFormMsg && (
+                    <div
+                      className={
+                        notifyFormMsg.type === "success"
+                          ? "success-message"
+                          : "error-message"
+                      }
+                    >
+                      {notifyFormMsg.text}
+                    </div>
+                  )}
+                </form>
+
+                <hr style={{ margin: "30px 0" }} />
+
+                <h3>
+                  Notification Banners (
+                  {notificationBanners.length})
+                </h3>
+
+                {loadingNotificationBanners ? (
+                  <p>Loading...</p>
+                ) : (
+                  <div className="notification-grid">
+                    {notificationBanners.map((banner) => (
+                      <div
+                        key={banner.id}
+                        className="notification-card"
+                      >
+                        <img
+                          src={`${BASE_URL}${banner.image}`}
+                          alt={banner.title}
+                          className="notify-image"
+                        />
+
+                        <div className="notification-info">
+                          <h4>{banner.title}</h4>
+
+                          <p>
+                            URL: {banner.target_url}
+                          </p>
+
+                          <span
+                            className={
+                              banner.is_active
+                                ? "notify-status-active"
+                                : "notify-status-inactive"
+                            }
+                          >
+                            {banner.is_active
+                              ? "ACTIVE"
+                              : "INACTIVE"}
+                          </span>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "10px",
+                              marginTop: "15px",
+                            }}
+                          >
+                            <button
+                              className="notify-action-btn"
+                              onClick={() =>
+                                handleNotificationBannerStatus(
+                                  banner.id,
+                                  banner.is_active
+                                )
+                              }
+                            >
+                              {banner.is_active
+                                ? "Deactivate"
+                                : "Activate"}
+                            </button>
+
+                            <button
+                              className="notify-action-btn danger"
+                              onClick={() =>
+                                handleDeleteNotificationBanner(
+                                  banner.id
+                                )
+                              }
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+
+
 
             {/* 6. ADMINS TAB (CREATE ADMIN USER) */}
             {activeTab === "admins" && (
