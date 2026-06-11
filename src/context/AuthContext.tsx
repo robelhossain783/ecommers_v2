@@ -37,12 +37,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("buyfest_customer");
+      const stored = sessionStorage.getItem("buyfest_customer");
       if (stored) {
         setUser(JSON.parse(stored));
       }
     } catch {
-      localStorage.removeItem("buyfest_customer");
+      sessionStorage.removeItem("buyfest_customer");
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         is_staff: data.is_staff,
       };
       setUser(customerUser);
-      localStorage.setItem("buyfest_customer", JSON.stringify(customerUser));
+      try {
+        sessionStorage.setItem("buyfest_customer", JSON.stringify(customerUser));
+        sessionStorage.setItem("buyfest_last_activity", Date.now().toString());
+      } catch (e) { }
       return { success: true };
     } catch {
       return { success: false, error: "Network error. Please try again." };
@@ -95,8 +98,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem("buyfest_customer");
+    try {
+      sessionStorage.removeItem("buyfest_customer");
+      sessionStorage.removeItem("buyfest_last_activity");
+    } catch (e) { }
   }, []);
+
+  // Auto-logout after 5 minutes of inactivity
+  useEffect(() => {
+    if (!user) return;
+
+    let lastActivity = Date.now();
+    try {
+      const savedLastActivity = sessionStorage.getItem("buyfest_last_activity");
+      if (savedLastActivity) {
+        lastActivity = parseInt(savedLastActivity, 10);
+      } else {
+        sessionStorage.setItem("buyfest_last_activity", lastActivity.toString());
+      }
+    } catch (e) { }
+
+    const handleActivity = () => {
+      const now = Date.now();
+      lastActivity = now;
+      try {
+        sessionStorage.setItem("buyfest_last_activity", now.toString());
+      } catch (e) { }
+    };
+
+    const events = ["mousemove", "mousedown", "keypress", "scroll", "touchstart", "click"];
+
+    events.forEach((event) => {
+      window.addEventListener(event, handleActivity);
+    });
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      let storedLastActivity = lastActivity;
+      try {
+        const savedLastActivity = sessionStorage.getItem("buyfest_last_activity");
+        if (savedLastActivity) {
+          storedLastActivity = parseInt(savedLastActivity, 10);
+        }
+      } catch (e) { }
+
+      if (now - storedLastActivity > 5 * 60 * 1000) {
+        logout();
+      }
+    }, 5000);
+
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, handleActivity);
+      });
+      clearInterval(interval);
+    };
+  }, [user, logout]);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
