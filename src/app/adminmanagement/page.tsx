@@ -702,8 +702,16 @@ export default function AdminManagementPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setNotificationBanners(data.data || []);
-        
+        // Handle both {data: [...]} and plain array responses
+        if (Array.isArray(data)) {
+          setNotificationBanners(data);
+        } else if (data.data && Array.isArray(data.data)) {
+          setNotificationBanners(data.data);
+        } else if (data.results && Array.isArray(data.results)) {
+          setNotificationBanners(data.results);
+        } else {
+          setNotificationBanners([]);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -722,10 +730,18 @@ export default function AdminManagementPage() {
 
     setNotifyFormMsg(null);
 
-    if (!notifyTitle || !notifyImageFile) {
+    if (!notifyTitle) {
       setNotifyFormMsg({
         type: "error",
-        text: "Title and Image required",
+        text: "❌ Title is required!",
+      });
+      return;
+    }
+
+    if (!notifyImageFile) {
+      setNotifyFormMsg({
+        type: "error",
+        text: "❌ Please select a banner image!",
       });
       return;
     }
@@ -736,12 +752,14 @@ export default function AdminManagementPage() {
 
     formData.append("title", notifyTitle);
     formData.append("target_url", notifyTargetUrl);
-    formData.append(
-      "is_active",
-      notifyActive ? "true" : "false"
-    );
-
+    formData.append("is_active", notifyActive ? "true" : "false");
     formData.append("image", notifyImageFile);
+
+    // Include optional date fields if filled
+    const startDateEl = document.getElementById("notifyStartDate") as HTMLInputElement;
+    const endDateEl = document.getElementById("notifyEndDate") as HTMLInputElement;
+    if (startDateEl?.value) formData.append("start_date", startDateEl.value);
+    if (endDateEl?.value) formData.append("end_date", endDateEl.value);
 
     try {
       const res = await fetch(
@@ -757,21 +775,25 @@ export default function AdminManagementPage() {
       if (res.ok) {
         setNotifyFormMsg({
           type: "success",
-          text: "Notification Banner Created",
+          text: "🎉 Notification Banner created successfully!",
         });
 
         setNotifyTitle("");
         setNotifyTargetUrl("/");
         setNotifyActive(true);
-
         setNotifyImageFile(null);
         setNotifyImagePreview(null);
 
+        // Reset date inputs
+        if (startDateEl) startDateEl.value = "";
+        if (endDateEl) endDateEl.value = "";
+
         fetchNotificationBanners();
       } else {
+        const errorText = typeof data === "object" ? JSON.stringify(data) : String(data);
         setNotifyFormMsg({
           type: "error",
-          text: JSON.stringify(data),
+          text: `❌ Failed: ${errorText}`,
         });
       }
     } catch (err) {
@@ -802,20 +824,24 @@ export default function AdminManagementPage() {
         }
       );
 
+      const data = await res.json();
+
       if (res.ok) {
+        // Update local state immediately
         setNotificationBanners((prev) =>
           prev.map((banner) =>
             banner.id === bannerId
-              ? {
-                ...banner,
-                is_active: !currentStatus,
-              }
+              ? { ...banner, is_active: !currentStatus }
               : banner
           )
         );
+      } else {
+        console.error("Status update failed:", data);
+        alert(`❌ Status update failed: ${data.message || JSON.stringify(data)}`);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Network error updating status:", err);
+      alert("❌ Connection error while updating status");
     }
   };
 
@@ -1557,216 +1583,253 @@ export default function AdminManagementPage() {
           margin-bottom: 24px;
         }
 
+/* =============================================
+   PREMIUM NOTIFICATION BANNER REDESIGN
+============================================= */
 
-
-
-
-
-        /* =========================
-   Notification Banner Section
-========================= */
-
-.notification-preview {
-  margin-top: 12px;
-}
-
-.notification-preview img {
-  width: 220px;
-  height: auto;
-  border-radius: 10px;
-  border: 1px solid var(--border-card);
-}
-
-.notification-grid {
+/* --- Notification Grid Cards --- */
+.nb-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
 }
 
-.notification-card {
+.nb-card {
   background: var(--bg-list-card);
   border: 1px solid var(--border-list-card);
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  position: relative;
 }
 
-.notification-card:hover {
-  background: var(--bg-card-hover);
+.nb-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
   border-color: var(--border-hover);
-  transform: translateY(-2px);
 }
 
-.notify-image {
+.nb-card-image-wrap {
+  position: relative;
   width: 100%;
-  height: 200px;
+  height: 185px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(232,50,10,0.08), rgba(100,50,200,0.08));
+}
+
+.nb-card-image-wrap img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.4s ease;
 }
 
-.notification-info {
-  padding: 16px;
+.nb-card:hover .nb-card-image-wrap img {
+  transform: scale(1.04);
 }
 
-.notification-info h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-strong);
-  margin: 0 0 8px;
-}
-
-.notification-info p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin: 0 0 12px;
-  word-break: break-word;
-}
-
-.notify-status-active {
-  display: inline-block;
-  background: var(--badge-success-bg);
-  color: var(--badge-success-text);
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.notify-status-inactive {
-  display: inline-block;
-  background: rgba(244, 67, 54, 0.15);
-  color: #ef5350;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.notification-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.notify-action-btn {
-  flex: 1;
-  background: var(--bg-toggle-btn);
-  color: var(--text-toggle-btn);
-  border: 1px solid var(--border-toggle-btn);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.notify-action-btn:hover {
-  background: var(--bg-toggle-hover);
-  transform: translateY(-1px);
-}
-
-.notify-action-btn.danger {
-  background: rgba(244, 67, 54, 0.15);
-  color: #ef5350;
-  border: 1px solid rgba(244, 67, 54, 0.25);
-}
-
-.notify-action-btn.danger:hover {
-  background: rgba(244, 67, 54, 0.22);
-}
-
-/* Notification Form Styling */
-
-.banner-form {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.banner-form .form-group {
+.nb-no-image {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
   gap: 8px;
 }
 
-.banner-form label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted);
+.nb-no-image span:first-child {
+  font-size: 36px;
+  opacity: 0.4;
 }
 
-.banner-form input[type="text"],
-.banner-form input[type="file"] {
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: var(--text-input);
-  font-size: 14px;
-  outline: none;
-}
-
-.banner-form input[type="text"]:focus {
-  border-color: var(--primary, #e8320a);
-}
-
-.banner-form button {
-  background: var(--primary, #e8320a);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 14px 20px;
+/* Status badge overlay on image */
+.nb-status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 30px;
+  font-size: 11px;
   font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  border: 1px solid;
+  animation: fadeIn 0.25s ease;
 }
 
-.banner-form button:hover {
-  filter: brightness(1.08);
+.nb-status-badge.active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.4);
 }
 
-.banner-form button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.nb-status-badge.inactive {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
-.success-message {
-  background: rgba(76, 175, 80, 0.15);
-  color: #81c784;
-  border: 1px solid rgba(76, 175, 80, 0.25);
-  padding: 12px;
-  border-radius: 8px;
+/* Card Body */
+.nb-card-body {
+  padding: 18px 20px 20px;
 }
 
-.error-message {
-  background: rgba(244, 67, 54, 0.15);
-  color: #e57373;
-  border: 1px solid rgba(244, 67, 54, 0.25);
-  padding: 12px;
-  border-radius: 8px;
-}
-
-/* Section Header */
-
-.content-card {
-  background: var(--bg-form-panel);
-  border: 1px solid var(--border-card);
-  border-radius: 16px;
-  padding: 30px;
-}
-
-.section-header {
-  margin-bottom: 24px;
-}
-
-.section-header h2 {
-  font-size: 20px;
+.nb-card-title {
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-strong);
+  margin: 0 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nb-card-url {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nb-card-url a {
+  color: #e8320a;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nb-card-url a:hover {
+  text-decoration: underline;
+}
+
+.nb-card-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+/* Action Buttons */
+.nb-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.nb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  white-space: nowrap;
+}
+
+.nb-btn:active {
+  transform: scale(0.97);
+}
+
+/* Activate button — green */
+.nb-btn-activate {
+  background: rgba(34, 197, 94, 0.13);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.nb-btn-activate:hover {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: rgba(34, 197, 94, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34,197,94,0.15);
+}
+
+/* Deactivate button — amber/orange */
+.nb-btn-deactivate {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.nb-btn-deactivate:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245,158,11,0.15);
+}
+
+/* Delete button — red */
+.nb-btn-delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.nb-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239,68,68,0.15);
+}
+
+/* Divider */
+.nb-divider {
+  margin: 28px 0;
+  border: none;
+  border-top: 1px solid var(--border-card);
+}
+
+/* Empty State */
+.nb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: var(--bg-sub-card);
+  border-radius: 16px;
+  border: 2px dashed var(--border-card);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.nb-empty-icon {
+  font-size: 48px;
+  margin-bottom: 14px;
+  opacity: 0.6;
+}
+
+.nb-empty h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0 0 6px;
+}
+
+.nb-empty p {
+  font-size: 13px;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -1799,10 +1862,11 @@ export default function AdminManagementPage() {
           <Link href="/adminmanagement" className="logo" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
             <span className="logo-text">
               <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+              <span style={{ fontSize: "22px", fontWeight: "600", color: "var(--text-muted)", marginLeft: "4px" }}>Dashboard</span>
             </span>
           </Link>
-          <span style={{ fontSize: "16px", fontWeight: "600", color: "var(--text-muted)", marginLeft: "4px" }}>Dashboard</span>
-          <span className="badge">Control Center</span>
+
+
         </div>
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <Link href="/" className="home-link">
@@ -1871,7 +1935,7 @@ export default function AdminManagementPage() {
                   />
                 </div>
                 <button type="submit" disabled={authLoading} className="form-button" style={{ marginTop: "10px" }}>
-                  {authLoading ? <div className="spinner"></div> : "Unlock Dashboard 🔒"}
+                  {authLoading ? <div className="spinner"></div> : "Dashboard Login"}
                 </button>
               </form>
             </div>
@@ -1906,6 +1970,11 @@ export default function AdminManagementPage() {
                 <span className="stat-label">Banners</span>
                 <span className="stat-value">{banners.length}</span>
                 <span className="stat-detail">Active promotional sliders</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Notify Banners</span>
+                <span className="stat-value">{notificationBanners.length}</span>
+                <span className="stat-detail">{notificationBanners.filter(b => b.is_active).length} active notifications</span>
               </div>
             </section>
 
@@ -1952,7 +2021,7 @@ export default function AdminManagementPage() {
                   : ""
                   }`}
               >
-                 Notification Banner ({notificationBanners.length})
+                Notification Banner ({notificationBanners.length})
               </button>
 
 
@@ -1967,7 +2036,7 @@ export default function AdminManagementPage() {
                 }}
                 className={`tab-btn ${activeTab === "admins" ? "active" : ""}`}
               >
-                 Manage Admins
+                Manage Admins
               </button>
             </section>
 
@@ -1978,16 +2047,16 @@ export default function AdminManagementPage() {
               <div>
                 <div className="dashboard-grid">
                   <div className="form-panel">
-                    <h3 className="form-title">📊 Store Status Summary</h3>
+                    <h3 className="form-title">Summary</h3>
                     <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: "1.6", marginBottom: "20px" }}>
-                      Welcome back! Your shop is connected and running active operations. Here is a live breakdown of your database metrics across products, categories, orders, and banners.
+                      Welcome back! Here is Dashboard Summary. Here is a live breakdown of database metrics across products, categories, orders, and banners.
                     </p>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                       {/* 1. Orders Status Breakdown */}
                       <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
                         <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "12px" }}>
-                          📦 Order Status Breakdown ({orders.length} Total)
+                          Order Status Breakdown ({orders.length} Total)
                         </h4>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: "12px" }}>
                           <div style={{ background: "var(--status-pending-bg)", borderLeft: "3px solid #ff9800", padding: "8px 12px", borderRadius: "4px" }}>
@@ -2020,7 +2089,7 @@ export default function AdminManagementPage() {
                       {/* 2. Products Inventory Health */}
                       <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
                         <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "12px" }}>
-                          🏷️ Products & Inventory ({products.length} Total)
+                          Products & Inventory ({products.length} Total)
                         </h4>
                         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
@@ -2047,7 +2116,7 @@ export default function AdminManagementPage() {
                       {/* 3. Categories & Banners */}
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                         <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
-                          <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "8px" }}>📁 Categories</h4>
+                          <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "8px" }}>Categories</h4>
                           <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--text-strong)" }}>
                             {categories.length}
                           </div>
@@ -2057,7 +2126,7 @@ export default function AdminManagementPage() {
                         </div>
 
                         <div style={{ background: "var(--bg-sub-card)", border: "1px solid var(--border-sub-card)", borderRadius: "8px", padding: "16px" }}>
-                          <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "8px" }}>🖼️ Slider Banners</h4>
+                          <h4 style={{ color: "var(--text-strong)", fontSize: "14px", marginBottom: "8px" }}>Slider Banners</h4>
                           <div style={{ fontSize: "24px", fontWeight: "bold", color: "var(--text-strong)" }}>
                             {banners.length}
                           </div>
@@ -2290,7 +2359,7 @@ export default function AdminManagementPage() {
               <div>
                 {/* Create Product Form */}
                 <div className="form-panel">
-                  <h3 className="form-title">⚡ Add New Product</h3>
+                  <h3 className="form-title">Add New Product</h3>
 
                   {productFormMsg && (
                     <div className={`msg-box ${productFormMsg.type}`}>
@@ -2308,7 +2377,7 @@ export default function AdminManagementPage() {
                         className="form-input"
                         value={prodName}
                         onChange={(e) => handleProdNameChange(e.target.value)}
-                        placeholder="e.g. Redmi Buds 5 Pro"
+                        placeholder="e.g. Enter product name"
                       />
                     </div>
 
@@ -2392,7 +2461,7 @@ export default function AdminManagementPage() {
                         className="form-input"
                         value={prodRegPrice}
                         onChange={(e) => setProdRegPrice(e.target.value)}
-                        placeholder="Before discount, e.g. 4000"
+                        placeholder="Regular price, e.g. 4000"
                       />
                     </div>
 
@@ -2525,7 +2594,7 @@ export default function AdminManagementPage() {
               <div>
                 {/* Create Category Form */}
                 <div className="form-panel">
-                  <h3 className="form-title">📁 Create Product Category</h3>
+                  <h3 className="form-title">Create Product Category</h3>
 
                   {categoryFormMsg && (
                     <div className={`msg-box ${categoryFormMsg.type}`}>
@@ -2543,7 +2612,7 @@ export default function AdminManagementPage() {
                         className="form-input"
                         value={catName}
                         onChange={(e) => handleCatNameChange(e.target.value)}
-                        placeholder="e.g. Smart Watch"
+                        placeholder="e.g. Enter category name"
                       />
                     </div>
 
@@ -2595,7 +2664,7 @@ export default function AdminManagementPage() {
                             <div className="spinner"></div> Creating Category...
                           </>
                         ) : (
-                          "🚀 Create Category"
+                          "Create Category"
                         )}
                       </button>
                     </div>
@@ -2694,7 +2763,7 @@ export default function AdminManagementPage() {
               <div>
                 {/* Create Banner Form */}
                 <div className="form-panel">
-                  <h3 className="form-title">🖼️ Add New Hero Banner</h3>
+                  <h3 className="form-title">Add New Hero Banner</h3>
 
                   {bannerFormMsg && (
                     <div className={`msg-box ${bannerFormMsg.type}`}>
@@ -2928,168 +2997,208 @@ export default function AdminManagementPage() {
 
             {activeTab === "notification_banners" && (
               <section className="content-card">
-                <div className="section-header">
-                  <h2>🔔 Notification Banner Management</h2>
+                {/* Header */}
+                <div className="section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h2>Notification Banner Management</h2>
+                  <button onClick={fetchNotificationBanners} className="refresh-btn">
+                    🔄 Refresh ({loadingNotificationBanners ? "Loading..." : "Synced"})
+                  </button>
                 </div>
 
-                {/* Create Form */}
-
-                <form
-                  onSubmit={handleCreateNotificationBanner}
-                  className="banner-form"
-                >
-                  <div className="form-group">
-                    <label>Title</label>
-                    <input
-                      type="text"
-                      value={notifyTitle}
-                      onChange={(e) =>
-                        setNotifyTitle(e.target.value)
-                      }
-                      placeholder="Banner title"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Target URL</label>
-                    <input
-                      type="text"
-                      value={notifyTargetUrl}
-                      onChange={(e) =>
-                        setNotifyTargetUrl(e.target.value)
-                      }
-                      placeholder="/products"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Banner Image</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleNotifyImageChange}
-                    />
-                  </div>
-
-                  {notifyImagePreview && (
-                    <div className="notification-preview">
-                      <img
-                        src={notifyImagePreview}
-                        alt="Preview"
-                      />
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={notifyActive}
-                        onChange={(e) =>
-                          setNotifyActive(e.target.checked)
-                        }
-                      />
-                      Active Banner
-                    </label>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={notifySubmitLoading}
-                  >
-                    {notifySubmitLoading
-                      ? "Creating..."
-                      : "Create Notification Banner"}
-                  </button>
+                {/* ── Create Form ── */}
+                <div className="form-panel" style={{ marginBottom: "30px" }}>
+                  <h3 className="form-title">Create New Notification Banner</h3>
 
                   {notifyFormMsg && (
-                    <div
-                      className={
-                        notifyFormMsg.type === "success"
-                          ? "success-message"
-                          : "error-message"
-                      }
-                    >
+                    <div className={`msg-box ${notifyFormMsg.type}`} style={{ marginBottom: "16px" }}>
                       {notifyFormMsg.text}
                     </div>
                   )}
-                </form>
 
-                <hr style={{ margin: "30px 0" }} />
+                  <form onSubmit={handleCreateNotificationBanner} className="form-grid">
+                    {/* Title */}
+                    <div className="form-group">
+                      <label className="form-label">Title *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={notifyTitle}
+                        onChange={(e) => setNotifyTitle(e.target.value)}
+                        placeholder="e.g. Summer Sale!"
+                        required
+                      />
+                    </div>
 
-                <h3>
-                  Notification Banners (
-                  {notificationBanners.length})
-                </h3>
+                    {/* Target URL */}
+                    <div className="form-group">
+                      <label className="form-label">Target URL</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={notifyTargetUrl}
+                        onChange={(e) => setNotifyTargetUrl(e.target.value)}
+                        placeholder="/products"
+                      />
+                    </div>
 
+                    {/* Image Upload */}
+                    <div className="form-group full-width">
+                      <label className="form-label">Banner Image *</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="form-input"
+                        style={{ padding: "10px" }}
+                        onChange={handleNotifyImageChange}
+                      />
+                      {notifyImagePreview && (
+                        <div style={{ marginTop: "14px" }}>
+                          <img
+                            src={notifyImagePreview}
+                            alt="Preview"
+                            style={{
+                              width: "260px",
+                              height: "140px",
+                              objectFit: "cover",
+                              borderRadius: "12px",
+                              border: "2px solid var(--border-card)",
+                              boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Start / End Date */}
+                    <div className="form-group">
+                      <label className="form-label">Start Date (Optional)</label>
+                      <input type="date" className="form-input" id="notifyStartDate" />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">End Date (Optional)</label>
+                      <input type="date" className="form-input" id="notifyEndDate" />
+                    </div>
+
+                    {/* Active toggle */}
+                    <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "10px", flexDirection: "row", paddingTop: "8px" }}>
+                      <input
+                        type="checkbox"
+                        id="notifyActiveCheck"
+                        checked={notifyActive}
+                        onChange={(e) => setNotifyActive(e.target.checked)}
+                        style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#e8320a" }}
+                      />
+                      <label htmlFor="notifyActiveCheck" className="form-label" style={{ margin: 0, cursor: "pointer" }}>
+                        Set as Active Banner
+                      </label>
+                    </div>
+
+                    {/* Submit */}
+                    <div className="form-group full-width">
+                      <button type="submit" className="form-button" disabled={notifySubmitLoading}>
+                        {notifySubmitLoading
+                          ? <><div className="spinner" style={{ display: "inline-block", width: "16px", height: "16px", marginRight: "8px" }}></div> Creating...</>
+                          : "🚀 Create Notification Banner"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* ── Divider ── */}
+                <hr className="nb-divider" />
+
+                {/* ── List Header ── */}
+                <div className="data-list-header" style={{ marginBottom: "4px" }}>
+                  <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)" }}>
+                    All Notification Banners
+                    <span style={{ fontSize: "14px", fontWeight: "500", color: "var(--text-muted)", marginLeft: "8px" }}>
+                      ({notificationBanners.length} total · {notificationBanners.filter(b => b.is_active).length} active)
+                    </span>
+                  </h3>
+                </div>
+
+                {/* ── Loading ── */}
                 {loadingNotificationBanners ? (
-                  <p>Loading...</p>
+                  <div style={{ textAlign: "center", padding: "60px 0" }}>
+                    <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
+                    <p style={{ color: "var(--text-muted)" }}>Loading notification banners...</p>
+                  </div>
+
+                ) : notificationBanners.length === 0 ? (
+                  /* ── Empty State ── */
+                  <div className="nb-empty">
+                    <div className="nb-empty-icon">🔔</div>
+                    <h4>No Notification Banners Yet</h4>
+                    <p>Create your first notification banner using the form above.</p>
+                  </div>
+
                 ) : (
-                  <div className="notification-grid">
+                  /* ── Banner Grid ── */
+                  <div className="nb-grid">
                     {notificationBanners.map((banner) => (
-                      <div
-                        key={banner.id}
-                        className="notification-card"
-                      >
-                        <img
-                          src={`${BASE_URL}${banner.image}`}
-                          alt={banner.title}
-                          className="notify-image"
-                        />
+                      <div key={banner.id} className="nb-card">
 
-                        <div className="notification-info">
-                          <h4>{banner.title}</h4>
+                        {/* Image + Status overlay */}
+                        <div className="nb-card-image-wrap">
+                          {banner.image ? (
+                            <img
+                              src={banner.image.startsWith("http") ? banner.image : `${BASE_URL}${banner.image}`}
+                              alt={banner.title}
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <div className="nb-no-image">
+                              <span>🖼️</span>
+                              <span>No Image</span>
+                            </div>
+                          )}
 
-                          <p>
-                            URL: {banner.target_url}
+                          {/* Status badge on image */}
+                          <span className={`nb-status-badge ${banner.is_active ? "active" : "inactive"}`}>
+                            {banner.is_active ? "● Active" : "● Inactive"}
+                          </span>
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="nb-card-body">
+                          <p className="nb-card-title" title={banner.title}>{banner.title}</p>
+
+                          <div className="nb-card-url">
+                            <span>🔗</span>
+                            <a href={banner.target_url} target="_blank" rel="noreferrer">
+                              {banner.target_url}
+                            </a>
+                          </div>
+
+                          {banner.start_date && (
+                            <p className="nb-card-date">
+                              📅 {banner.start_date} → {banner.end_date ?? "No end"}
+                            </p>
+                          )}
+
+                          <p className="nb-card-date" style={{ marginBottom: 0 }}>
+                            🕐 {new Date(banner.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                           </p>
 
-                          <span
-                            className={
-                              banner.is_active
-                                ? "notify-status-active"
-                                : "notify-status-inactive"
-                            }
-                          >
-                            {banner.is_active
-                              ? "ACTIVE"
-                              : "INACTIVE"}
-                          </span>
-
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "10px",
-                              marginTop: "15px",
-                            }}
-                          >
+                          {/* Action buttons */}
+                          <div className="nb-actions">
                             <button
-                              className="notify-action-btn"
-                              onClick={() =>
-                                handleNotificationBannerStatus(
-                                  banner.id,
-                                  banner.is_active
-                                )
-                              }
+                              className={`nb-btn ${banner.is_active ? "nb-btn-deactivate" : "nb-btn-activate"}`}
+                              onClick={() => handleNotificationBannerStatus(banner.id, banner.is_active)}
                             >
-                              {banner.is_active
-                                ? "Deactivate"
-                                : "Activate"}
+                              {banner.is_active ? "⏸ Deactivate" : "▶ Activate"}
                             </button>
 
                             <button
-                              className="notify-action-btn danger"
-                              onClick={() =>
-                                handleDeleteNotificationBanner(
-                                  banner.id
-                                )
-                              }
+                              className="nb-btn nb-btn-delete"
+                              onClick={() => handleDeleteNotificationBanner(banner.id)}
                             >
-                              Delete
+                              🗑 Delete
                             </button>
                           </div>
                         </div>
+
                       </div>
                     ))}
                   </div>

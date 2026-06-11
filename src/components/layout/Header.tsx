@@ -1,12 +1,44 @@
 "use client";
-import { List } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Home, Menu as MenuIcon, ShoppingCart, ClipboardList, User } from "lucide-react";
+import {
+  List,
+  Home,
+  Menu as MenuIcon,
+  ShoppingCart,
+  ClipboardList,
+  User,
+  X,
+  ChevronRight,
+  Apple,
+  Egg,
+  Fish,
+  Croissant,
+  Snowflake,
+  Cookie,
+  CupSoda,
+  GlassWater,
+  Sparkles,
+  ChefHat,
+  Baby,
+  Heart,
+  Smile,
+  Laptop,
+  Smartphone,
+  Tablet,
+  Watch,
+  Wallet,
+  Shirt,
+  Drumstick,
+  Cpu,
+  FolderOpen,
+  Coffee,
+  Utensils
+} from "lucide-react";
 import { searchProducts } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 
@@ -14,6 +46,40 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
 interface HeaderProps {
   cartCount?: number;
+}
+
+function getCategoryIcon(slug: string) {
+  const s = slug.toLowerCase();
+  if (s.includes("fruit") || s.includes("veg")) return <Apple size={20} strokeWidth={1.5} />;
+  if (s.includes("dairy") || s.includes("egg")) return <Egg size={20} strokeWidth={1.5} />;
+  if (s.includes("meat") || s.includes("poultry") || s.includes("chicken")) return <Drumstick size={20} strokeWidth={1.5} />;
+  if (s.includes("seafood") || s.includes("fish")) return <Fish size={20} strokeWidth={1.5} />;
+  if (s.includes("bakery") || s.includes("bread") || s.includes("bake")) return <Croissant size={20} strokeWidth={1.5} />;
+  if (s.includes("canned")) return <FolderOpen size={20} strokeWidth={1.5} />;
+  if (s.includes("frozen")) return <Snowflake size={20} strokeWidth={1.5} />;
+  if (s.includes("pasta") || s.includes("rice")) return <Utensils size={20} strokeWidth={1.5} />;
+  if (s.includes("breakfast") || s.includes("coffee")) return <Coffee size={20} strokeWidth={1.5} />;
+  if (s.includes("snack") || s.includes("chip") || s.includes("cookie")) return <Cookie size={20} strokeWidth={1.5} />;
+  if (s.includes("beverage") || s.includes("drink")) return <CupSoda size={20} strokeWidth={1.5} />;
+  if (s.includes("condiment") || s.includes("sauce")) return <GlassWater size={20} strokeWidth={1.5} />;
+  if (s.includes("spice") || s.includes("season")) return <Sparkles size={20} strokeWidth={1.5} />;
+  if (s.includes("bakeware") || s.includes("baking") || s.includes("supply")) return <ChefHat size={20} strokeWidth={1.5} />;
+  if (s.includes("baby") || s.includes("kids") || s.includes("child")) return <Baby size={20} strokeWidth={1.5} />;
+  if (s.includes("health") || s.includes("wellness")) return <Heart size={20} strokeWidth={1.5} />;
+  if (s.includes("household") || s.includes("house")) return <Home size={20} strokeWidth={1.5} />;
+  if (s.includes("personal") || s.includes("care")) return <Smile size={20} strokeWidth={1.5} />;
+  if (s.includes("pet") || s.includes("dog") || s.includes("cat")) return <Sparkles size={20} strokeWidth={1.5} />;
+
+  // Tech / default
+  if (s.includes("wallet")) return <Wallet size={20} strokeWidth={1.5} />;
+  if (s.includes("gadget")) return <Cpu size={20} strokeWidth={1.5} />;
+  if (s.includes("mobile") || s.includes("phone")) return <Smartphone size={20} strokeWidth={1.5} />;
+  if (s.includes("laptop")) return <Laptop size={20} strokeWidth={1.5} />;
+  if (s.includes("tablet")) return <Tablet size={20} strokeWidth={1.5} />;
+  if (s.includes("watch")) return <Watch size={20} strokeWidth={1.5} />;
+  if (s.includes("fashion") || s.includes("fasion") || s.includes("cloth")) return <Shirt size={20} strokeWidth={1.5} />;
+
+  return <FolderOpen size={20} strokeWidth={1.5} />;
 }
 
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
@@ -88,7 +154,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           const data = await res.json();
           const mapped = data.map((cat: any) => {
             const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-");
-            return { name: cat.name, slug, icon: "" };
+            return { name: cat.name, slug, image: cat.image, icon: "" };
           });
           setCategoriesList(mapped);
         }
@@ -419,7 +485,17 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               <div className="sub-nav-dropdown-menu">
                 {categoriesList.map((cat) => (
                   <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="sub-nav-dropdown-item">
-                    <span className="cat-icon">{cat.icon || "📁"}</span>
+                    <span className="cat-icon">
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          style={{ width: "16px", height: "16px", objectFit: "contain", verticalAlign: "middle" }}
+                        />
+                      ) : (
+                        getCategoryIcon(cat.slug)
+                      )}
+                    </span>
                     <span className="cat-name">{cat.name}</span>
                   </Link>
                 ))}
@@ -497,22 +573,42 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
       <div className={`category-sidebar-overlay ${isSidebarOpen ? "open" : ""}`} onClick={() => setIsSidebarOpen(false)}>
         <div className={`category-sidebar-drawer ${isSidebarOpen ? "open" : ""}`} onClick={(e) => e.stopPropagation()}>
           <div className="category-sidebar-header">
-            <h3 className="category-sidebar-title"><span>📁</span> Categories</h3>
-            <button className="category-sidebar-close" onClick={() => setIsSidebarOpen(false)}>✕</button>
+            <div className="category-sidebar-header-left">
+              <div className="category-sidebar-icon-wrap">
+                <List size={20} strokeWidth={2.2} />
+              </div>
+              <h3 className="category-sidebar-title">Categories</h3>
+            </div>
+            <button className="category-sidebar-close" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">
+              <X size={20} />
+            </button>
           </div>
           <div className="category-sidebar-body">
-            <p className="category-sidebar-subtitle">Select a category to view items</p>
             <div className="category-sidebar-list">
               {categoriesList.map((cat) => (
                 <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="category-sidebar-item" onClick={() => setIsSidebarOpen(false)}>
-                  <span className="category-sidebar-item-icon">{cat.icon}</span>
-                  <span className="category-sidebar-item-name">{cat.name}</span>
-                  <span className="category-sidebar-item-arrow">➔</span>
+                  <div className="category-sidebar-item-left">
+                    <span className="category-sidebar-item-icon">
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          className="category-sidebar-item-img"
+                        />
+                      ) : (
+                        getCategoryIcon(cat.slug)
+                      )}
+                    </span>
+                    <span className="category-sidebar-item-name">{cat.name}</span>
+                  </div>
+                  <ChevronRight size={16} strokeWidth={2.2} className="category-sidebar-item-arrow" />
                 </Link>
               ))}
             </div>
           </div>
-          <div className="category-sidebar-footer"><p>Premium E-commerce Experience</p></div>
+          <div className="category-sidebar-footer">
+            <p className="category-sidebar-footer-text">Browse all our product categories</p>
+          </div>
         </div>
       </div>
 

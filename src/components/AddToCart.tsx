@@ -295,7 +295,7 @@ export default function AddToCarts() {
                     <input
                       type="text"
                       className="form-input"
-                      placeholder="e.g. Rohim Uddin"
+                      placeholder="e.g. Enter your full name"
                       required
                       value={name}
                       onChange={(e) => setFullName(e.target.value)}
