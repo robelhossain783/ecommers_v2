@@ -102,6 +102,7 @@ export default function AdminManagementPage() {
 
   // Auth states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -387,6 +388,7 @@ export default function AdminManagementPage() {
         localStorage.setItem("adminAccessToken", data.access);
         localStorage.setItem("adminRefreshToken", data.refresh);
         localStorage.setItem("adminUser", JSON.stringify({ username: data.username, is_staff: data.is_staff }));
+        sessionStorage.setItem("adminLastActivity", String(Date.now()));
         setAuthSuccess("🎉 Login successful! Redirecting...");
         setTimeout(() => {
           setIsLoggedIn(true);
@@ -447,6 +449,7 @@ export default function AdminManagementPage() {
     localStorage.removeItem("adminAccessToken");
     localStorage.removeItem("adminRefreshToken");
     localStorage.removeItem("adminUser");
+    sessionStorage.removeItem("adminLastActivity");
     setIsLoggedIn(false);
     setUsername("");
     setPassword("");
@@ -602,14 +605,64 @@ export default function AdminManagementPage() {
     }
   };
 
-  // Check auth session on mount — validate JWT token exists
+  // Check auth session on mount — validate JWT token exists and check inactivity limit
   useEffect(() => {
     const token = localStorage.getItem("adminAccessToken");
     const adminUser = localStorage.getItem("adminUser");
+    const lastActivity = sessionStorage.getItem("adminLastActivity");
+    
     if (token && adminUser) {
-      setIsLoggedIn(true);
+      const now = Date.now();
+      const inactivityLimit = 5 * 60 * 1000; // 5 minutes
+      
+      if (lastActivity && (now - Number(lastActivity) > inactivityLimit)) {
+        // Exceeded inactivity limit, logout
+        localStorage.removeItem("adminAccessToken");
+        localStorage.removeItem("adminRefreshToken");
+        localStorage.removeItem("adminUser");
+        sessionStorage.removeItem("adminLastActivity");
+        setIsLoggedIn(false);
+      } else {
+        setIsLoggedIn(true);
+        sessionStorage.setItem("adminLastActivity", String(now));
+      }
     }
+    setCheckingAuth(false);
   }, []);
+
+  // Track user activity for auto logout
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      sessionStorage.setItem("adminLastActivity", String(Date.now()));
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      timeoutId = setTimeout(() => {
+        handleLogout();
+        alert("🔒 Session expired due to 5 minutes of inactivity. Please login again.");
+      }, 5 * 60 * 1000); // 5 minutes
+    };
+
+    // Events that indicate user activity
+    const activityEvents = ["mousemove", "mousedown", "keypress", "scroll", "touchstart"];
+    
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    // Initialize the timer
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [isLoggedIn]);
 
   // Fetch only if logged in
   useEffect(() => {
@@ -876,6 +929,38 @@ export default function AdminManagementPage() {
 
 
   const ordersToShow = filteredOrders.slice(0, visibleOrdersCount);
+
+  if (checkingAuth) {
+    return (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        background: "radial-gradient(circle at 10% 20%, #1e1e24 0%, #111115 90%)",
+        color: "#ffffff",
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{
+          width: "40px",
+          height: "40px",
+          border: "4px solid rgba(255, 255, 255, 0.1)",
+          borderTop: "4px solid #e8320a",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite",
+          marginBottom: "16px"
+        }}></div>
+        <div style={{ fontSize: "14px", color: "#a0a0b0", letterSpacing: "0.5px" }}>Verifying Session...</div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className={`admin-dashboard-container theme-${theme}`}>
