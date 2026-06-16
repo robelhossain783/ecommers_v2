@@ -429,13 +429,33 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                   onClick={() => setShowUserMenu(v => !v)}
                   aria-label="Account menu"
                   id="account-avatar-btn"
+                  style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
-                  <span className="account-avatar-initials">{getInitials()}</span>
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar.startsWith("http") ? user.avatar : `${BASE_URL}${user.avatar}`}
+                      alt="User Avatar"
+                      className="account-avatar-img"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <span className="account-avatar-initials">{getInitials()}</span>
+                  )}
                 </button>
                 {showUserMenu && (
                   <div className="account-dropdown">
                     <div className="account-dropdown-header">
-                      <div className="account-dropdown-avatar">{getInitials()}</div>
+                      <div className="account-dropdown-avatar" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar.startsWith("http") ? user.avatar : `${BASE_URL}${user.avatar}`}
+                            alt="User Avatar"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          getInitials()
+                        )}
+                      </div>
                       <div>
                         <div className="account-dropdown-name">
                           {user.first_name ? `${user.first_name} ${user.last_name}`.trim() : user.username}
@@ -444,6 +464,10 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       </div>
                     </div>
                     <div className="account-dropdown-divider" />
+                    <Link href="/profile" className="account-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                      My Profile
+                    </Link>
                     <Link href="/orders" className="account-dropdown-item" onClick={() => setShowUserMenu(false)}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>
                       My Orders
@@ -539,13 +563,27 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               {showMobileUserMenu && (
                 <div className="mb-account-dropdown">
                   <div className="mb-account-dropdown-header">
-                    <span className="mb-avatar-initials">{getInitials()}</span>
+                    <span className="mb-avatar-initials" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar.startsWith("http") ? user.avatar : `${BASE_URL}${user.avatar}`}
+                          alt="User Avatar"
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                      ) : (
+                        getInitials()
+                      )}
+                    </span>
                     <div className="mb-user-info">
                       <div className="mb-user-name">{user.first_name ? `${user.first_name} ${user.last_name}`.trim() : user.username}</div>
                       <div className="mb-user-email">{user.email || user.username}</div>
                     </div>
                   </div>
                   <div className="mb-dropdown-divider" />
+                  <Link href="/profile" className="mb-dropdown-item" onClick={() => setShowMobileUserMenu(false)}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    My Profile
+                  </Link>
                   <Link href="/orders" className="mb-dropdown-item" onClick={() => setShowMobileUserMenu(false)}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>
                     My Orders
