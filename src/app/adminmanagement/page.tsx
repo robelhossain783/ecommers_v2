@@ -158,6 +158,9 @@ export default function AdminManagementPage() {
   const [prodNewArrivals, setProdNewArrivals] = useState(false);
   const [prodImageFile, setProdImageFile] = useState<File | null>(null);
   const [prodImagePreview, setProdImagePreview] = useState<string | null>(null);
+  // Gallery images state
+  const [prodGalleryFiles, setProdGalleryFiles] = useState<File[]>([]);
+  const [prodGalleryPreviews, setProdGalleryPreviews] = useState<string[]>([]);
 
   // Banner Form fields
   const [bannerTitle, setBannerTitle] = useState("");
@@ -259,6 +262,20 @@ export default function AdminManagementPage() {
     }
   };
 
+  const handleProdGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setProdGalleryFiles((prev) => [...prev, ...newFiles]);
+      const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
+      setProdGalleryPreviews((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeProdGalleryItem = (idx: number) => {
+    setProdGalleryFiles((prev) => prev.filter((_, i) => i !== idx));
+    setProdGalleryPreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleBannerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -345,6 +362,17 @@ export default function AdminManagementPage() {
 
       const responseData = await res.json();
       if (res.ok) {
+        // Upload gallery images if any
+        const newProductId = responseData?.data?.id || responseData?.id;
+        if (newProductId && prodGalleryFiles.length > 0) {
+          const galleryFormData = new FormData();
+          prodGalleryFiles.forEach((file) => galleryFormData.append("images", file));
+          await fetch(`${BASE_URL}/api/products/${newProductId}/gallery/add/`, {
+            method: "POST",
+            body: galleryFormData,
+          });
+        }
+
         setProductFormMsg({ type: "success", text: "🎉 Product created successfully!" });
         // Reset form
         setProdName("");
@@ -358,6 +386,8 @@ export default function AdminManagementPage() {
         setProdNewArrivals(false);
         setProdImageFile(null);
         setProdImagePreview(null);
+        setProdGalleryFiles([]);
+        setProdGalleryPreviews([]);
         // Refresh products
         fetchProducts();
       } else {
@@ -1285,6 +1315,51 @@ export default function AdminManagementPage() {
           grid-template-columns: 1fr 1fr;
           gap: 20px;
         }
+        .form-group.full-width {
+          grid-column: 1 / -1;
+        }
+        .gallery-upload-area {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .gallery-upload-dropzone {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          border: 2px dashed var(--admin-border, #334155);
+          border-radius: 10px;
+          padding: 20px 12px;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+          background: rgba(255,255,255,0.02);
+          text-align: center;
+        }
+        .gallery-upload-dropzone:hover {
+          border-color: #3b82f6;
+          background: rgba(59,130,246,0.07);
+        }
+        .gallery-upload-icon { font-size: 24px; line-height: 1; }
+        .gallery-upload-text { font-size: 13px; font-weight: 600; color: var(--admin-text-primary, #f1f5f9); }
+        .gallery-upload-hint { font-size: 11px; opacity: 0.5; }
+        .gallery-thumbs-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .gallery-thumb-item {
+          position: relative; width: 78px; height: 78px;
+          border-radius: 9px; overflow: visible;
+          border: 2px solid var(--admin-border, #334155); flex-shrink: 0;
+        }
+        .gallery-thumb-img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; display: block; }
+        .gallery-thumb-remove {
+          position: absolute; top: -8px; right: -8px;
+          width: 20px; height: 20px; border-radius: 50%;
+          background: #ef4444; color: #fff; border: none;
+          font-size: 10px; font-weight: 700; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: background 0.15s, transform 0.15s; z-index: 5;
+        }
+        .gallery-thumb-remove:hover { background: #b91c1c; transform: scale(1.15); }
         .dashboard-grid {
           display: grid;
           grid-template-columns: 2fr 1fr;
@@ -2655,6 +2730,43 @@ export default function AdminManagementPage() {
                             <span>Preview</span>
                           )}
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Gallery Images Upload */}
+                    <div className="form-group full-width">
+                      <label className="form-label">
+                        Gallery Images <span style={{ fontWeight: 400, opacity: 0.65 }}>(optional — click or drag multiple)</span>
+                      </label>
+                      <div className="gallery-upload-area">
+                        <label htmlFor="prod-gallery-input" className="gallery-upload-dropzone">
+                          <span className="gallery-upload-icon">🖼️</span>
+                          <span className="gallery-upload-text">Click to add more images</span>
+                          <span className="gallery-upload-hint">PNG, JPG, WEBP — multiple allowed</span>
+                          <input
+                            id="prod-gallery-input"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleProdGalleryChange}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+                        {prodGalleryPreviews.length > 0 && (
+                          <div className="gallery-thumbs-row">
+                            {prodGalleryPreviews.map((src, idx) => (
+                              <div key={idx} className="gallery-thumb-item">
+                                <img src={src} alt={`Gallery ${idx + 1}`} className="gallery-thumb-img" />
+                                <button
+                                  type="button"
+                                  className="gallery-thumb-remove"
+                                  onClick={() => removeProdGalleryItem(idx)}
+                                  title="Remove"
+                                >✕</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 

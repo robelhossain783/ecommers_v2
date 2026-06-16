@@ -11,10 +11,22 @@ import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 
+const PAGE_SIZE = 30;
+
 export default function NewArrivalsAllPage() {
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const handleSeeMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 300);
+  };
 
   useEffect(() => {
     async function loadAllProducts() {
@@ -87,15 +99,52 @@ export default function NewArrivalsAllPage() {
             </h2>
           </div>
         ) : products.length > 0 ? (
-          <div className="products-row">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={() => handleAddToCart(product)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="products-row">
+              {products.slice(0, visibleCount).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={() => handleAddToCart(product)}
+                />
+              ))}
+            </div>
+
+            {visibleCount < products.length && (
+              <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
+                <button
+                  onClick={handleSeeMore}
+                  disabled={loadingMore}
+                  style={{
+                    background: "linear-gradient(135deg, #e8320a 0%, #ff6b35 100%)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "12px 36px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    cursor: loadingMore ? "not-allowed" : "pointer",
+                    transition: "all 0.25s ease",
+                    boxShadow: "0 4px 16px rgba(232,50,10,0.3)",
+                    letterSpacing: "0.3px",
+                    opacity: loadingMore ? 0.7 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loadingMore) {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "0 8px 24px rgba(232,50,10,0.45)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(232,50,10,0.3)";
+                  }}
+                >
+                  {loadingMore ? "Loading..." : "See More"}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="empty-category-view">
             <span className="empty-category-icon">🛍️</span>

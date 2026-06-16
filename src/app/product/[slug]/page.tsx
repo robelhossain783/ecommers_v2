@@ -8,9 +8,10 @@ import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
-import { getProductBySlug, getNewArrivals } from "@/lib/api";
+import { getProductBySlug, getNewArrivals, getNewArrival2 } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
+import { FaWhatsapp } from "react-icons/fa";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
@@ -30,6 +31,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"details" | "specs" | "shipping">("details");
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -38,11 +40,19 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       try {
         const data = await getProductBySlug(slug);
         setProduct(data);
+        if (data) {
+          setActiveImage(data.image);
+        }
 
-        // Fetch related products
-        const allProducts = await getNewArrivals();
+        // Fetch related products by category
+        let related: Product[] = [];
+        if (data && data.category?.slug) {
+          related = await getNewArrival2({ slug: data.category.slug });
+        } else {
+          related = await getNewArrivals();
+        }
         // Filter out current product and grab up to 4 items
-        const filtered = allProducts
+        const filtered = related
           .filter((p) => p.slug !== slug)
           .slice(0, 4);
         setRelatedProducts(filtered);
@@ -119,6 +129,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const discount = hasDiscount ? regularPrice - sellPrice : 0;
   const inStock = product.stock > 0;
 
+  const productUrl = typeof window !== "undefined" ? `${window.location.origin}/product/${product.slug}` : "";
+  const whatsappMessage = `Hello, I want to order this product:\n\n*Product:* ${product.name}\n*Price:* ৳${sellPrice}\n*Quantity:* ${quantity}\n${productUrl ? `*Link:* ${productUrl}` : ""}`;
+  const whatsappUrl = `https://wa.me/8801635275630?text=${encodeURIComponent(whatsappMessage)}`;
+
+  // Build the list of all images for gallery
+  const allImages: string[] = [];
+  if (product.image) allImages.push(product.image);
+  if (product.gallery_images && product.gallery_images.length > 0) {
+    product.gallery_images.forEach((imgObj) => {
+      if (imgObj.image && !allImages.includes(imgObj.image)) {
+        allImages.push(imgObj.image);
+      }
+    });
+  }
+
   return (
     <>
       {/* <TopBar /> */}
@@ -136,19 +161,48 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
         {/* MAIN DETAIL GRID */}
         <div className="product-detail-grid">
-          {/* IMAGE SECTION */}
-          <div className="product-detail-image-sec">
-            {product.image ? (
-              <Image
-                src={product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`}
-                alt={product.name}
-                width={400}
-                height={400}
-                className="product-detail-image"
-                unoptimized
-              />
-            ) : (
-              <div style={{ fontSize: "24px", color: "#ccc" }}>No Product Image</div>
+          {/* LEFT: IMAGE & GALLERY SECTION */}
+          <div className="product-detail-left-column">
+            <div className="product-detail-image-sec">
+              {activeImage ? (
+                <Image
+                  src={activeImage.startsWith("http") ? activeImage : `${BASE_URL}${activeImage}`}
+                  alt={product.name}
+                  width={400}
+                  height={400}
+                  className="product-detail-image"
+                  unoptimized
+                />
+              ) : (
+                <div style={{ fontSize: "24px", color: "#ccc" }}>No Product Image</div>
+              )}
+            </div>
+
+            {/* THUMBNAILS GALLERY */}
+            {allImages.length > 1 && (
+              <div className="product-detail-gallery-thumbs">
+                {allImages.map((imgSrc, idx) => {
+                  const resolvedSrc = imgSrc.startsWith("http") ? imgSrc : `${BASE_URL}${imgSrc}`;
+                  const isActive = activeImage === imgSrc;
+                  return (
+                    <button
+                      key={idx}
+                      className={`product-detail-gallery-thumb-btn ${isActive ? "active" : ""}`}
+                      onClick={() => setActiveImage(imgSrc)}
+                      type="button"
+                    >
+                      <Image
+                        src={resolvedSrc}
+                        alt={`Product image ${idx + 1}`}
+                        width={70}
+                        height={70}
+                        className="product-detail-gallery-thumb-img"
+                        unoptimized
+                      />
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
 
@@ -161,9 +215,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
               <h1 className="product-detail-title">{product.name}</h1>
 
-              <div className="product-detail-stock-badge">
+              <div className={`product-detail-stock-badge ${inStock ? "" : "out"}`}>
                 <span style={{ fontSize: "16px" }}>{inStock ? "🟢" : "🔴"}</span>
-                <span className={inStock ? "" : "out"}>
+                <span>
                   {inStock ? `In Stock (Available: ${product.stock})` : "Out of Stock"}
                 </span>
               </div>
@@ -208,6 +262,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <button onClick={handleBuyNow} className="product-detail-buy-btn">
                   Buy Now
                 </button>
+
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="product-detail-whatsapp-btn"
+                >
+                  <FaWhatsapp size={18} /> WhatsApp
+                </a>
               </div>
             ) : (
               <div style={{ marginTop: "24px", padding: "16px", background: "#ffebee", color: "#c62828", borderRadius: "var(--radius-sm)", fontWeight: "600" }}>

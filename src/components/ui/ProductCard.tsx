@@ -216,14 +216,14 @@ export default function ProductCard({
       )}
 
       <Link href={`/product/${product.slug || product.id}`} className="product-card-link" style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", height: "100%" }}>
-        <div className="product-image-wrapper">
+        <div className="product-card-image-wrapper">
           {imageSrc ? (
             <Image
               src={imageSrc}
               alt={product.name || "Product Image"}
               width={250}
               height={200}
-              className="product-image"
+              className="product-card-image"
               unoptimized
             />
           ) : (
@@ -231,31 +231,31 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* PRODUCT NAME */}
-        <h3 className="product-name">
-          {product.name || "Unnamed Product"}
-        </h3>
-
         {/* CATEGORY */}
-        <p className="product-category">
+        <p className="product-card-category">
           {product.category?.name || "Gadget"}
         </p>
 
+        {/* PRODUCT NAME */}
+        <h3 className="product-card-name">
+          {product.name || "Unnamed Product"}
+        </h3>
+
         {/* PRICE */}
-        <div className="product-prices">
-          <span className="product-detail-sell-price">
+        <div className="product-card-prices">
+          <span className="product-card-sell-price">
             ৳{sellPrice}
           </span>
 
           {hasDiscount && (
-            <span className="product-detail-regular-price">
+            <span className="product-card-regular-price">
               ৳{regularPrice}
             </span>
           )}
         </div>
 
         {/* STOCK */}
-        <p className="stock">
+        <p className={`product-card-stock ${product.stock && product.stock > 0 ? "" : "out-of-stock"}`}>
           Stock: {product.stock ?? 0}
         </p>
       </Link>
