@@ -174,9 +174,13 @@ import ProductCard from "@/components/ui/ProductCard";
 import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 
+const PAGE_SIZE = 20;
+
 export default function NewTrends() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const { addToCart } = useCart();
   const router = useRouter();
@@ -199,6 +203,14 @@ export default function NewTrends() {
     router.push("/cart");
   };
 
+  const handleSeeMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 300);
+  };
+
   if (loading) {
     return (
       <div className="container section-gap">
@@ -207,22 +219,23 @@ export default function NewTrends() {
     );
   }
 
+  const visibleProducts = products.slice(0, visibleCount);
+  const hasMore = visibleCount < products.length;
+
   return (
     <div className="container section-gap">
 
       {/* HEADER */}
       <div className="section-header">
         <h2 className="section-title">Top Selling Product</h2>
-
-        {/* ✅ FIXED LINK */}
         <Link href="/new-arrivals" className="see-all">
           View All
         </Link>
       </div>
 
-      {/* PREVIEW PRODUCTS (only 4) */}
+      {/* PRODUCTS GRID */}
       <div className="products-row">
-        {products.slice(0, 12).map((p) => (
+        {visibleProducts.map((p) => (
           <ProductCard
             key={p.id}
             product={p}
@@ -231,6 +244,43 @@ export default function NewTrends() {
         ))}
       </div>
 
+      {/* SEE MORE BUTTON */}
+      {hasMore && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: "28px" }}>
+          <button
+            onClick={handleSeeMore}
+            disabled={loadingMore}
+            style={{
+              background: "linear-gradient(135deg, #e8320a 0%, #ff6b35 100%)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "10px",
+              padding: "12px 36px",
+              fontSize: "14px",
+              fontWeight: "700",
+              cursor: loadingMore ? "not-allowed" : "pointer",
+              transition: "all 0.25s ease",
+              boxShadow: "0 4px 16px rgba(232,50,10,0.3)",
+              letterSpacing: "0.3px",
+              opacity: loadingMore ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!loadingMore) {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(232,50,10,0.45)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(232,50,10,0.3)";
+            }}
+          >
+            {loadingMore
+              ? "Loading..."
+              : `See More`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

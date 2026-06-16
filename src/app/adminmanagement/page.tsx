@@ -28,6 +28,7 @@ interface Product {
   regular_price: string | null;
   stock: number;
   is_active: boolean;
+  is_new_arrivals?: boolean;
   created_at: string;
 }
 
@@ -127,7 +128,8 @@ export default function AdminManagementPage() {
 
   // Orders filters and pagination
   const [orderDateFilter, setOrderDateFilter] = useState<"all" | "today" | "yesterday" | "week" | "month">("all");
-  const [visibleOrdersCount, setVisibleOrdersCount] = useState(20);
+  const [orderCurrentPage, setOrderCurrentPage] = useState(1);
+  const ORDERS_PER_PAGE = 10;
 
   // Forms statuses
   const [productSubmitLoading, setProductSubmitLoading] = useState(false);
@@ -153,6 +155,7 @@ export default function AdminManagementPage() {
   const [prodRegPrice, setProdRegPrice] = useState("");
   const [prodStock, setProdStock] = useState("");
   const [prodActive, setProdActive] = useState(true);
+  const [prodNewArrivals, setProdNewArrivals] = useState(false);
   const [prodImageFile, setProdImageFile] = useState<File | null>(null);
   const [prodImagePreview, setProdImagePreview] = useState<string | null>(null);
 
@@ -331,6 +334,7 @@ export default function AdminManagementPage() {
     formData.append("description", prodDesc);
     formData.append("stock", prodStock || "0");
     formData.append("is_active", prodActive ? "true" : "false");
+    formData.append("is_new_arrivals", prodNewArrivals ? "true" : "false");
     formData.append("image", prodImageFile);
 
     try {
@@ -351,6 +355,7 @@ export default function AdminManagementPage() {
         setProdDesc("");
         setProdStock("");
         setProdActive(true);
+        setProdNewArrivals(false);
         setProdImageFile(null);
         setProdImagePreview(null);
         // Refresh products
@@ -610,11 +615,11 @@ export default function AdminManagementPage() {
     const token = localStorage.getItem("adminAccessToken");
     const adminUser = localStorage.getItem("adminUser");
     const lastActivity = sessionStorage.getItem("adminLastActivity");
-    
+
     if (token && adminUser) {
       const now = Date.now();
       const inactivityLimit = 5 * 60 * 1000; // 5 minutes
-      
+
       if (lastActivity && (now - Number(lastActivity) > inactivityLimit)) {
         // Exceeded inactivity limit, logout
         localStorage.removeItem("adminAccessToken");
@@ -639,7 +644,7 @@ export default function AdminManagementPage() {
     const resetTimer = () => {
       sessionStorage.setItem("adminLastActivity", String(Date.now()));
       if (timeoutId) clearTimeout(timeoutId);
-      
+
       timeoutId = setTimeout(() => {
         handleLogout();
         alert("🔒 Session expired due to 5 minutes of inactivity. Please login again.");
@@ -648,7 +653,7 @@ export default function AdminManagementPage() {
 
     // Events that indicate user activity
     const activityEvents = ["mousemove", "mousedown", "keypress", "scroll", "touchstart"];
-    
+
     activityEvents.forEach((event) => {
       window.addEventListener(event, resetTimer);
     });
@@ -928,7 +933,11 @@ export default function AdminManagementPage() {
 
 
 
-  const ordersToShow = filteredOrders.slice(0, visibleOrdersCount);
+  const orderTotalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
+  const ordersToShow = filteredOrders.slice(
+    (orderCurrentPage - 1) * ORDERS_PER_PAGE,
+    orderCurrentPage * ORDERS_PER_PAGE
+  );
 
   if (checkingAuth) {
     return (
@@ -2267,7 +2276,7 @@ export default function AdminManagementPage() {
                         value={orderDateFilter}
                         onChange={(e) => {
                           setOrderDateFilter(e.target.value as any);
-                          setVisibleOrdersCount(20);
+                          setOrderCurrentPage(1);
                         }}
                         style={{
                           background: "var(--bg-status-select, rgba(0,0,0,0.5))",
@@ -2406,31 +2415,109 @@ export default function AdminManagementPage() {
                       </table>
                     </div>
 
-                    {filteredOrders.length > visibleOrdersCount && (
-                      <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+                    {/* PAGINATION */}
+                    {orderTotalPages > 1 && (
+                      <div style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        gap: "6px",
+                        marginTop: "24px",
+                        flexWrap: "wrap",
+                      }}>
+                        {/* Info text */}
+                        <span style={{
+                          fontSize: "12px",
+                          color: "var(--text-muted)",
+                          marginRight: "8px",
+                        }}>
+                          Showing {(orderCurrentPage - 1) * ORDERS_PER_PAGE + 1}–{Math.min(orderCurrentPage * ORDERS_PER_PAGE, filteredOrders.length)} of {filteredOrders.length} orders
+                        </span>
+
+                        {/* PREV button */}
                         <button
-                          onClick={() => setVisibleOrdersCount(prev => prev + 20)}
+                          onClick={() => setOrderCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={orderCurrentPage === 1}
                           style={{
-                            background: "var(--bg-toggle-btn, rgba(255,255,255,0.1))",
-                            color: "var(--text-toggle-btn, #fff)",
+                            background: orderCurrentPage === 1 ? "rgba(255,255,255,0.05)" : "var(--bg-toggle-btn, rgba(255,255,255,0.1))",
+                            color: orderCurrentPage === 1 ? "rgba(255,255,255,0.3)" : "var(--text-toggle-btn, #fff)",
                             border: "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
-                            borderRadius: "8px",
-                            padding: "10px 24px",
+                            borderRadius: "7px",
+                            padding: "7px 14px",
                             fontSize: "13px",
                             fontWeight: "600",
-                            cursor: "pointer",
-                            transition: "all 0.25s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "var(--bg-toggle-hover, rgba(255,255,255,0.18))";
-                            e.currentTarget.style.transform = "translateY(-1px)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "var(--bg-toggle-btn, rgba(255,255,255,0.1))";
-                            e.currentTarget.style.transform = "translateY(0)";
+                            cursor: orderCurrentPage === 1 ? "not-allowed" : "pointer",
+                            transition: "all 0.2s ease",
                           }}
                         >
-                          See More Orders (Showing {visibleOrdersCount} of {filteredOrders.length}) 👇
+                          ← Prev
+                        </button>
+
+                        {/* Page number buttons */}
+                        {Array.from({ length: orderTotalPages }, (_, i) => i + 1)
+                          .filter(page => {
+                            // Show: first, last, current, and neighbours
+                            return (
+                              page === 1 ||
+                              page === orderTotalPages ||
+                              Math.abs(page - orderCurrentPage) <= 1
+                            );
+                          })
+                          .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                            if (idx > 0 && (page as number) - (arr[idx - 1] as number) > 1) {
+                              acc.push("...");
+                            }
+                            acc.push(page);
+                            return acc;
+                          }, [])
+                          .map((item, idx) =>
+                            item === "..." ? (
+                              <span key={`dots-${idx}`} style={{ color: "var(--text-muted)", padding: "0 4px", fontSize: "13px" }}>…</span>
+                            ) : (
+                              <button
+                                key={item}
+                                onClick={() => setOrderCurrentPage(item as number)}
+                                style={{
+                                  background: orderCurrentPage === item
+                                    ? "linear-gradient(135deg, #e8320a 0%, #ff6b35 100%)"
+                                    : "var(--bg-toggle-btn, rgba(255,255,255,0.08))",
+                                  color: orderCurrentPage === item ? "#fff" : "var(--text-toggle-btn, #ccc)",
+                                  border: orderCurrentPage === item
+                                    ? "1px solid #e8320a"
+                                    : "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                                  borderRadius: "7px",
+                                  minWidth: "36px",
+                                  height: "34px",
+                                  fontSize: "13px",
+                                  fontWeight: orderCurrentPage === item ? "700" : "500",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                  boxShadow: orderCurrentPage === item ? "0 2px 10px rgba(232,50,10,0.4)" : "none",
+                                }}
+                              >
+                                {item}
+                              </button>
+                            )
+                          )
+                        }
+
+                        {/* NEXT button */}
+                        <button
+                          onClick={() => setOrderCurrentPage(prev => Math.min(prev + 1, orderTotalPages))}
+                          disabled={orderCurrentPage === orderTotalPages}
+                          style={{
+                            background: orderCurrentPage === orderTotalPages ? "rgba(255,255,255,0.05)" : "var(--bg-toggle-btn, rgba(255,255,255,0.1))",
+                            color: orderCurrentPage === orderTotalPages ? "rgba(255,255,255,0.3)" : "var(--text-toggle-btn, #fff)",
+                            border: "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                            borderRadius: "7px",
+                            padding: "7px 14px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                            cursor: orderCurrentPage === orderTotalPages ? "not-allowed" : "pointer",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          Next →
                         </button>
                       </div>
                     )}
@@ -2583,6 +2670,30 @@ export default function AdminManagementPage() {
                       </label>
                     </div>
 
+                    {/* New Arrivals check */}
+                    <div className="form-group" style={{ justifyContent: "center" }}>
+                      <label className="checkbox-container">
+                        <input
+                          type="checkbox"
+                          checked={prodNewArrivals}
+                          onChange={(e) => setProdNewArrivals(e.target.checked)}
+                        />
+                        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{
+                            background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                            color: "#fff",
+                            fontSize: "9px",
+                            fontWeight: "800",
+                            padding: "2px 7px",
+                            borderRadius: "4px",
+                            letterSpacing: "0.5px",
+                            flexShrink: 0,
+                          }}>NEW</span>
+                          Mark as New Arrival (Show in Home Slider)
+                        </span>
+                      </label>
+                    </div>
+
                     {/* Submit button */}
                     <div className="form-group full-width" style={{ marginTop: "10px" }}>
                       <button
@@ -2663,7 +2774,12 @@ export default function AdminManagementPage() {
                               <strong style={{ color: "var(--primary, #e8320a)", fontSize: "13px" }}>
                                 ৳{Number(prod.sell_price).toLocaleString()}
                               </strong>
-                              <span className="list-card-badge">Stock: {prod.stock}</span>
+                              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                                {prod.is_new_arrivals && (
+                                  <span className="list-card-badge" style={{ background: "rgba(34, 197, 94, 0.15)", color: "#22c55e", borderColor: "rgba(34, 197, 94, 0.3)" }}>New</span>
+                                )}
+                                <span className="list-card-badge">Stock: {prod.stock}</span>
+                              </div>
                             </div>
                           </div>
                         </div>

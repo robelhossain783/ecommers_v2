@@ -30,7 +30,9 @@ export default function HomeClient() {
         {/* <FeaturedProducts /> */}
         {/* <PromoBanners /> */}
         <NotificationBanner />
+
         <NewArrivals />
+
         {/* <AcSection /> */}
         {/* <TopBrandProducts /> */}
         <SeoSection />

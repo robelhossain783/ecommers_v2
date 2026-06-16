@@ -145,6 +145,7 @@ interface GetNewTrendsParams {
   slug?: string;
   start_date?: string;
   end_date?: string;
+  is_new_arrivals?: boolean;
 }
 
 export async function getNewArrival2(
@@ -157,6 +158,11 @@ export async function getNewArrival2(
     if (params?.slug) query.append("slug", params.slug);
     if (params?.start_date) query.append("start_date", params.start_date);
     if (params?.end_date) query.append("end_date", params.end_date);
+
+    // Only add if true
+    if (params?.is_new_arrivals === true) {
+      query.append("is_new_arrivals", "true");
+    }
 
     const url = `${BASE_URL}/api/products/list/?${query.toString()}`;
 
