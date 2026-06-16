@@ -15,6 +15,7 @@ export interface Product {
   slug: string;
 
   image: string | null;
+  gallery_images?: { id: number; image: string }[];
   description: string;
 
   sell_price: string;
