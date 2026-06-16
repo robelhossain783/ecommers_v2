@@ -22,6 +22,7 @@ export interface Product {
 
   stock: number;
   is_active: boolean;
+  is_new_arrivals?: boolean;
 
   created_at: string;
 

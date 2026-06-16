@@ -200,7 +200,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 
@@ -215,12 +215,18 @@ interface NewArrivalsProps {
 export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
   const { addToCart } = useCart();
   const router = useRouter();
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
 
+  // Drag state
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
   useEffect(() => {
     async function load() {
-      const data = await getNewArrival2();
+      const data = await getNewArrival2({ is_new_arrivals: true });
       setProducts(data);
     }
     load();
@@ -232,27 +238,155 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
     router.push("/cart");
   };
 
+  // ---- Arrow scroll ----
+  const scrollBy = (dir: "left" | "right") => {
+    const el = sliderRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.75;
+    el.scrollBy({ left: dir === "right" ? amount : -amount, behavior: "smooth" });
+  };
+
+  // ---- Mouse drag handlers ----
+  const onMouseDown = (e: React.MouseEvent) => {
+    const el = sliderRef.current;
+    if (!el) return;
+    isDragging.current = true;
+    startX.current = e.pageX - el.offsetLeft;
+    scrollLeft.current = el.scrollLeft;
+    el.style.cursor = "grabbing";
+    el.style.userSelect = "none";
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    const el = sliderRef.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    el.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const onMouseUp = () => {
+    isDragging.current = false;
+    if (sliderRef.current) {
+      sliderRef.current.style.cursor = "grab";
+      sliderRef.current.style.userSelect = "";
+    }
+  };
+
+  if (products.length === 0) return null;
+
   return (
     <div className="container section-gap">
 
+      {/* HEADER */}
       <div className="section-header">
         <h2 className="section-title">New Arrival</h2>
 
-        {/* <a href="/new-arrivals" className="see-all">
-          View All
-        </a> */}
+        {/* Arrow buttons */}
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={() => scrollBy("left")}
+            aria-label="Scroll left"
+            style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              border: "1.5px solid rgba(232,50,10,0.5)",
+              background: "rgba(232,50,10,0.08)",
+              color: "#e8320a",
+              fontSize: "16px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s ease",
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#e8320a";
+              e.currentTarget.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(232,50,10,0.08)";
+              e.currentTarget.style.color = "#e8320a";
+            }}
+          >
+            ‹
+          </button>
+          <button
+            onClick={() => scrollBy("right")}
+            aria-label="Scroll right"
+            style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              border: "1.5px solid rgba(232,50,10,0.5)",
+              background: "rgba(232,50,10,0.08)",
+              color: "#e8320a",
+              fontSize: "16px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s ease",
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#e8320a";
+              e.currentTarget.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(232,50,10,0.08)";
+              e.currentTarget.style.color = "#e8320a";
+            }}
+          >
+            ›
+          </button>
+        </div>
       </div>
 
-      <div className="products-row">
+      {/* HORIZONTAL SLIDER */}
+      <style>{`
+        .new-arrival-slider::-webkit-scrollbar { display: none; }
+      `}</style>
+      <div
+        ref={sliderRef}
+        className="new-arrival-slider"
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "16px",
+          overflowX: "auto",
+          overflowY: "visible",
+          scrollSnapType: "x mandatory",
+          cursor: "grab",
+          paddingBottom: "12px",
+          paddingTop: "4px",
+          msOverflowStyle: "none",
+          scrollbarWidth: "none",
+        }}
+      >
         {products.map((product) => (
-          <ProductCard
+          <div
             key={product.id}
-            product={product}
-            onAddToCart={() => handleAddToCart(product)}
-          />
+            style={{
+              flex: "0 0 auto",
+              width: "200px",
+              scrollSnapAlign: "start",
+            }}
+          >
+            <ProductCard
+              product={product}
+              onAddToCart={() => handleAddToCart(product)}
+            />
+          </div>
         ))}
       </div>
-
     </div>
   );
 }
