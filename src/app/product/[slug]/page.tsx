@@ -11,6 +11,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import { getProductBySlug, getNewArrivals, getNewArrival2 } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { FaWhatsapp } from "react-icons/fa";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
@@ -25,13 +26,24 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const slug = params?.slug;
   const router = useRouter();
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<"details" | "specs" | "shipping">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "specs" | "shipping" | "reviews">("details");
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeImage, setActiveImage] = useState<string | null>(null);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<{ id: number; name: string; rating: number; comment: string; created_at: string }[]>([]);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState("");
 
   useEffect(() => {
     if (!slug) return;
@@ -42,6 +54,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         setProduct(data);
         if (data) {
           setActiveImage(data.image);
+          if (data.reviews) setReviews(data.reviews);
+          // Pre-fill name from logged-in user
+          if (user) {
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
+            setReviewName(fullName);
+          }
         }
 
         // Fetch related products by category
@@ -295,11 +313,17 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             >
               Specifications
             </button>
-            <button
+            {/* <button
               onClick={() => setActiveTab("shipping")}
               className={`tab-btn ${activeTab === "shipping" ? "active" : ""}`}
             >
               Delivery & EMI Info
+            </button> */}
+            <button
+              onClick={() => setActiveTab("reviews")}
+              className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`}
+            >
+              Reviews ({reviews.length})
             </button>
           </div>
 
@@ -339,7 +363,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </tbody>
               </table>
             )}
-
+            {/* 
             {activeTab === "shipping" && (
               <div>
                 <h3 style={{ marginBottom: "12px", color: "var(--text-primary)" }}>Fast & Secured Delivery</h3>
@@ -351,6 +375,165 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <p style={{ lineHeight: "1.7", color: "var(--text-secondary)" }}>
                   💳 Pay in easy monthly installments (EMI) up to 36 months using credit cards from leading banks in Bangladesh (UCB, City Bank, EBL, DBBL, etc.). Contact outlets for offline EMI support.
                 </p>
+              </div>
+            )} */}
+
+            {activeTab === "reviews" && (
+              <div className="reviews-tab-container">
+                {/* REVIEW LIST */}
+                {reviews.length > 0 ? (
+                  <div className="reviews-list">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="review-item">
+                        <div className="review-meta">
+                          <div className="review-author-avatar">
+                            {review.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="review-author-name">{review.name}</div>
+                            <div className="review-date">
+                              {new Date(review.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="review-stars">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <span key={s} className={s <= review.rating ? "star filled" : "star"}>★</span>
+                          ))}
+                        </div>
+                        <p className="review-comment">{review.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="review-empty">
+                    <span style={{ fontSize: "40px" }}>💬</span>
+                    <p>No reviews yet. Be the first to share your experience!</p>
+                  </div>
+                )}
+
+                {/* REVIEW FORM */}
+                <div className="review-form-sec">
+                  <h3 className="review-form-title">Write a Review</h3>
+
+                  {!user ? (
+                    /* NOT LOGGED IN — show login gate */
+                    <div className="review-login-gate">
+                      <span className="review-login-icon"></span>
+                      <p className="review-login-msg">
+                        Required login to write a review.
+                      </p>
+                      <button
+                        className="review-login-btn"
+                        onClick={() => {
+                          // Scroll to top and trigger header login modal
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                          setTimeout(() => {
+                            const loginBtn = document.getElementById("account-login-btn");
+                            if (loginBtn) loginBtn.click();
+                          }, 400);
+                        }}
+                      >
+                        Login
+                      </button>
+                    </div>
+                  ) : (
+                    /* LOGGED IN — show the form */
+                    <>
+                      {reviewSuccess && (
+                        <div className="review-alert success">{reviewSuccess}</div>
+                      )}
+                      {reviewError && (
+                        <div className="review-alert error">{reviewError}</div>
+                      )}
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          if (!reviewName.trim() || !reviewComment.trim()) {
+                            setReviewError("Please fill in your name and comment.");
+                            return;
+                          }
+                          setReviewSubmitting(true);
+                          setReviewError("");
+                          setReviewSuccess("");
+                          try {
+                            const res = await fetch(
+                              `${BASE_URL}/api/products/${product.id}/reviews/add/`,
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ name: reviewName, rating: reviewRating, comment: reviewComment }),
+                              }
+                            );
+                            if (res.ok) {
+                              const data = await res.json();
+                              setReviews((prev) => [data.review, ...prev]);
+                              setReviewComment("");
+                              setReviewRating(5);
+                              setReviewSuccess("✅ Thank you! Your review has been submitted.");
+                            } else {
+                              const err = await res.json();
+                              setReviewError(err?.comment?.[0] || err?.name?.[0] || "Failed to submit review.");
+                            }
+                          } catch {
+                            setReviewError("Network error. Please try again.");
+                          } finally {
+                            setReviewSubmitting(false);
+                          }
+                        }}
+                        className="review-form"
+                      >
+                        <div className="review-form-row">
+                          <div className="review-form-group">
+                            <label className="review-label">Posting as</label>
+                            <input
+                              type="text"
+                              className="review-input review-input-readonly"
+                              value={reviewName}
+                              readOnly
+                            />
+                          </div>
+                          <div className="review-form-group">
+                            <label className="review-label">Your Rating</label>
+                            <div className="rating-stars-input">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  className={`rating-star-btn ${s <= (reviewHover || reviewRating) ? "active" : ""}`}
+                                  onClick={() => setReviewRating(s)}
+                                  onMouseEnter={() => setReviewHover(s)}
+                                  onMouseLeave={() => setReviewHover(0)}
+                                >
+                                  ★
+                                </button>
+                              ))}
+                              <span className="rating-label">{reviewHover || reviewRating}/5</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="review-form-group">
+                          <label className="review-label">Your Review</label>
+                          <textarea
+                            className="review-textarea"
+                            placeholder="Share your experience with this product..."
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            rows={4}
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="review-submit-btn"
+                          disabled={reviewSubmitting}
+                        >
+                          {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </div>
