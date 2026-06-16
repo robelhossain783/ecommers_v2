@@ -36,7 +36,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
   // Reviews state
-  const [reviews, setReviews] = useState<{ id: number; name: string; rating: number; comment: string; created_at: string }[]>([]);
+  const [reviews, setReviews] = useState<{ id: number; name: string; rating: number; comment: string; created_at: string; avatar_url?: string | null }[]>([]);
   const [reviewName, setReviewName] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -387,7 +387,15 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                       <div key={review.id} className="review-item">
                         <div className="review-meta">
                           <div className="review-author-avatar">
-                            {review.name.charAt(0).toUpperCase()}
+                            {review.avatar_url ? (
+                              <img
+                                src={review.avatar_url.startsWith("http") ? review.avatar_url : `${BASE_URL}${review.avatar_url}`}
+                                alt={review.name}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                              />
+                            ) : (
+                              review.name.charAt(0).toUpperCase()
+                            )}
                           </div>
                           <div>
                             <div className="review-author-name">{review.name}</div>
@@ -462,7 +470,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                               {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ name: reviewName, rating: reviewRating, comment: reviewComment }),
+                                body: JSON.stringify({ name: reviewName, rating: reviewRating, comment: reviewComment, user_id: user?.id }),
                               }
                             );
                             if (res.ok) {

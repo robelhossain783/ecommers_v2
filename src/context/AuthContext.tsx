@@ -11,6 +11,9 @@ export interface CustomerUser {
   first_name: string;
   last_name: string;
   is_staff: boolean;
+  phone?: string;
+  address?: string;
+  avatar?: string | null;
 }
 
 interface AuthContextType {
@@ -19,6 +22,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateUser: (updatedFields: Partial<CustomerUser>) => void;
 }
 
 interface RegisterData {
@@ -66,6 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         first_name: data.first_name,
         last_name: data.last_name,
         is_staff: data.is_staff,
+        phone: data.phone,
+        address: data.address,
+        avatar: data.avatar,
       };
       setUser(customerUser);
       try {
@@ -102,6 +109,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sessionStorage.removeItem("buyfest_customer");
       sessionStorage.removeItem("buyfest_last_activity");
     } catch (e) { }
+  }, []);
+
+  const updateUser = useCallback((updatedFields: Partial<CustomerUser>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const newUser = { ...prev, ...updatedFields };
+      try {
+        sessionStorage.setItem("buyfest_customer", JSON.stringify(newUser));
+      } catch (e) {}
+      return newUser;
+    });
   }, []);
 
   // Auto-logout after 5 minutes of inactivity
@@ -156,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, logout]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
