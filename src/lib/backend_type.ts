@@ -16,6 +16,7 @@ export interface Product {
 
   image: string | null;
   gallery_images?: { id: number; image: string }[];
+  reviews?: { id: number; name: string; rating: number; comment: string; created_at: string }[];
   description: string;
 
   sell_price: string;
