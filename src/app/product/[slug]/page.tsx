@@ -172,9 +172,16 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div style={{ display: "flex", gap: "8px", fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>
           <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
           <span>/</span>
-          <span>{product.category?.name || "Product"}</span>
-          <span>/</span>
-          <span style={{ color: "var(--text-primary)", fontWeight: "600" }}>{product.name}</span>
+
+          <Link
+            href={`/category_product/?category=${product.category?.slug}`}
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            {product.category?.name || "Product"}
+          </Link>
+
+          <span></span>
+
         </div>
 
         {/* MAIN DETAIL GRID */}
