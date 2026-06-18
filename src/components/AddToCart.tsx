@@ -169,16 +169,33 @@ export default function AddToCarts() {
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF();
 
-    // Set styling
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(22);
-    doc.setTextColor(232, 50, 10); // primary red color matching theme
-    doc.text("AVAA GADGETS", 105, 20, { align: "center" });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Text widths
+    const buyWidth = doc.getTextWidth("BUY");
+    const festWidth = doc.getTextWidth("FEST");
+    const totalWidth = buyWidth + festWidth;
+
+    // Center position
+    const startX = (pageWidth - totalWidth) / 2;
+
+    // BUY - Blue
+    doc.setTextColor(22, 73, 214);
+    doc.text("BUY", startX, 20);
+
+    // FEST - Orange
+    doc.setTextColor(255, 87, 34);
+    doc.text("FEST", startX + buyWidth, 20);
+
+
 
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text("Premium Gadgets & Accessories Store", 105, 26, { align: "center" });
+    doc.text("www.buyfestbd.com", 105, 26, { align: "center" });
 
     // Decorative line
     doc.setDrawColor(200, 200, 200);
@@ -231,7 +248,7 @@ export default function AddToCarts() {
       doc.text(displayName, 15, yPos);
       doc.text(String(item.quantity), 150, yPos, { align: "center" });
       const itemTotal = Number(item.product.sell_price) * item.quantity;
-      doc.text(`৳${itemTotal.toFixed(2)}`, 185, yPos, { align: "right" });
+      doc.text(`BDT ${itemTotal.toFixed(2)}`, 185, yPos, { align: "right" });
       yPos += 8;
     });
 
@@ -242,21 +259,21 @@ export default function AddToCarts() {
     const grandTotalPrice = subtotalPrice + deliveryCharge;
 
     doc.text("Subtotal:", 130, yPos + 6);
-    doc.text(`৳${subtotalPrice.toFixed(2)}`, 185, yPos + 6, { align: "right" });
+    doc.text(`BDT ${subtotalPrice.toFixed(2)}`, 185, yPos + 6, { align: "right" });
 
     doc.text("Delivery Charge:", 130, yPos + 12);
-    doc.text(`৳${deliveryCharge.toFixed(2)}`, 185, yPos + 12, { align: "right" });
+    doc.text(`BDT ${deliveryCharge.toFixed(2)}`, 185, yPos + 12, { align: "right" });
 
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(11);
     doc.text("Total Paid:", 130, yPos + 20);
-    doc.text(`৳${grandTotalPrice.toFixed(2)}`, 185, yPos + 20, { align: "right" });
+    doc.text(`BDT ${grandTotalPrice.toFixed(2)}`, 185, yPos + 20, { align: "right" });
 
     // Footer
     doc.setFont("Helvetica", "italic");
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
-    doc.text("Thank you for shopping with Avaa Gadgets!", 105, yPos + 40, { align: "center" });
+    doc.text("Thank you for shopping with www.buyfestbd.com", 105, yPos + 40, { align: "center" });
 
     doc.save("order-receipt.pdf");
   };
@@ -274,7 +291,7 @@ export default function AddToCarts() {
               Order Placed Successfully!
             </h2>
             <p style={{ fontSize: "15px", color: "var(--text-secondary)", marginBottom: "24px" }}>
-              Thank you for shopping with Avaa Gadgets. Your Order ID is <strong>{orderId}</strong>.
+              Thank you for shopping with BUYFEST. Your Order ID is <strong>{orderId}</strong>.
             </p>
             <div style={{ maxWidth: "450px", margin: "0 auto", padding: "16px", background: "#f9f9f9", borderRadius: "var(--radius-sm)", textAlign: "left", fontSize: "14px", border: "1px solid var(--border-light)", marginBottom: "24px" }}>
               <h4 style={{ margin: "0 0 10px", borderBottom: "1px solid var(--border)", paddingBottom: "6px" }}>Shipping Details</h4>
