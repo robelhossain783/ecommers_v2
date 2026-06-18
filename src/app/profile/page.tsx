@@ -92,10 +92,25 @@ export default function ProfilePage() {
     async function fetchOrders() {
       setOrdersLoading(true);
       try {
+        // Step 1: Try by user_id
         const res = await fetch(`${BASE_URL}/api/orders/customer/?user_id=${user.id}`);
         if (res.ok) {
           const data = await res.json();
-          setOrders(data.data || []);
+          let fetchedOrders: Order[] = data.data || [];
+
+          // Step 2: Fallback — backend may not save user_id, search by phone
+          if (fetchedOrders.length === 0 && user.phone) {
+            const listRes = await fetch(`${BASE_URL}/api/orders/list/`);
+            if (listRes.ok) {
+              const listData = await listRes.json();
+              const allOrders: Order[] = listData.data || [];
+              fetchedOrders = allOrders.filter(
+                (ord: Order) => ord.phone?.trim() === user.phone?.trim()
+              );
+            }
+          }
+
+          setOrders(fetchedOrders);
         }
       } catch (err) {
         console.error("Failed to fetch customer orders:", err);
@@ -519,6 +534,7 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       <div className="profile-orders-list">
+                        {/* Desktop: Table View */}
                         <div className="orders-table-wrapper">
                           <table className="orders-table">
                             <thead>
@@ -553,6 +569,37 @@ export default function ProfilePage() {
                               ))}
                             </tbody>
                           </table>
+                        </div>
+
+                        {/* Mobile: Card View */}
+                        <div className="profile-orders-mobile-list">
+                          {orders.map((order) => (
+                            <div key={order.id} className="order-mobile-card">
+                              <div className="order-card-header">
+                                <span className="order-card-id">#BF-{order.id}</span>
+                                <span className="order-card-date">{formatDate(order.created_at)}</span>
+                              </div>
+                              <div className="order-card-body">
+                                <div className="order-card-field">
+                                  <span className="order-card-label">Total Price</span>
+                                  <span className="order-card-value amount">
+                                    ৳{Number(order.total_amount || order.amount).toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="order-card-field">
+                                  <span className="order-card-label">Payment</span>
+                                  <span className="order-card-value payment">{order.payment_type}</span>
+                                </div>
+                              </div>
+                              <div className="order-card-footer">
+                                <span className={`status-badge ${order.status}`}>{order.status}</span>
+                                <Link href="/orders" className="order-card-track-link">
+                                  <FileText size={13} />
+                                  Track Order
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
