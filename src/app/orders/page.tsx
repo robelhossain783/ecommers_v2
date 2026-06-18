@@ -322,27 +322,32 @@ import { useAuth } from "@/context/AuthContext";
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
-interface OrderItem {
+interface OrderProductItem {
   product_name: string;
   product_image: string | null;
   quantity: number;
-  amount: number;
-  paymentMethod: string;
+  price: number;
+}
+
+interface Order {
+  order_id: string;
   fullName: string;
   phone: string;
   address: string;
+  paymentMethod: string;
+  amount: number;
   status: "pending" | "processing" | "completed" | "cancelled";
   created_at: string;
-  order_id: string;
+  items: OrderProductItem[];
 }
 
 export default function MyOrdersPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  const [searchResults, setSearchResults] = useState<OrderItem[] | null>(null);
+  const [searchResults, setSearchResults] = useState<Order[] | null>(null);
   const [searchVal, setSearchVal] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchMsg, setSearchMsg] = useState("");
@@ -398,21 +403,24 @@ export default function MyOrdersPage() {
           }
         }
 
-        const mapped: OrderItem[] = allOrders.map((ord: any) => {
-          const firstItem = ord.items?.[0] || {};
+        const mapped: Order[] = allOrders.map((ord: any) => {
+          const itemsList = (ord.items || []).map((item: any) => ({
+            product_name: item.product?.name || "Premium Gadget",
+            product_image: item.product?.image || null,
+            quantity: item.quantity || 1,
+            price: Number(item.price || item.product?.sell_price || 0),
+          }));
+
           return {
             order_id: ord.order_id || `ORDER-${ord.id}`,
             fullName: ord.full_name,
             phone: ord.phone,
             address: ord.address,
             paymentMethod: ord.payment_type || "COD",
-            product_name: firstItem.product?.name || "Premium Gadget",
-            product_image: firstItem.product?.image || null,
-            quantity: firstItem.quantity || 1,
-            // Use total_amount first (includes delivery), fallback to amount
             amount: Number(ord.total_amount || ord.amount || 0),
             status: ord.status || "pending",
             created_at: ord.created_at || new Date().toISOString(),
+            items: itemsList,
           };
         });
 
@@ -471,20 +479,24 @@ export default function MyOrdersPage() {
       });
 
       if (matched.length > 0) {
-        const mappedOrders: OrderItem[] = matched.map((ord: any) => {
-          const firstItem = ord.items?.[0] || {};
+        const mappedOrders: Order[] = matched.map((ord: any) => {
+          const itemsList = (ord.items || []).map((item: any) => ({
+            product_name: item.product?.name || "Premium Gadget",
+            product_image: item.product?.image || null,
+            quantity: item.quantity || 1,
+            price: Number(item.price || item.product?.sell_price || 0),
+          }));
+
           return {
             order_id: ord.order_id || `ORDER-${ord.id}`,
             fullName: ord.full_name,
             phone: ord.phone,
             address: ord.address,
             paymentMethod: ord.payment_type || "COD",
-            product_name: firstItem.product?.name || "Premium Gadget",
-            product_image: firstItem.product?.image || null,
-            quantity: firstItem.quantity || 1,
             amount: Number(ord.total_amount || ord.amount || 0),
             status: ord.status || "pending",
             created_at: ord.created_at || new Date().toISOString(),
+            items: itemsList,
           };
         });
 
@@ -691,66 +703,70 @@ export default function MyOrdersPage() {
 
                       {/* Card Body */}
                       <div className="order-card-body">
-                        {/* Item details */}
-                        <div className="order-item-detail">
-                          <div className="order-item-img-wrap">
-                            {order.product_image ? (
-                              <Image
-                                src={
-                                  order.product_image.startsWith("http")
-                                    ? order.product_image
-                                    : `${BASE_URL}${order.product_image}`
-                                }
-                                alt={order.product_name}
-                                width={54}
-                                height={54}
-                                unoptimized
-                              />
-                            ) : (
-                              <span
-                                style={{ fontSize: "10px", color: "#aaa" }}
-                              >
-                                No Image
-                              </span>
-                            )}
-                          </div>
+                        {/* Left Column: List of items */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                          {order.items && order.items.length > 0 ? (
+                            order.items.map((item, idx) => (
+                              <div key={idx} className="order-item-detail" style={{ borderBottom: idx < order.items.length - 1 ? "1px solid var(--border-light)" : "none", paddingBottom: idx < order.items.length - 1 ? "16px" : "0" }}>
+                                <div className="order-item-img-wrap">
+                                  {item.product_image ? (
+                                    <Image
+                                      src={
+                                        item.product_image.startsWith("http")
+                                          ? item.product_image
+                                          : `${BASE_URL}${item.product_image}`
+                                      }
+                                      alt={item.product_name}
+                                      width={54}
+                                      height={54}
+                                      unoptimized
+                                    />
+                                  ) : (
+                                    <span
+                                      style={{ fontSize: "10px", color: "#aaa" }}
+                                    >
+                                      No Image
+                                    </span>
+                                  )}
+                                </div>
 
-                          <div className="order-item-info">
-                            <h4>{order.product_name}</h4>
-                            <p>
-                              Quantity: {order.quantity} | Total paid:{" "}
-                              <strong
-                                style={{
-                                  color: "var(--primary)",
-                                  fontSize: "14px",
-                                }}
-                              >
-                                ৳{order.amount}
-                              </strong>
-                            </p>
-                            <p style={{ marginTop: "4px" }}>
-                              Payment Method:{" "}
-                              <strong>
-                                {order.paymentMethod === "COD"
-                                  ? "💵 Cash on Delivery"
-                                  : `📱 ${order.paymentMethod}`}
-                              </strong>
-                            </p>
-                          </div>
+                                <div className="order-item-info">
+                                  <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: "600" }}>{item.product_name}</h4>
+                                  <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>
+                                    Qty: <strong>{item.quantity}</strong> | Price: <strong style={{ color: "var(--primary)" }}>৳{item.price.toFixed(2)}</strong>
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No items found</p>
+                          )}
                         </div>
 
-                        {/* Shipping Address */}
-                        <div className="order-shipping-summary">
-                          <h5>Shipping Details</h5>
-                          <p>
-                            <strong>Customer Name:</strong> {order.fullName}
-                          </p>
-                          <p>
-                            <strong>Mobile No:</strong> {order.phone}
-                          </p>
-                          <p>
-                            <strong>Full Address:</strong> {order.address}
-                          </p>
+                        {/* Right Column: Order Summary & Shipping Details */}
+                        <div className="order-shipping-summary" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                          <div>
+                            <h5 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "700" }}>Order Summary</h5>
+                            <p style={{ margin: "4px 0", fontSize: "13px" }}>
+                              Total Paid: <strong style={{ color: "var(--primary)", fontSize: "15px" }}>৳{order.amount.toFixed(2)}</strong>
+                            </p>
+                            <p style={{ margin: "4px 0", fontSize: "13px" }}>
+                              Payment Method: <strong>{order.paymentMethod === "COD" ? "💵 Cash on Delivery" : `📱 ${order.paymentMethod}`}</strong>
+                            </p>
+                          </div>
+
+                          <div style={{ borderTop: "1px solid var(--border-light)", paddingTop: "12px" }}>
+                            <h5 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "700" }}>Shipping Details</h5>
+                            <p style={{ margin: "2px 0", fontSize: "13px" }}>
+                              <strong>Name:</strong> {order.fullName}
+                            </p>
+                            <p style={{ margin: "2px 0", fontSize: "13px" }}>
+                              <strong>Mobile:</strong> {order.phone}
+                            </p>
+                            <p style={{ margin: "2px 0", fontSize: "13px" }}>
+                              <strong>Address:</strong> {order.address}
+                            </p>
+                          </div>
                         </div>
                       </div>
 

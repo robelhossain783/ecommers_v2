@@ -45,14 +45,48 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const [orderId, setOrderId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Prefill shipping info if user is logged in
+  // Shipping Address Options
+  const [addressOption, setAddressOption] = useState<"profile" | "new">("profile");
+  const hasProfileAddress = !!(user && (user.address || user.phone));
+
+  const nameDisabled = addressOption === "profile" && !!(user?.first_name || user?.last_name || user?.username);
+  const phoneDisabled = addressOption === "profile" && !!user?.phone;
+  const addressDisabled = addressOption === "profile" && !!user?.address;
+
+  // Determine initial address option based on profile completeness
   useEffect(() => {
     if (user) {
-      setFullName(`${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "");
-      setMobileNumber(user.phone || "");
-      setAddress(user.address || "");
+      const profileAddress = user.address || "";
+      const profilePhone = user.phone || "";
+      if (profileAddress || profilePhone) {
+        setAddressOption("profile");
+      } else {
+        setAddressOption("new");
+      }
+    } else {
+      setAddressOption("new");
     }
   }, [user]);
+
+  // Sync inputs with profile or clear if different address selected
+  useEffect(() => {
+    if (user && addressOption === "profile") {
+      const profileName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "";
+      if (profileName) {
+        setFullName(profileName);
+      }
+      if (user.phone) {
+        setMobileNumber(user.phone);
+      }
+      if (user.address) {
+        setAddress(user.address);
+      }
+    } else if (addressOption === "new") {
+      setFullName("");
+      setMobileNumber("");
+      setAddress("");
+    }
+  }, [addressOption, user]);
 
   // Load product slug details
   useEffect(() => {
@@ -372,6 +406,36 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
               </h2>
 
               <form onSubmit={handlePlaceOrder}>
+                {hasProfileAddress && (
+                  <div style={{ marginBottom: "20px", padding: "14px", background: "#f0f7ff", border: "1px solid #bae7ff", borderRadius: "8px" }}>
+                    <label style={{ display: "block", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", color: "#0050b3", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                      Delivery Destination Option
+                    </label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", color: "var(--text-primary)", cursor: "pointer" }}>
+                        <input
+                          type="radio"
+                          name="addressOption"
+                          value="profile"
+                          checked={addressOption === "profile"}
+                          onChange={() => setAddressOption("profile")}
+                        />
+                        Profile Shipping Address
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", color: "var(--text-primary)", cursor: "pointer" }}>
+                        <input
+                          type="radio"
+                          name="addressOption"
+                          value="new"
+                          checked={addressOption === "new"}
+                          onChange={() => setAddressOption("new")}
+                        />
+                        New Address
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 {/* Full Name */}
                 <div style={{ marginBottom: "18px" }}>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "var(--text-secondary)" }}>Full Name *</label>
@@ -381,7 +445,19 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
-                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "14px", outline: "none", transition: "all 0.2s" }}
+                    disabled={nameDisabled}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "1px solid #ddd",
+                      fontSize: "14px",
+                      outline: "none",
+                      transition: "all 0.2s",
+                      background: nameDisabled ? "#f5f5f5" : "#fff",
+                      cursor: nameDisabled ? "not-allowed" : "text",
+                      color: nameDisabled ? "#666" : "var(--text-primary)",
+                    }}
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
                     onBlur={(e) => e.target.style.borderColor = "#ddd"}
                   />
@@ -398,7 +474,18 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                     placeholder="Enter 11-digit mobile number"
                     pattern="[0-9]{11}"
                     title="Please enter a valid 11-digit phone number"
-                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "14px", outline: "none" }}
+                    disabled={phoneDisabled}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "1px solid #ddd",
+                      fontSize: "14px",
+                      outline: "none",
+                      background: phoneDisabled ? "#f5f5f5" : "#fff",
+                      cursor: phoneDisabled ? "not-allowed" : "text",
+                      color: phoneDisabled ? "#666" : "var(--text-primary)",
+                    }}
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
                     onBlur={(e) => e.target.style.borderColor = "#ddd"}
                   />
@@ -434,7 +521,20 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Village/Area, House No, Road, Flat Number, Landmarks"
                     rows={3}
-                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "14px", fontFamily: "inherit", resize: "none", outline: "none" }}
+                    disabled={addressDisabled}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      border: "1px solid #ddd",
+                      fontSize: "14px",
+                      fontFamily: "inherit",
+                      resize: "none",
+                      outline: "none",
+                      background: addressDisabled ? "#f5f5f5" : "#fff",
+                      cursor: addressDisabled ? "not-allowed" : "text",
+                      color: addressDisabled ? "#666" : "var(--text-primary)",
+                    }}
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
                     onBlur={(e) => e.target.style.borderColor = "#ddd"}
                   />
@@ -446,7 +546,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   <div style={{ display: "flex", gap: "8px" }}>
                     <input
                       type="text"
-                      placeholder="e.g. SAVE10 or AVAA100"
+                      placeholder="e.g. enter coupon code if have"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                       style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "13px", textTransform: "uppercase", outline: "none" }}
@@ -463,9 +563,9 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   </div>
                   {couponError && <p style={{ color: "#d43f3a", fontSize: "12px", fontWeight: "600", marginTop: "6px" }}>{couponError}</p>}
                   {couponSuccessMsg && <p style={{ color: "#389e0d", fontSize: "12px", fontWeight: "600", marginTop: "6px" }}>{couponSuccessMsg}</p>}
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px", fontStyle: "italic" }}>
+                  {/* <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px", fontStyle: "italic" }}>
                     * Tip: Try <strong style={{ color: "var(--text-secondary)" }}>SAVE10</strong> for 10% off or <strong style={{ color: "var(--text-secondary)" }}>BF10</strong> up to ৳100 discount!
-                  </p>
+                  </p> */}
                 </div>
 
 
