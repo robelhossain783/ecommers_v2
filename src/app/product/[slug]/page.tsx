@@ -100,7 +100,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const handleAddToCart = () => {
     if (!product) return;
     addToCart(product, quantity);
-    alert(`${quantity} x "${product.name}" added to cart!`);
   };
 
   const handleBuyNow = () => {
@@ -280,22 +279,24 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   <button onClick={handleIncrement} className="quantity-control-btn">+</button>
                 </div>
 
-                <button onClick={handleAddToCart} className="product-detail-add-btn">
-                  🛒 Add to Cart
-                </button>
+                <div className="product-detail-btn-group">
+                  <button onClick={handleAddToCart} className="product-detail-add-btn">
+                    🛒 Add to Cart
+                  </button>
 
-                <button onClick={handleBuyNow} className="product-detail-buy-btn">
-                  Buy Now
-                </button>
+                  <button onClick={handleBuyNow} className="product-detail-buy-btn">
+                    ⚡ Buy Now
+                  </button>
 
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="product-detail-whatsapp-btn"
-                >
-                  <FaWhatsapp size={18} /> WhatsApp
-                </a>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="product-detail-whatsapp-btn"
+                  >
+                    <FaWhatsapp size={16} /> WhatsApp
+                  </a>
+                </div>
               </div>
             ) : (
               <div style={{ marginTop: "24px", padding: "16px", background: "#ffebee", color: "#c62828", borderRadius: "var(--radius-sm)", fontWeight: "600" }}>

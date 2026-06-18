@@ -66,7 +66,6 @@ export default function NewArrivalsAllPage() {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
-    alert(`"${product.name}" added to cart!`);
   };
 
   return (

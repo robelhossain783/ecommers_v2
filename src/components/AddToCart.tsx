@@ -31,14 +31,48 @@ export default function AddToCarts() {
   const [orderId, setOrderId] = useState("");
   const [orderedItems, setOrderedItems] = useState<any[]>([]);
 
-  // Prefill shipping info if user is logged in
+  // Shipping Address Options
+  const [addressOption, setAddressOption] = useState<"profile" | "new">("profile");
+  const hasProfileAddress = !!(user && (user.address || user.phone));
+
+  const nameDisabled = addressOption === "profile" && !!(user?.first_name || user?.last_name || user?.username);
+  const phoneDisabled = addressOption === "profile" && !!user?.phone;
+  const addressDisabled = addressOption === "profile" && !!user?.address;
+
+  // Determine initial address option based on profile completeness
   useEffect(() => {
     if (user) {
-      setFullName(`${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "");
-      setMobileNumber(user.phone || "");
-      setAddress(user.address || "");
+      const profileAddress = user.address || "";
+      const profilePhone = user.phone || "";
+      if (profileAddress || profilePhone) {
+        setAddressOption("profile");
+      } else {
+        setAddressOption("new");
+      }
+    } else {
+      setAddressOption("new");
     }
   }, [user]);
+
+  // Sync inputs with profile or clear if different address selected
+  useEffect(() => {
+    if (user && addressOption === "profile") {
+      const profileName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "";
+      if (profileName) {
+        setFullName(profileName);
+      }
+      if (user.phone) {
+        setMobileNumber(user.phone);
+      }
+      if (user.address) {
+        setAddress(user.address);
+      }
+    } else if (addressOption === "new") {
+      setFullName("");
+      setMobileNumber("");
+      setAddress("");
+    }
+  }, [addressOption, user]);
 
   const deliveryCharge = deliveryArea === "inside" ? 80 : 150;
 
@@ -86,69 +120,68 @@ export default function AddToCarts() {
         return;
       }
 
-      // each cart item order create
-      for (const item of cart) {
-        const response = await fetch(
-          `${BASE_URL}/api/create-order/`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+      const orderItemsPayload = cart.map((item) => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+      }));
 
-            body: JSON.stringify({
-              type: "buy_now",
-
-              product_id: item.product.id,
-              quantity: item.quantity,
-
-              full_name: name,
-              phone: phone,
-
-              address: `${address}, ${district}`,
-
-              payment_type: paymentMethod.toUpperCase(),
-              ...(user ? { user_id: user.id } : {}),
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-
-          console.log(errData);
-
-          throw new Error(
-            errData.message || "Failed to place cart order"
-          );
-        }
-
-        const data = await response.json();
-        const confirmedOrderId = data.order_id || `ORDER-${data.id}`;
-
-        // last order id
-        setOrderId(confirmedOrderId);
-
-        // Save order to localStorage
-        try {
-          const savedOrders = JSON.parse(localStorage.getItem("placed_orders") || "[]");
-          const newOrder = {
-            order_id: confirmedOrderId,
-            fullName: name,
+      const response = await fetch(
+        `${BASE_URL}/api/create-order/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "cart",
+            items: orderItemsPayload,
+            full_name: name,
             phone: phone,
             address: `${address}, ${district}`,
-            paymentMethod: paymentMethod.toUpperCase(),
-            product_name: item.product.name,
-            product_image: item.product.image,
-            quantity: item.quantity,
-            amount: Number(item.product.sell_price) * item.quantity + Math.round(deliveryCharge / cart.length),
-            status: "pending",
-            created_at: new Date().toISOString()
-          };
-          localStorage.setItem("placed_orders", JSON.stringify([newOrder, ...savedOrders]));
-        } catch (e) {
-          console.error("Failed to save order to localStorage", e);
+            payment_type: paymentMethod.toUpperCase(),
+            ...(user ? { user_id: user.id } : {}),
+          }),
         }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        console.log(errData);
+        throw new Error(
+          errData.message || "Failed to place cart order"
+        );
+      }
+
+      const data = await response.json();
+      const confirmedOrderId = data.order_id || `ORDER-${data.id}`;
+
+      // set order id
+      setOrderId(confirmedOrderId);
+
+      // Save order to localStorage
+      try {
+        const savedOrders = JSON.parse(localStorage.getItem("placed_orders") || "[]");
+        const newOrder = {
+          order_id: confirmedOrderId,
+          fullName: name,
+          phone: phone,
+          address: `${address}, ${district}`,
+          paymentMethod: paymentMethod.toUpperCase(),
+          amount: total,
+          status: "pending",
+          created_at: new Date().toISOString(),
+          items: cart.map((item) => ({
+            product: {
+              name: item.product.name,
+              image: item.product.image,
+            },
+            quantity: item.quantity,
+            price: Number(item.product.sell_price),
+          })),
+        };
+        localStorage.setItem("placed_orders", JSON.stringify([newOrder, ...savedOrders]));
+      } catch (e) {
+        console.error("Failed to save order to localStorage", e);
       }
 
       setOrderedItems([...cart]);
@@ -158,7 +191,6 @@ export default function AddToCarts() {
 
     } catch (error: any) {
       console.error("ORDER ERROR:", error);
-
       alert(
         `❌ Order failed: ${error.message || "Something went wrong"}`
       );
@@ -441,6 +473,36 @@ export default function AddToCarts() {
                     Shipping Details
                   </h4>
 
+                  {hasProfileAddress && (
+                    <div style={{ marginBottom: "20px", padding: "14px", background: "var(--bg-light)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)" }}>
+                      <label style={{ display: "block", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", color: "var(--text-secondary)", marginBottom: "8px", letterSpacing: "0.5px" }}>
+                        Delivery Destination Option
+                      </label>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", color: "var(--text-primary)", cursor: "pointer" }}>
+                          <input
+                            type="radio"
+                            name="addressOption"
+                            value="profile"
+                            checked={addressOption === "profile"}
+                            onChange={() => setAddressOption("profile")}
+                          />
+                          Profile Shipping Address
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", fontWeight: "600", color: "var(--text-primary)", cursor: "pointer" }}>
+                          <input
+                            type="radio"
+                            name="addressOption"
+                            value="new"
+                            checked={addressOption === "new"}
+                            onChange={() => setAddressOption("new")}
+                          />
+                          New Address
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label className="form-label">Customer Name *</label>
                     <input
@@ -450,6 +512,8 @@ export default function AddToCarts() {
                       required
                       value={name}
                       onChange={(e) => setFullName(e.target.value)}
+                      disabled={nameDisabled}
+                      style={nameDisabled ? { background: "#f5f5f5", cursor: "not-allowed", color: "#666" } : {}}
                     />
                   </div>
 
@@ -462,6 +526,8 @@ export default function AddToCarts() {
                       required
                       value={phone}
                       onChange={(e) => setMobileNumber(e.target.value)}
+                      disabled={phoneDisabled}
+                      style={phoneDisabled ? { background: "#f5f5f5", cursor: "not-allowed", color: "#666" } : {}}
                     />
                   </div>
 
@@ -470,10 +536,11 @@ export default function AddToCarts() {
                     <textarea
                       className="form-input"
                       placeholder="House No, Road No, Area, District"
-                      style={{ minHeight: "60px", fontFamily: "inherit" }}
+                      style={addressDisabled ? { minHeight: "60px", fontFamily: "inherit", background: "#f5f5f5", cursor: "not-allowed", color: "#666" } : { minHeight: "60px", fontFamily: "inherit" }}
                       required
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
+                      disabled={addressDisabled}
                     />
                   </div>
 
