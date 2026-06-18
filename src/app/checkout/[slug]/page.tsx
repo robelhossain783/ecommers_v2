@@ -45,6 +45,15 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const [orderId, setOrderId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Prefill shipping info if user is logged in
+  useEffect(() => {
+    if (user) {
+      setFullName(`${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "");
+      setMobileNumber(user.phone || "");
+      setAddress(user.address || "");
+    }
+  }, [user]);
+
   // Load product slug details
   useEffect(() => {
     if (!slug) return;
@@ -109,18 +118,18 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
       const discount = Math.round(subtotal * 0.1);
       setDiscountAmount(discount);
       setCouponApplied(true);
-      setCouponSuccessMsg(`🎉 Success! 10% discount of ৳${discount} applied.`);
-    } else if (code === "AVAA100") {
+      setCouponSuccessMsg(`Success! 10% discount of ৳${discount} applied.`);
+    } else if (code === "BF10") {
       const discount = Math.min(100, subtotal);
       setDiscountAmount(discount);
       setCouponApplied(true);
-      setCouponSuccessMsg(`🎉 Success! Flat ৳${discount} discount applied.`);
+      setCouponSuccessMsg(`Success! Flat ৳${discount} discount applied.`);
     } else if (code === "FREESHIP") {
       setDiscountAmount(deliveryCharge);
       setCouponApplied(true);
-      setCouponSuccessMsg("🎉 Success! Free shipping discount applied.");
+      setCouponSuccessMsg("Success! Free shipping discount applied.");
     } else {
-      setCouponError("❌ Invalid coupon code! Try SAVE10 or AVAA100.");
+      setCouponError("Invalid coupon code! Try SAVE10 or AVAA100.");
       setDiscountAmount(0);
       setCouponApplied(false);
     }
@@ -191,10 +200,116 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
       clearCart();
     } catch (err: any) {
       console.error("Order creation failed:", err);
-      alert(`❌ Order placement failed: ${err.message || "Unknown error"}`);
+      alert(`Order placement failed: ${err.message || "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }
+  };
+  // Handle Download Receipt
+  const handleDownloadReceipt = async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+
+    // Set styling
+    // doc.setFont("Helvetica", "bold");
+    // doc.setFontSize(22);
+    // doc.setTextColor(232, 50, 10); // primary red color matching theme
+    // doc.text("BUYFEST", 105, 20, { align: "center" });
+
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(22);
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Text widths
+    const buyWidth = doc.getTextWidth("BUY");
+    const festWidth = doc.getTextWidth("FEST");
+    const totalWidth = buyWidth + festWidth;
+
+    // Center position
+    const startX = (pageWidth - totalWidth) / 2;
+
+    // BUY - Blue
+    doc.setTextColor(22, 73, 214);
+    doc.text("BUY", startX, 20);
+
+    // FEST - Orange
+    doc.setTextColor(255, 87, 34);
+    doc.text("FEST", startX + buyWidth, 20);
+
+
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("www.buyfestbd.com", 105, 26, { align: "center" });
+
+    // Decorative line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, 32, 195, 32);
+
+    // Invoice Details
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(33, 33, 33);
+    doc.text("ORDER RECEIPT", 15, 42);
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Order Reference: ${orderId}`, 15, 50);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 56);
+
+    // Shipping Section
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Shipping & Customer Details", 15, 68);
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Customer Name: ${fullName}`, 15, 76);
+    doc.text(`Mobile Number: ${mobileNumber}`, 15, 82);
+    doc.text(`Delivery Address: ${address}, ${district}`, 15, 88);
+    const paymentLabel = paymentMethod === "COD" ? "Cash on Delivery" : paymentMethod === "BKASH" ? "bKash / Nagad Wallet" : "Card Payment";
+    doc.text(`Payment Method: ${paymentLabel}`, 15, 94);
+
+    // Items Header
+    doc.setDrawColor(220, 220, 220);
+    doc.line(15, 102, 195, 102);
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("Item Details", 15, 108);
+    doc.text("Qty", 150, 108, { align: "center" });
+    doc.text("Price", 185, 108, { align: "right" });
+
+    doc.line(15, 112, 195, 112);
+
+    // Item row
+    doc.setFont("Helvetica", "normal");
+    doc.text(product.name, 15, 120);
+    doc.text(String(quantity), 150, 120, { align: "center" });
+    doc.text(`BDT${(Number(product.sell_price) * quantity).toFixed(2)}`, 185, 120, { align: "right" });
+
+    doc.line(15, 126, 195, 126);
+
+    // Summary Section
+    doc.text("Delivery Charge:", 130, 134);
+    doc.text(`BDT${deliveryCharge.toFixed(2)}`, 185, 134, { align: "right" });
+
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Total Paid:", 130, 142);
+    doc.text(`BDT${grandTotal.toFixed(2)}`, 185, 142, { align: "right" });
+
+    // Footer
+    doc.setFont("Helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Thank you for shopping with BUYFEST", 105, 165, { align: "center" });
+
+    doc.save("order-receipt.pdf");
   };
 
   return (
@@ -219,7 +334,28 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
               <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Total Payable:</strong> ৳{grandTotal}</p>
             </div>
 
-            <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                onClick={handleDownloadReceipt}
+                style={{
+                  background: "#4caf50",
+                  color: "#fff",
+                  border: "none",
+                  padding: "12px 30px",
+                  borderRadius: "30px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(0.9)"}
+                onMouseLeave={(e) => e.currentTarget.style.filter = "none"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download Receipt
+              </button>
               <Link href="/" style={{ background: "var(--primary)", color: "#fff", textDecoration: "none", padding: "12px 30px", borderRadius: "30px", fontWeight: "700", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(0.9)"} onMouseLeave={(e) => e.currentTarget.style.filter = "none"}>
                 Continue Shopping
               </Link>
@@ -328,7 +464,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   {couponError && <p style={{ color: "#d43f3a", fontSize: "12px", fontWeight: "600", marginTop: "6px" }}>{couponError}</p>}
                   {couponSuccessMsg && <p style={{ color: "#389e0d", fontSize: "12px", fontWeight: "600", marginTop: "6px" }}>{couponSuccessMsg}</p>}
                   <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px", fontStyle: "italic" }}>
-                    * Tip: Try <strong style={{ color: "var(--text-secondary)" }}>SAVE10</strong> for 10% off or <strong style={{ color: "var(--text-secondary)" }}>AVAA100</strong> for ৳100 discount!
+                    * Tip: Try <strong style={{ color: "var(--text-secondary)" }}>SAVE10</strong> for 10% off or <strong style={{ color: "var(--text-secondary)" }}>BF10</strong> up to ৳100 discount!
                   </p>
                 </div>
 

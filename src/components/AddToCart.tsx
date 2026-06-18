@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,12 +8,14 @@ import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { Product } from "@/lib/backend_type";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
 export default function AddToCarts() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { user } = useAuth();
   const router = useRouter();
 
   // Form states
@@ -27,6 +29,16 @@ export default function AddToCarts() {
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [orderedItems, setOrderedItems] = useState<any[]>([]);
+
+  // Prefill shipping info if user is logged in
+  useEffect(() => {
+    if (user) {
+      setFullName(`${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "");
+      setMobileNumber(user.phone || "");
+      setAddress(user.address || "");
+    }
+  }, [user]);
 
   const deliveryCharge = deliveryArea === "inside" ? 80 : 150;
 
@@ -96,6 +108,7 @@ export default function AddToCarts() {
               address: `${address}, ${district}`,
 
               payment_type: paymentMethod.toUpperCase(),
+              ...(user ? { user_id: user.id } : {}),
             }),
           }
         );
@@ -138,6 +151,7 @@ export default function AddToCarts() {
         }
       }
 
+      setOrderedItems([...cart]);
       setOrderPlaced(true);
 
       clearCart();
@@ -149,6 +163,102 @@ export default function AddToCarts() {
         `❌ Order failed: ${error.message || "Something went wrong"}`
       );
     }
+  };
+
+  const handleDownloadReceipt = async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+
+    // Set styling
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(232, 50, 10); // primary red color matching theme
+    doc.text("AVAA GADGETS", 105, 20, { align: "center" });
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Premium Gadgets & Accessories Store", 105, 26, { align: "center" });
+
+    // Decorative line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, 32, 195, 32);
+
+    // Invoice Details
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(33, 33, 33);
+    doc.text("ORDER RECEIPT", 15, 42);
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Order Reference: ${orderId}`, 15, 50);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 15, 56);
+
+    // Shipping Section
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(33, 33, 33);
+    doc.text("Shipping & Customer Details", 15, 68);
+
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`Customer Name: ${name}`, 15, 76);
+    doc.text(`Mobile Number: ${phone}`, 15, 82);
+    doc.text(`Delivery Address: ${address}, ${district}`, 15, 88);
+    const paymentLabel = paymentMethod === "COD" ? "Cash on Delivery" : paymentMethod === "BKASH" ? "bKash / Nagad Wallet" : "Card Payment";
+    doc.text(`Payment Method: ${paymentLabel}`, 15, 94);
+
+    // Items Header
+    doc.setDrawColor(220, 220, 220);
+    doc.line(15, 102, 195, 102);
+
+    doc.setFont("Helvetica", "bold");
+    doc.text("Item Details", 15, 108);
+    doc.text("Qty", 150, 108, { align: "center" });
+    doc.text("Price", 185, 108, { align: "right" });
+
+    doc.line(15, 112, 195, 112);
+
+    // Item rows looping
+    doc.setFont("Helvetica", "normal");
+    let yPos = 120;
+    orderedItems.forEach((item: any) => {
+      // Limit product name length to fit in line nicely
+      const displayName = item.product.name.length > 55 ? item.product.name.substring(0, 52) + "..." : item.product.name;
+      doc.text(displayName, 15, yPos);
+      doc.text(String(item.quantity), 150, yPos, { align: "center" });
+      const itemTotal = Number(item.product.sell_price) * item.quantity;
+      doc.text(`৳${itemTotal.toFixed(2)}`, 185, yPos, { align: "right" });
+      yPos += 8;
+    });
+
+    doc.line(15, yPos - 2, 195, yPos - 2);
+
+    // Totals Calculation
+    const subtotalPrice = orderedItems.reduce((sum: number, item: any) => sum + Number(item.product.sell_price) * item.quantity, 0);
+    const grandTotalPrice = subtotalPrice + deliveryCharge;
+
+    doc.text("Subtotal:", 130, yPos + 6);
+    doc.text(`৳${subtotalPrice.toFixed(2)}`, 185, yPos + 6, { align: "right" });
+
+    doc.text("Delivery Charge:", 130, yPos + 12);
+    doc.text(`৳${deliveryCharge.toFixed(2)}`, 185, yPos + 12, { align: "right" });
+
+    doc.setFont("Helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Total Paid:", 130, yPos + 20);
+    doc.text(`৳${grandTotalPrice.toFixed(2)}`, 185, yPos + 20, { align: "right" });
+
+    // Footer
+    doc.setFont("Helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Thank you for shopping with Avaa Gadgets!", 105, yPos + 40, { align: "center" });
+
+    doc.save("order-receipt.pdf");
   };
 
   return (
@@ -174,9 +284,33 @@ export default function AddToCarts() {
               <p style={{ margin: "4px 0" }}><strong>Delivery:</strong> {deliveryArea === "inside" ? "Dhaka City (৳80)" : "Outside Dhaka (৳150)"}</p>
               <p style={{ margin: "4px 0" }}><strong>Payment:</strong> {paymentMethod === "cod" ? "Cash on Delivery" : paymentMethod === "bkash" ? "bKash / Nagad" : "Card Payment"}</p>
             </div>
-            <Link href="/" className="continue-shopping">
-              Continue Shopping
-            </Link>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap", marginTop: "24px" }}>
+              <button
+                onClick={handleDownloadReceipt}
+                style={{
+                  background: "#4caf50",
+                  color: "#fff",
+                  border: "none",
+                  padding: "12px 30px",
+                  borderRadius: "30px",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(0.9)"}
+                onMouseLeave={(e) => e.currentTarget.style.filter = "none"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download Receipt
+              </button>
+              <Link href="/" className="continue-shopping" style={{ margin: 0 }}>
+                Continue Shopping
+              </Link>
+            </div>
           </div>
         ) : cart.length === 0 ? (
           <div className="empty-cart-view">

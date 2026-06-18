@@ -337,7 +337,7 @@ interface OrderItem {
 }
 
 export default function MyOrdersPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -347,10 +347,14 @@ export default function MyOrdersPage() {
   const [searching, setSearching] = useState(false);
   const [searchMsg, setSearchMsg] = useState("");
 
-  // ── Fetch orders on mount ──────────────────────────────────────
+  // ── Fetch orders — wait for auth to finish loading first ───────
   useEffect(() => {
+    // Auth context is still reading sessionStorage — don't run yet
+    if (authLoading) return;
+
     const fetchOrders = async () => {
       if (!user) {
+        // User is definitely not logged in (auth finished, no user found)
         setOrders([]);
         setLoading(false);
         return;
@@ -358,8 +362,8 @@ export default function MyOrdersPage() {
       setLoading(true);
       setLoadError("");
       try {
+        // Step 1: Try fetching by user_id
         const endpoint = `${BASE_URL}/api/orders/customer/?user_id=${user.id}`;
-
         const response = await fetch(endpoint, {
           headers: { "Content-Type": "application/json" },
           cache: "no-store",
@@ -370,7 +374,29 @@ export default function MyOrdersPage() {
         }
 
         const result = await response.json();
-        const allOrders: any[] = result.data || [];
+        let allOrders: any[] = result.data || [];
+
+        // Step 2: Fallback — if backend didn't link user_id, search by phone
+        if (allOrders.length === 0 && user.phone) {
+          const listRes = await fetch(`${BASE_URL}/api/orders/list/`, {
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+          });
+          if (listRes.ok) {
+            const listResult = await listRes.json();
+            const allBackendOrders: any[] = listResult.data || [];
+            // Match by the user's registered phone number
+            allOrders = allBackendOrders.filter((ord: any) => {
+              const ordDigits = ord.phone ? ord.phone.replace(/\D/g, "") : "";
+              const userDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
+              return (
+                ordDigits.length >= 10 &&
+                userDigits.length >= 10 &&
+                ordDigits.slice(-10) === userDigits.slice(-10)
+              );
+            });
+          }
+        }
 
         const mapped: OrderItem[] = allOrders.map((ord: any) => {
           const firstItem = ord.items?.[0] || {};
@@ -383,7 +409,8 @@ export default function MyOrdersPage() {
             product_name: firstItem.product?.name || "Premium Gadget",
             product_image: firstItem.product?.image || null,
             quantity: firstItem.quantity || 1,
-            amount: Number(ord.amount),
+            // Use total_amount first (includes delivery), fallback to amount
+            amount: Number(ord.total_amount || ord.amount || 0),
             status: ord.status || "pending",
             created_at: ord.created_at || new Date().toISOString(),
           };
@@ -401,7 +428,8 @@ export default function MyOrdersPage() {
     };
 
     fetchOrders();
-  }, [user]);
+  }, [user, authLoading]);
+
 
   // ── Search: filter purely from already-fetched API data ─────────────────────
   const handleSearch = async (e: React.FormEvent) => {
@@ -454,7 +482,7 @@ export default function MyOrdersPage() {
             product_name: firstItem.product?.name || "Premium Gadget",
             product_image: firstItem.product?.image || null,
             quantity: firstItem.quantity || 1,
-            amount: Number(ord.amount),
+            amount: Number(ord.total_amount || ord.amount || 0),
             status: ord.status || "pending",
             created_at: ord.created_at || new Date().toISOString(),
           };
@@ -591,7 +619,7 @@ export default function MyOrdersPage() {
         )}
 
         {/* Loading / Error states */}
-        {loading && (
+        {(authLoading || loading) && (
           <div
             style={{
               textAlign: "center",
@@ -604,7 +632,7 @@ export default function MyOrdersPage() {
           </div>
         )}
 
-        {!loading && loadError && (
+        {!authLoading && !loading && loadError && (
           <div
             style={{
               padding: "16px",
@@ -622,7 +650,8 @@ export default function MyOrdersPage() {
         )}
 
         {/* Orders list */}
-        {!loading && !loadError && (
+        {!authLoading && !loading && !loadError && (
+
           <>
             {ordersToDisplay.length > 0 ? (
               <div className="orders-list">
@@ -842,7 +871,7 @@ export default function MyOrdersPage() {
                     display: "inline-block",
                   }}
                 >
-                  Shop Hot Gadgets Now
+                  Shop Now
                 </Link>
               </div>
             ) : (
@@ -897,7 +926,7 @@ export default function MyOrdersPage() {
                     display: "inline-block",
                   }}
                 >
-                  Shop Hot Gadgets Now
+                  Shop Now
                 </Link>
               </div>
             )}
