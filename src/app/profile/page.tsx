@@ -104,9 +104,15 @@ export default function ProfilePage() {
             if (listRes.ok) {
               const listData = await listRes.json();
               const allOrders: Order[] = listData.data || [];
-              fetchedOrders = allOrders.filter(
-                (ord: Order) => ord.phone?.trim() === user.phone?.trim()
-              );
+              fetchedOrders = allOrders.filter((ord: Order) => {
+                const ordDigits = ord.phone ? ord.phone.replace(/\D/g, "") : "";
+                const userDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
+                return (
+                  ordDigits.length >= 10 &&
+                  userDigits.length >= 10 &&
+                  ordDigits.slice(-10) === userDigits.slice(-10)
+                );
+              });
             }
           }
 

@@ -386,10 +386,15 @@ export default function MyOrdersPage() {
             const listResult = await listRes.json();
             const allBackendOrders: any[] = listResult.data || [];
             // Match by the user's registered phone number
-            allOrders = allBackendOrders.filter(
-              (ord: any) =>
-                ord.phone?.trim() === user.phone?.trim()
-            );
+            allOrders = allBackendOrders.filter((ord: any) => {
+              const ordDigits = ord.phone ? ord.phone.replace(/\D/g, "") : "";
+              const userDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
+              return (
+                ordDigits.length >= 10 &&
+                userDigits.length >= 10 &&
+                ordDigits.slice(-10) === userDigits.slice(-10)
+              );
+            });
           }
         }
 
@@ -477,7 +482,7 @@ export default function MyOrdersPage() {
             product_name: firstItem.product?.name || "Premium Gadget",
             product_image: firstItem.product?.image || null,
             quantity: firstItem.quantity || 1,
-            amount: Number(ord.amount),
+            amount: Number(ord.total_amount || ord.amount || 0),
             status: ord.status || "pending",
             created_at: ord.created_at || new Date().toISOString(),
           };
