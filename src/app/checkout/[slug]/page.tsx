@@ -290,24 +290,24 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
     doc.setFont("Helvetica", "normal");
     doc.text(product.name, 15, 120);
     doc.text(String(quantity), 150, 120, { align: "center" });
-    doc.text(`BDT${(Number(product.sell_price) * quantity).toFixed(2)}`, 185, 120, { align: "right" });
+    doc.text(`BDT ${(Number(product.sell_price) * quantity).toFixed(2)}`, 185, 120, { align: "right" });
 
     doc.line(15, 126, 195, 126);
 
     // Summary Section
     doc.text("Delivery Charge:", 130, 134);
-    doc.text(`BDT${deliveryCharge.toFixed(2)}`, 185, 134, { align: "right" });
+    doc.text(`BDT ${deliveryCharge.toFixed(2)}`, 185, 134, { align: "right" });
 
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(11);
     doc.text("Total Paid:", 130, 142);
-    doc.text(`BDT${grandTotal.toFixed(2)}`, 185, 142, { align: "right" });
+    doc.text(`BDT ${grandTotal.toFixed(2)}`, 185, 142, { align: "right" });
 
     // Footer
     doc.setFont("Helvetica", "italic");
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
-    doc.text("Thank you for shopping with BUYFEST", 105, 165, { align: "center" });
+    doc.text("Thank you for shopping with www.buyfestbd.com", 105, 165, { align: "center" });
 
     doc.save("order-receipt.pdf");
   };
