@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -125,6 +125,14 @@ export default function AdminManagementPage() {
   const [loadingBanners, setLoadingBanners] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const [tempStatus, setTempStatus] = useState<Record<number, string>>({});
+  const [tempStock, setTempStock] = useState<Record<number, number>>({});
+  const [editingStockProdId, setEditingStockProdId] = useState<number | null>(null);
+  const [stockStatus, setStockStatus] = useState<Record<number, { type: "success" | "error" | "loading"; text: string } | null>>({});
+  const [productCurrentPage, setProductCurrentPage] = useState(1);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showCategoryPopup, setShowCategoryPopup] = useState<boolean>(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Orders filters and pagination
   const [orderDateFilter, setOrderDateFilter] = useState<"all" | "today" | "yesterday" | "week" | "month">("all");
@@ -188,10 +196,14 @@ export default function AdminManagementPage() {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (searchVal?: string) => {
     setLoadingProducts(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/products/list/?all=true`);
+      const querySearch = searchVal !== undefined ? searchVal : searchQuery;
+      const url = querySearch
+        ? `${BASE_URL}/api/products/list/?all=true&search=${encodeURIComponent(querySearch)}`
+        : `${BASE_URL}/api/products/list/?all=true`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
@@ -541,6 +553,62 @@ export default function AdminManagementPage() {
     } catch (err) {
       console.error("Error deleting product:", err);
       alert("❌ Connection error while deleting product");
+    }
+  };
+
+  const handleUpdateStock = async (prodId: number, newStock: number) => {
+    setStockStatus((prev) => ({
+      ...prev,
+      [prodId]: { type: "loading", text: "Updating..." }
+    }));
+    try {
+      const res = await fetch(`${BASE_URL}/api/products/${prodId}/update-stock/`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ stock: newStock }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProducts((prev) =>
+          prev.map((p) => (p.id === prodId ? { ...p, stock: data.stock } : p))
+        );
+        setStockStatus((prev) => ({
+          ...prev,
+          [prodId]: { type: "success", text: `Updated to ${data.stock}!` }
+        }));
+        setTimeout(() => {
+          setStockStatus((prev) => ({
+            ...prev,
+            [prodId]: null
+          }));
+        }, 3000);
+      } else {
+        const errData = await res.json();
+        setStockStatus((prev) => ({
+          ...prev,
+          [prodId]: { type: "error", text: errData.error || "Failed!" }
+        }));
+        setTimeout(() => {
+          setStockStatus((prev) => ({
+            ...prev,
+            [prodId]: null
+          }));
+        }, 4000);
+      }
+    } catch (err) {
+      console.error("Error updating stock:", err);
+      setStockStatus((prev) => ({
+        ...prev,
+        [prodId]: { type: "error", text: "Connection error!" }
+      }));
+      setTimeout(() => {
+        setStockStatus((prev) => ({
+          ...prev,
+          [prodId]: null
+        }));
+      }, 4000);
     }
   };
 
@@ -967,6 +1035,19 @@ export default function AdminManagementPage() {
   const ordersToShow = filteredOrders.slice(
     (orderCurrentPage - 1) * ORDERS_PER_PAGE,
     orderCurrentPage * ORDERS_PER_PAGE
+  );
+
+  const PRODUCTS_PER_PAGE = 8;
+  const filteredProducts = products.filter((prod) => {
+    if (selectedCategoryFilter === "all") return true;
+    const prodCatId = typeof prod.category === "object" ? prod.category?.id : prod.category;
+    return prodCatId?.toString() === selectedCategoryFilter;
+  });
+  const productTotalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const productCurrentPageClamped = Math.max(1, Math.min(productCurrentPage, productTotalPages || 1));
+  const productsToShow = filteredProducts.slice(
+    (productCurrentPageClamped - 1) * PRODUCTS_PER_PAGE,
+    productCurrentPageClamped * PRODUCTS_PER_PAGE
   );
 
   if (checkingAuth) {
@@ -2827,11 +2908,230 @@ export default function AdminManagementPage() {
 
                 {/* Products List */}
                 <div>
-                  <div className="data-list-header">
-                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)" }}>Catalog Products ({products.length})</h3>
-                    <button onClick={fetchProducts} className="refresh-btn">
-                      🔄 Refresh List
-                    </button>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "12px",
+                    marginBottom: "20px",
+                    borderBottom: "1px solid var(--border-color, rgba(255,255,255,0.06))",
+                    paddingBottom: "12px"
+                  }}>
+                    <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-strong)", margin: 0 }}>
+                      Catalog Products ({filteredProducts.length === products.length ? products.length : `${filteredProducts.length} of ${products.length}`})
+                    </h3>
+
+                    {/* Controls container: Category Dropdown & Search & Refresh */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap"
+                    }}>
+
+                      {/* Search Bar */}
+                      <div style={{ position: "relative", minWidth: "180px", maxWidth: "240px" }}>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSearchQuery(val);
+                            // Debounced search
+                            if (searchTimeoutRef.current) {
+                              clearTimeout(searchTimeoutRef.current);
+                            }
+                            searchTimeoutRef.current = setTimeout(() => {
+                              fetchProducts(val);
+                              setProductCurrentPage(1);
+                            }, 500);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              if (searchTimeoutRef.current) {
+                                clearTimeout(searchTimeoutRef.current);
+                              }
+                              fetchProducts(searchQuery);
+                              setProductCurrentPage(1);
+                            }
+                          }}
+                          placeholder="Search..."
+                          style={{
+                            width: "100%",
+                            background: "var(--bg-input, rgba(255,255,255,0.05))",
+                            border: "1px solid var(--border-input, rgba(255,255,255,0.12))",
+                            borderRadius: "7px",
+                            padding: "6px 28px 6px 28px",
+                            fontSize: "13px",
+                            color: "var(--text-input, #fff)",
+                            outline: "none",
+                            transition: "all 0.2s",
+                          }}
+                        />
+                        <span style={{
+                          position: "absolute",
+                          left: "8px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          color: "var(--text-muted, #888)",
+                          fontSize: "12px",
+                          pointerEvents: "none"
+                        }}>
+                          🔍
+                        </span>
+                        {searchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery("");
+                              if (searchTimeoutRef.current) {
+                                clearTimeout(searchTimeoutRef.current);
+                              }
+                              fetchProducts("");
+                              setProductCurrentPage(1);
+                            }}
+                            style={{
+                              position: "absolute",
+                              right: "8px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              background: "none",
+                              border: "none",
+                              color: "var(--text-muted, #888)",
+                              cursor: "pointer",
+                              fontSize: "10px",
+                              padding: "2px"
+                            }}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Category Dropdown/Popup Trigger */}
+                      <div style={{ position: "relative" }}>
+                        <button
+                          type="button"
+                          onClick={() => setShowCategoryPopup(!showCategoryPopup)}
+                          style={{
+                            background: "var(--bg-toggle-btn, rgba(255,255,255,0.08))",
+                            color: "var(--text-strong, #fff)",
+                            border: "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                            borderRadius: "7px",
+                            padding: "6px 12px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <span>📁 Category:</span>
+                          <strong style={{ color: "var(--primary, #e8320a)", fontWeight: "700" }}>
+                            {selectedCategoryFilter === "all" ? "All" : categories.find(c => c.id.toString() === selectedCategoryFilter)?.name || "Unknown"}
+                          </strong>
+                          <span style={{ fontSize: "10px", opacity: 0.8 }}>▼</span>
+                        </button>
+                        {showCategoryPopup && (
+                          <>
+                            {/* Backdrop to close the popup */}
+                            <div
+                              onClick={() => setShowCategoryPopup(false)}
+                              style={{
+                                position: "fixed",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                zIndex: 999,
+                              }}
+                            />
+                            <div style={{
+                              position: "absolute",
+                              top: "100%",
+                              right: 0,
+                              marginTop: "6px",
+                              background: "var(--bg-card, #1e1e24)",
+                              border: "1px solid var(--border-color, rgba(255,255,255,0.1))",
+                              borderRadius: "8px",
+                              boxShadow: "0 10px 25px rgba(0,0,0,0.6)",
+                              zIndex: 1000,
+                              minWidth: "180px",
+                              maxHeight: "250px",
+                              overflowY: "auto",
+                              padding: "4px 0",
+                            }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCategoryFilter("all");
+                                  setProductCurrentPage(1);
+                                  setShowCategoryPopup(false);
+                                }}
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  textAlign: "left",
+                                  background: selectedCategoryFilter === "all" ? "rgba(232,50,10,0.15)" : "transparent",
+                                  color: selectedCategoryFilter === "all" ? "var(--primary, #e8320a)" : "var(--text-input, #ccc)",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  fontSize: "13px",
+                                  fontWeight: selectedCategoryFilter === "all" ? "600" : "400",
+                                  transition: "all 0.15s",
+                                }}
+                              >
+                                📁 All Categories
+                              </button>
+                              {categories.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedCategoryFilter(cat.id.toString());
+                                    setProductCurrentPage(1);
+                                    setShowCategoryPopup(false);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    padding: "8px 12px",
+                                    textAlign: "left",
+                                    background: selectedCategoryFilter === cat.id.toString() ? "rgba(232,50,10,0.15)" : "transparent",
+                                    color: selectedCategoryFilter === cat.id.toString() ? "var(--primary, #e8320a)" : "var(--text-input, #ccc)",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    fontSize: "13px",
+                                    fontWeight: selectedCategoryFilter === cat.id.toString() ? "600" : "400",
+                                    transition: "all 0.15s",
+                                  }}
+                                >
+                                  🏷️ {cat.name}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          fetchProducts(searchQuery);
+                        }}
+                        className="refresh-btn"
+                        style={{
+                          margin: 0,
+                          padding: "6px 12px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        🔄 Refresh
+                      </button>
+
+                    </div>
                   </div>
 
                   {loadingProducts && products.length === 0 ? (
@@ -2841,62 +3141,278 @@ export default function AdminManagementPage() {
                     </div>
                   ) : products.length === 0 ? (
                     <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No products created yet.</p>
+                  ) : filteredProducts.length === 0 ? (
+                    <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No products found in this category.</p>
                   ) : (
-                    <div className="list-grid">
-                      {products.map((prod) => (
-                        <div key={prod.id} className="list-card" style={{ position: "relative" }}>
-                          <button
-                            onClick={() => handleDeleteProduct(prod.id)}
-                            style={{
-                              position: "absolute",
-                              top: "8px",
-                              right: "8px",
-                              background: "rgba(244, 67, 54, 0.25)",
-                              color: "#ff8a80",
-                              border: "1px solid rgba(244, 67, 54, 0.35)",
-                              borderRadius: "4px",
-                              padding: "4px 8px",
-                              fontSize: "11px",
-                              cursor: "pointer",
-                              zIndex: 10,
-                              transition: "all 0.2s"
-                            }}
-                            title="Delete Product"
-                          >
-                            🗑️ Delete
-                          </button>
-                          <div className="list-card-img">
-                            {prod.image ? (
-                              <img
-                                src={prod.image.startsWith("http") ? prod.image : `${BASE_URL}${prod.image}`}
-                                alt={prod.name}
-                              />
-                            ) : (
-                              <span style={{ fontSize: "10px", color: "#666" }}>No Image</span>
-                            )}
-                          </div>
-                          <div className="list-card-info">
-                            <div className="list-card-title" title={prod.name}>
-                              {prod.name}
+                    <>
+                      <div className="list-grid">
+                        {productsToShow.map((prod) => (
+                          <div key={prod.id} className="list-card" style={{ position: "relative" }}>
+                            <button
+                              onClick={() => handleDeleteProduct(prod.id)}
+                              style={{
+                                position: "absolute",
+                                top: "8px",
+                                right: "8px",
+                                background: "rgba(244, 67, 54, 0.25)",
+                                color: "#ff8a80",
+                                border: "1px solid rgba(244, 67, 54, 0.35)",
+                                borderRadius: "4px",
+                                padding: "4px 8px",
+                                fontSize: "11px",
+                                cursor: "pointer",
+                                zIndex: 10,
+                                transition: "all 0.2s"
+                              }}
+                              title="Delete Product"
+                            >
+                              🗑️ Delete
+                            </button>
+                            <div className="list-card-img">
+                              {prod.image ? (
+                                <img
+                                  src={prod.image.startsWith("http") ? prod.image : `${BASE_URL}${prod.image}`}
+                                  alt={prod.name}
+                                />
+                              ) : (
+                                <span style={{ fontSize: "10px", color: "#666" }}>No Image</span>
+                              )}
                             </div>
-                            <div className="list-card-subtitle">
-                              Category: {typeof prod.category === "object" ? prod.category.name : `Cat ID ${prod.category}`}
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
-                              <strong style={{ color: "var(--primary, #e8320a)", fontSize: "13px" }}>
-                                ৳{Number(prod.sell_price).toLocaleString()}
-                              </strong>
-                              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                                {prod.is_new_arrivals && (
-                                  <span className="list-card-badge" style={{ background: "rgba(34, 197, 94, 0.15)", color: "#22c55e", borderColor: "rgba(34, 197, 94, 0.3)" }}>New</span>
-                                )}
-                                <span className="list-card-badge">Stock: {prod.stock}</span>
+                            <div className="list-card-info">
+                              <div className="list-card-title" title={prod.name}>
+                                {prod.name}
                               </div>
+                              <div className="list-card-subtitle">
+                                Category: {typeof prod.category === "object" ? prod.category.name : `Cat ID ${prod.category}`}
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                                <strong style={{ color: "var(--primary, #e8320a)", fontSize: "13px" }}>
+                                  ৳{Number(prod.sell_price).toLocaleString()}
+                                </strong>
+                                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                                  {prod.is_new_arrivals && (
+                                    <span className="list-card-badge" style={{ background: "rgba(34, 197, 94, 0.15)", color: "#22c55e", borderColor: "rgba(34, 197, 94, 0.3)" }}>New</span>
+                                  )}
+                                  <span className="list-card-badge">Stock: {prod.stock}</span>
+                                </div>
+                              </div>
+                              {stockStatus[prod.id] && (
+                                <div style={{
+                                  fontSize: "11px",
+                                  fontWeight: 500,
+                                  marginTop: "6px",
+                                  color: stockStatus[prod.id]?.type === "success" ? "#66bb6a" : stockStatus[prod.id]?.type === "loading" ? "var(--text-muted)" : "#ef5350",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px"
+                                }}>
+                                  <span>{stockStatus[prod.id]?.type === "success" ? "✅" : stockStatus[prod.id]?.type === "loading" ? "⏳" : "❌"}</span>
+                                  <span>{stockStatus[prod.id]?.text}</span>
+                                </div>
+                              )}
+                              {editingStockProdId === prod.id ? (
+                                <div style={{ marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "8px" }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={tempStock[prod.id] !== undefined ? tempStock[prod.id] : prod.stock}
+                                      onChange={(e) => setTempStock({
+                                        ...tempStock,
+                                        [prod.id]: parseInt(e.target.value) || 0
+                                      })}
+                                      style={{
+                                        width: "60px",
+                                        background: "var(--bg-input)",
+                                        border: "1px solid var(--border-input)",
+                                        borderRadius: "4px",
+                                        padding: "3px 6px",
+                                        fontSize: "12px",
+                                        color: "var(--text-input)",
+                                        textAlign: "center"
+                                      }}
+                                      autoFocus
+                                    />
+                                    <button
+                                      onClick={async () => {
+                                        const val = tempStock[prod.id] !== undefined ? tempStock[prod.id] : prod.stock;
+                                        await handleUpdateStock(prod.id, val);
+                                        setEditingStockProdId(null);
+                                      }}
+                                      style={{
+                                        background: "rgba(34, 197, 94, 0.2)",
+                                        color: "#66bb6a",
+                                        border: "1px solid rgba(34, 197, 94, 0.3)",
+                                        borderRadius: "4px",
+                                        padding: "3px 8px",
+                                        fontSize: "11px",
+                                        cursor: "pointer",
+                                        flexGrow: 1,
+                                        textAlign: "center",
+                                        transition: "all 0.2s"
+                                      }}
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingStockProdId(null)}
+                                      style={{
+                                        background: "rgba(255, 255, 255, 0.05)",
+                                        color: "#ccc",
+                                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                                        borderRadius: "4px",
+                                        padding: "3px 8px",
+                                        fontSize: "11px",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                      }}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "8px" }}>
+                                  <button
+                                    onClick={() => {
+                                      setTempStock({
+                                        ...tempStock,
+                                        [prod.id]: prod.stock
+                                      });
+                                      setEditingStockProdId(prod.id);
+                                    }}
+                                    style={{
+                                      background: "rgba(149, 36, 36, 0.05)",
+                                      color: "#229c12ff",
+                                      border: "1px solid rgba(204, 32, 32, 0.1)",
+                                      borderRadius: "4px",
+                                      padding: "4px 10px",
+                                      fontSize: "11px",
+                                      cursor: "pointer",
+                                      transition: "all 0.2s",
+                                      width: "100%",
+                                      textAlign: "center"
+                                    }}
+                                  >
+                                    Update Stock
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
+                        ))}
+                      </div>
+
+                      {/* Product Pagination */}
+                      {productTotalPages > 1 && (
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          marginTop: "24px",
+                          flexWrap: "wrap",
+                        }}>
+                          {/* Info text */}
+                          <span style={{
+                            fontSize: "12px",
+                            color: "var(--text-muted)",
+                            marginRight: "8px",
+                          }}>
+                            Showing {(productCurrentPageClamped - 1) * PRODUCTS_PER_PAGE + 1}–{Math.min(productCurrentPageClamped * PRODUCTS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
+                          </span>
+
+                          {/* PREV button */}
+                          <button
+                            type="button"
+                            onClick={() => setProductCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={productCurrentPageClamped === 1}
+                            style={{
+                              background: productCurrentPageClamped === 1 ? "rgba(255,255,255,0.05)" : "var(--bg-toggle-btn, rgba(255,255,255,0.1))",
+                              color: productCurrentPageClamped === 1 ? "rgba(213, 13, 13, 0.97)" : "var(--text-toggle-btn, #fff)",
+                              border: "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                              borderRadius: "7px",
+                              padding: "7px 14px",
+                              fontSize: "13px",
+                              fontWeight: "600",
+                              cursor: productCurrentPageClamped === 1 ? "not-allowed" : "pointer",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            ← Prev
+                          </button>
+
+                          {/* Page number buttons */}
+                          {Array.from({ length: productTotalPages }, (_, i) => i + 1)
+                            .filter(page => {
+                              // Show: first, last, current, and neighbours
+                              return (
+                                page === 1 ||
+                                page === productTotalPages ||
+                                Math.abs(page - productCurrentPageClamped) <= 1
+                              );
+                            })
+                            .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                              if (idx > 0 && (page as number) - (arr[idx - 1] as number) > 1) {
+                                acc.push("...");
+                              }
+                              acc.push(page);
+                              return acc;
+                            }, [])
+                            .map((item, idx) =>
+                              item === "..." ? (
+                                <span key={`dots-${idx}`} style={{ color: "var(--text-muted)", padding: "0 4px", fontSize: "13px" }}>…</span>
+                              ) : (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => setProductCurrentPage(item as number)}
+                                  style={{
+                                    background: productCurrentPageClamped === item
+                                      ? "linear-gradient(135deg, #e8320a 0%, #ff6b35 100%)"
+                                      : "var(--bg-toggle-btn, rgba(255,255,255,0.08))",
+                                    color: productCurrentPageClamped === item ? "#fff" : "var(--text-toggle-btn, #ccc)",
+                                    border: productCurrentPageClamped === item
+                                      ? "1px solid #e8320a"
+                                      : "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                                    borderRadius: "7px",
+                                    minWidth: "36px",
+                                    height: "34px",
+                                    fontSize: "13px",
+                                    fontWeight: productCurrentPageClamped === item ? "700" : "500",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s ease",
+                                    boxShadow: productCurrentPageClamped === item ? "0 2px 10px rgba(232,50,10,0.4)" : "none",
+                                  }}
+                                >
+                                  {item}
+                                </button>
+                              )
+                            )
+                          }
+
+                          {/* NEXT button */}
+                          <button
+                            type="button"
+                            onClick={() => setProductCurrentPage(prev => Math.min(prev + 1, productTotalPages))}
+                            disabled={productCurrentPageClamped === productTotalPages}
+                            style={{
+                              background: productCurrentPageClamped === productTotalPages ? "rgba(255,255,255,0.05)" : "var(--bg-toggle-btn, rgba(255,255,255,0.1))",
+                              color: productCurrentPageClamped === productTotalPages ? "rgba(213, 13, 13, 0.97)" : "var(--text-toggle-btn, #fff)",
+                              border: "1px solid var(--border-toggle-btn, rgba(255,255,255,0.15))",
+                              borderRadius: "7px",
+                              padding: "7px 14px",
+                              fontSize: "13px",
+                              fontWeight: "600",
+                              cursor: productCurrentPageClamped === productTotalPages ? "not-allowed" : "pointer",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            Next →
+                          </button>
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

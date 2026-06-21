@@ -30,6 +30,7 @@ export default function AddToCarts() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [orderedItems, setOrderedItems] = useState<any[]>([]);
+  const [cartErrors, setCartErrors] = useState<{ [productId: number]: string }>({});
 
   // Shipping Address Options
   const [addressOption, setAddressOption] = useState<"profile" | "new">("profile");
@@ -86,7 +87,25 @@ export default function AddToCarts() {
   const total = subtotal + deliveryCharge;
 
   const handleQuantityChange = (productId: number, newQty: number) => {
-    updateQuantity(productId, newQty);
+    const res = updateQuantity(productId, newQty);
+    if (res && !res.success) {
+      setCartErrors((prev) => ({
+        ...prev,
+        [productId]: res.message || "Limit exceeded"
+      }));
+      // Auto-clear message after 4 seconds
+      setTimeout(() => {
+        setCartErrors((prev) => ({
+          ...prev,
+          [productId]: ""
+        }));
+      }, 4000);
+    } else {
+      setCartErrors((prev) => ({
+        ...prev,
+        [productId]: ""
+      }));
+    }
   };
 
   // const handleCheckoutSubmit = (e: React.FormEvent) => {
@@ -401,6 +420,11 @@ export default function AddToCarts() {
                       <div className="cart-item-details">
                         <h3 className="cart-item-name">{item.product.name}</h3>
                         <p className="cart-item-category">{item.product.category?.name || "Gadget"}</p>
+                        {cartErrors[item.product.id] && (
+                          <div style={{ color: "#ef4444", fontSize: "11px", marginTop: "4px", fontWeight: "500" }}>
+                            ⚠️ {cartErrors[item.product.id]}
+                          </div>
+                        )}
                       </div>
 
                       {/* QTY CONTROL */}

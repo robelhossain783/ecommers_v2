@@ -44,6 +44,7 @@ function CategoryProductsContent() {
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
   const [categoryTitle, setCategoryTitle] = useState("Category");
   const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     async function loadProductsAndCategories() {
@@ -114,8 +115,15 @@ function CategoryProductsContent() {
   }, [categorySlug]);
 
   const handleAddToCart = (product: Product) => {
-    addToCart(product, 1);
-    alert(`"${product.name}" added to cart!`);
+    const res = addToCart(product, 1);
+    if (res && !res.success) {
+      setNotification({ type: "error", text: res.message || "Could not add to cart" });
+    } else {
+      setNotification({ type: "success", text: `"${product.name}" added to cart!` });
+    }
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
   };
 
   if (loading) {
@@ -199,11 +207,32 @@ function CategoryProductsContent() {
             )}
           </div> */}
 
-          <div style={{ marginTop: "40px" }}>
-            <Link href="/" className="continue-shopping" style={{ background: "var(--primary)", color: "#fff", padding: "12px 32px", borderRadius: "30px", fontWeight: "700", fontSize: "14px" }}>
-              Back to Home Store
-            </Link>
-          </div>
+        <div style={{ marginTop: "40px" }}>
+          <Link href="/" className="continue-shopping" style={{ background: "var(--primary)", color: "#fff", padding: "12px 32px", borderRadius: "30px", fontWeight: "700", fontSize: "14px" }}>
+            Back to Home Store
+          </Link>
+        </div>
+      </div>
+      )}
+
+      {notification && (
+        <div style={{
+          position: "fixed",
+          bottom: "30px",
+          right: "30px",
+          backgroundColor: notification.type === "success" ? "#10b981" : "#ef4444",
+          color: "#fff",
+          padding: "12px 24px",
+          borderRadius: "8px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          zIndex: 1000,
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px"
+        }}>
+          <span>{notification.type === "success" ? "✅" : "⚠️"}</span>
+          <span>{notification.text}</span>
         </div>
       )}
     </div>
