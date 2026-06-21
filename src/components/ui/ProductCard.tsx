@@ -256,20 +256,22 @@ export default function ProductCard({
 
         {/* STOCK */}
         <p className={`product-card-stock ${product.stock && product.stock > 0 ? "" : "out-of-stock"}`}>
-          Stock: {product.stock ?? 0}
+          {product.stock && product.stock > 0 ? `Stock: ${product.stock}` : "Stock Out"}
         </p>
       </Link>
 
       {/* BUTTON */}
       <button
-        className="add-cart-btn"
+        className={`add-cart-btn ${product.stock && product.stock > 0 ? "" : "out-of-stock"}`}
+        disabled={!product.stock || product.stock <= 0}
         onClick={(e) => {
+          if (!product.stock || product.stock <= 0) return;
           e.preventDefault();
           e.stopPropagation();
           onAddToCart();
         }}
       >
-        Add to Cart
+        {product.stock && product.stock > 0 ? "Add to Cart" : "Stock Out"}
       </button>
 
     </div>

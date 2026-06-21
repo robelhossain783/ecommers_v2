@@ -44,6 +44,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
+  const [stockLimitMsg, setStockLimitMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -86,24 +87,53 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   const handleIncrement = () => {
     if (!product) return;
-    if (quantity < product.stock) {
+    const maxAllowed = Math.max(1, Math.floor(product.stock * 0.7));
+    if (quantity < maxAllowed) {
       setQuantity((prev) => prev + 1);
+      setStockLimitMsg(null);
+    } else {
+      setStockLimitMsg(`Limit exceeded. You cannot order more than 70% of available stock (Limit: ${maxAllowed} items)`);
     }
   };
 
   const handleDecrement = () => {
     if (quantity > 1) {
       setQuantity((prev) => prev - 1);
+      setStockLimitMsg(null);
     }
   };
 
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart(product, quantity);
+    if (product.stock <= 0) {
+      setStockLimitMsg("Stock Out");
+      return;
+    }
+    const maxAllowed = Math.max(1, Math.floor(product.stock * 0.7));
+    if (quantity > maxAllowed) {
+      setStockLimitMsg(`Limit exceeded. You cannot order more than 70% of available stock (Limit: ${maxAllowed} items)`);
+      return;
+    }
+    const res = addToCart(product, quantity);
+    if (res && !res.success) {
+      setStockLimitMsg(res.message || "Failed to add to cart");
+    } else {
+      setStockLimitMsg(null);
+    }
   };
 
   const handleBuyNow = () => {
     if (!product) return;
+    if (product.stock <= 0) {
+      setStockLimitMsg("Stock Out");
+      return;
+    }
+    const maxAllowed = Math.max(1, Math.floor(product.stock * 0.7));
+    if (quantity > maxAllowed) {
+      setStockLimitMsg(`Limit exceeded. You cannot order more than 70% of available stock (Limit: ${maxAllowed} items)`);
+      return;
+    }
+    setStockLimitMsg(null);
     // Redirect to custom single-product checkout form
     router.push(`/checkout/${product.slug}?qty=${quantity}`);
   };
@@ -240,9 +270,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <h1 className="product-detail-title">{product.name}</h1>
 
               <div className={`product-detail-stock-badge ${inStock ? "" : "out"}`}>
-                <span style={{ fontSize: "16px" }}>{inStock ? "🟢" : "🔴"}</span>
+                {/* <span style={{ fontSize: "16px" }}>{inStock ? "🟢" : "🔴"}</span> */}
                 <span>
-                  {inStock ? `In Stock (Available: ${product.stock})` : "Out of Stock"}
+                  {inStock ? `In Stock (Available: ${product.stock})` : "Stock Out"}
                 </span>
               </div>
 
@@ -297,10 +327,58 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     <FaWhatsapp size={16} /> WhatsApp
                   </a>
                 </div>
+
+                {stockLimitMsg && (
+                  <div style={{
+                    width: "100%",
+                    color: "#e8320a",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    background: "rgba(232, 50, 10, 0.06)",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    marginTop: "12px",
+                    border: "1px solid rgba(232, 50, 10, 0.15)",
+                    boxSizing: "border-box"
+                  }}>
+                    <span>⚠️</span> {stockLimitMsg}
+                  </div>
+                )}
               </div>
             ) : (
-              <div style={{ marginTop: "24px", padding: "16px", background: "#ffebee", color: "#c62828", borderRadius: "var(--radius-sm)", fontWeight: "600" }}>
-                This item is currently unavailable. Please check back later or subscribe to pre-order notifications.
+              <div className="product-detail-actions">
+                <div className="quantity-control disabled" style={{ opacity: 0.5, pointerEvents: "none" }}>
+                  <button className="quantity-control-btn" disabled>−</button>
+                  <input
+                    type="text"
+                    value="0"
+                    readOnly
+                    className="quantity-input"
+                  />
+                  <button className="quantity-control-btn" disabled>+</button>
+                </div>
+
+                <div className="product-detail-btn-group">
+                  <button className="product-detail-add-btn" disabled style={{ background: "#f3f4f6", color: "#9ca3af", borderColor: "#e5e7eb", cursor: "not-allowed", opacity: 0.8 }}>
+                    Stock Out
+                  </button>
+
+                  <button className="product-detail-buy-btn" disabled style={{ background: "#f3f4f6", color: "#9ca3af", borderColor: "#e5e7eb", cursor: "not-allowed", opacity: 0.8 }}>
+                    Stock Out
+                  </button>
+
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="product-detail-whatsapp-btn"
+                  >
+                    <FaWhatsapp size={16} /> WhatsApp
+                  </a>
+                </div>
               </div>
             )}
           </div>
