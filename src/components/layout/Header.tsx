@@ -37,7 +37,8 @@ import {
   Cpu,
   FolderOpen,
   Coffee,
-  Utensils
+  Utensils,
+  TicketPercent
 } from "lucide-react";
 import { searchProducts } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
@@ -87,6 +88,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const { user, login, register, logout } = useAuth();
   const cartCount = propCartCount ?? contextCartCount;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCategoriesSidebarExpanded, setIsCategoriesSidebarExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -328,21 +330,23 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
       <header className="site-header">
         <div className="header-inner">
 
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="category-menu-btn"
-            aria-label="Open Category Sidebar"
-          >
-            <List size={22} strokeWidth={1.75} />
-          </button>
+          <div className="header-left">
+            {/* Hamburger Menu Button */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="category-menu-btn"
+              aria-label="Open Category Sidebar"
+            >
+              <List size={22} strokeWidth={1.75} />
+            </button>
 
-          {/* ── Logo ── */}
-          <a href="/" className="logo" aria-label="BuyFest Home">
-            <span className="logo-text">
-              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
-            </span>
-          </a>
+            {/* ── Logo ── */}
+            <a href="/" className="logo" aria-label="BuyFest Home">
+              <span className="logo-text">
+                <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+              </span>
+            </a>
+          </div>
 
 
           {/* ── DESKTOP: always-visible search bar ── */}
@@ -528,6 +532,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
             <a href="/" className="sub-nav-link">Offer</a>
             <Link href="/orders" className="sub-nav-link">Orders</Link>
+            <Link href="/contact-us" className="sub-nav-link">Contact Us</Link>
           </div>
         </div>
       </header>
@@ -609,45 +614,136 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
         <div className="header-search-backdrop" onClick={closeMobileSearch} />
       )}
 
-      {/* Category Sidebar */}
+      {/* Category/Menu Sidebar */}
       <div className={`category-sidebar-overlay ${isSidebarOpen ? "open" : ""}`} onClick={() => setIsSidebarOpen(false)}>
         <div className={`category-sidebar-drawer ${isSidebarOpen ? "open" : ""}`} onClick={(e) => e.stopPropagation()}>
+          {/* ── Sidebar Header: User/Login Banner ── */}
           <div className="category-sidebar-header">
-            <div className="category-sidebar-header-left">
-              <div className="category-sidebar-icon-wrap">
-                <List size={20} strokeWidth={2.2} />
-              </div>
-              <h3 className="category-sidebar-title">Categories</h3>
-            </div>
             <button className="category-sidebar-close" onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar">
-              <X size={20} />
+              <X size={16} />
             </button>
-          </div>
-          <div className="category-sidebar-body">
-            <div className="category-sidebar-list">
-              {categoriesList.map((cat) => (
-                <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="category-sidebar-item" onClick={() => setIsSidebarOpen(false)}>
-                  <div className="category-sidebar-item-left">
-                    <span className="category-sidebar-item-icon">
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          className="category-sidebar-item-img"
-                        />
-                      ) : (
-                        getCategoryIcon(cat.slug)
-                      )}
-                    </span>
-                    <span className="category-sidebar-item-name">{cat.name}</span>
+            {mounted && (user ? (
+              <div className="sidebar-user-banner sidebar-user-banner--loggedin">
+                <Link href="/profile" className="sidebar-user-profile-clickable" onClick={() => setIsSidebarOpen(false)}>
+                  <div className="sidebar-user-avatar sidebar-user-avatar--lg">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar.startsWith("http") ? user.avatar : `${BASE_URL}${user.avatar}`}
+                        alt="User Avatar"
+                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                      />
+                    ) : (
+                      <span className="sidebar-user-avatar-initials">{getInitials()}</span>
+                    )}
                   </div>
-                  <ChevronRight size={16} strokeWidth={2.2} className="category-sidebar-item-arrow" />
+                  <div className="sidebar-user-info">
+                    <div className="sidebar-user-hello">
+                      {user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user.username}
+                    </div>
+                    <span className="sidebar-user-view-profile">View Profile →</span>
+                  </div>
                 </Link>
-              ))}
+                <button
+                  className="sidebar-user-logout-pill"
+                  onClick={() => { logout(); setIsSidebarOpen(false); }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                className="sidebar-user-banner sidebar-user-banner--guest"
+                onClick={() => { openAuthModal("login"); setIsSidebarOpen(false); }}
+              >
+                <div className="sidebar-user-avatar sidebar-user-avatar--guest">
+                  <User size={26} strokeWidth={1.5} color="#fff" />
+                </div>
+                <div className="sidebar-user-info">
+                  <div className="sidebar-user-hello">Hello there!</div>
+                  <div className="sidebar-user-signin">Sign In / Register</div>
+                </div>
+                <svg className="sidebar-user-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+              </button>
+            ))}
+          </div>
+
+          <div className="category-sidebar-body">
+            <div className="sidebar-nav-menu">
+              {/* Home */}
+              <Link href="/" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+                <Home size={18} strokeWidth={2} />
+                <span>Home</span>
+              </Link>
+
+              {/* Category (Accordion style) */}
+              <div className={`sidebar-accordion ${isCategoriesSidebarExpanded ? "expanded" : ""}`}>
+                <button
+                  className="sidebar-accordion-trigger"
+                  onClick={() => setIsCategoriesSidebarExpanded(!isCategoriesSidebarExpanded)}
+                >
+                  <div className="sidebar-accordion-trigger-left">
+                    <List size={18} strokeWidth={2} />
+                    <span>Categories</span>
+                  </div>
+                  <ChevronRight size={16} strokeWidth={2} className="sidebar-accordion-arrow" />
+                </button>
+
+                {isCategoriesSidebarExpanded && (
+                  <div className="sidebar-accordion-content">
+                    {categoriesList.map((cat) => (
+                      <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="sidebar-sub-item" onClick={() => setIsSidebarOpen(false)}>
+                        <span className="sidebar-sub-item-icon">
+                          {cat.image ? (
+                            <img
+                              src={cat.image}
+                              alt={cat.name}
+                              className="sidebar-sub-item-img"
+                            />
+                          ) : (
+                            getCategoryIcon(cat.slug)
+                          )}
+                        </span>
+                        <span className="sidebar-sub-item-name">{cat.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Offer */}
+              <Link href="/" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+                <TicketPercent size={18} strokeWidth={2} />
+                <span>Offers</span>
+              </Link>
+
+              {/* Orders */}
+              <Link href="/orders" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+                <ClipboardList size={18} strokeWidth={2} />
+                <span>My Orders</span>
+              </Link>
+
+              {/* Profile */}
+              <Link href="/profile" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+                <User size={18} strokeWidth={2} />
+                <span>My Profile</span>
+              </Link>
+
+              {/* Cart */}
+              <Link href="/cart" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+                <ShoppingCart size={18} strokeWidth={2} />
+                <span>Cart</span>
+              </Link>
+
+              {/* Contact Us */}
+              <Link href="/contact-us" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                <span>Contact Us</span>
+              </Link>
             </div>
           </div>
           <div className="category-sidebar-footer">
-            <p className="category-sidebar-footer-text">Browse all our product categories</p>
+            <p className="category-sidebar-footer-text">Explore premium gadgets & accessories</p>
           </div>
         </div>
       </div>
@@ -823,9 +919,9 @@ function SearchDropdownContent({
           </Link>
         );
       })}
-      <Link href={`/search?q=${encodeURIComponent(query)}`} className="header-search-view-all" onClick={onClose}>
+      {/* <Link href={`/search?q=${encodeURIComponent(query)}`} className="header-search-view-all" onClick={onClose}>
         View all results for &quot;{query}&quot; →
-      </Link>
+      </Link> */}
     </>
   );
 }
