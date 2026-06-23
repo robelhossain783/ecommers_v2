@@ -352,6 +352,17 @@ export default function MyOrdersPage() {
   const [searching, setSearching] = useState(false);
   const [searchMsg, setSearchMsg] = useState("");
 
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set());
+
+  const toggleSummary = (orderId: string) => {
+    setExpandedSummaries(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
+
   // ── Fetch orders — wait for auth to finish loading first ───────
   useEffect(() => {
     // Auth context is still reading sessionStorage — don't run yet
@@ -703,72 +714,65 @@ export default function MyOrdersPage() {
 
                       {/* Card Body */}
                       <div className="order-card-body">
-                        {/* Left Column: List of items */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                          {order.items && order.items.length > 0 ? (
-                            order.items.map((item, idx) => (
-                              <div key={idx} className="order-item-detail" style={{ borderBottom: idx < order.items.length - 1 ? "1px solid var(--border-light)" : "none", paddingBottom: idx < order.items.length - 1 ? "16px" : "0" }}>
-                                <div className="order-item-img-wrap">
-                                  {item.product_image ? (
-                                    <Image
-                                      src={
-                                        item.product_image.startsWith("http")
-                                          ? item.product_image
-                                          : `${BASE_URL}${item.product_image}`
-                                      }
-                                      alt={item.product_name}
-                                      width={54}
-                                      height={54}
-                                      unoptimized
-                                    />
-                                  ) : (
-                                    <span
-                                      style={{ fontSize: "10px", color: "#aaa" }}
-                                    >
-                                      No Image
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="order-item-info">
-                                  <h4 style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: "600" }}>{item.product_name}</h4>
-                                  <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>
-                                    Qty: <strong>{item.quantity}</strong> | Price: <strong style={{ color: "var(--primary)" }}>৳{item.price.toFixed(2)}</strong>
-                                  </p>
-                                </div>
+                        {order.items && order.items.length > 0 ? (
+                          order.items.map((item, idx) => (
+                            <div key={idx} className="order-item-detail" style={{ borderBottom: idx < order.items.length - 1 ? "1px solid var(--border-light)" : "none", paddingBottom: idx < order.items.length - 1 ? "10px" : "0", marginBottom: idx < order.items.length - 1 ? "10px" : "0" }}>
+                              <div className="order-item-img-wrap">
+                                {item.product_image ? (
+                                  <Image
+                                    src={
+                                      item.product_image.startsWith("http")
+                                        ? item.product_image
+                                        : `${BASE_URL}${item.product_image}`
+                                    }
+                                    alt={item.product_name}
+                                    width={42}
+                                    height={42}
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <span style={{ fontSize: "10px", color: "#aaa" }}>No Image</span>
+                                )}
                               </div>
-                            ))
-                          ) : (
-                            <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>No items found</p>
-                          )}
-                        </div>
-
-                        {/* Right Column: Order Summary & Shipping Details */}
-                        <div className="order-shipping-summary" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                          <div>
-                            <h5 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "700" }}>Order Summary</h5>
-                            <p style={{ margin: "4px 0", fontSize: "13px" }}>
-                              Total Paid: <strong style={{ color: "var(--primary)", fontSize: "15px" }}>৳{order.amount.toFixed(2)}</strong>
-                            </p>
-                            <p style={{ margin: "4px 0", fontSize: "13px" }}>
-                              Payment Method: <strong>{order.paymentMethod === "COD" ? "💵 Cash on Delivery" : `📱 ${order.paymentMethod}`}</strong>
-                            </p>
-                          </div>
-
-                          <div style={{ borderTop: "1px solid var(--border-light)", paddingTop: "12px" }}>
-                            <h5 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "700" }}>Shipping Details</h5>
-                            <p style={{ margin: "2px 0", fontSize: "13px" }}>
-                              <strong>Name:</strong> {order.fullName}
-                            </p>
-                            <p style={{ margin: "2px 0", fontSize: "13px" }}>
-                              <strong>Mobile:</strong> {order.phone}
-                            </p>
-                            <p style={{ margin: "2px 0", fontSize: "13px" }}>
-                              <strong>Address:</strong> {order.address}
-                            </p>
-                          </div>
-                        </div>
+                              <div className="order-item-info">
+                                <div className="order-item-name">{item.product_name}</div>
+                                <div className="order-item-meta">Qty: {item.quantity} &middot; ৳{item.price.toFixed(2)}</div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "13px" }}>No items found</p>
+                        )}
                       </div>
+
+                      {/* Summary toggle */}
+                      <div className="order-info-bar">
+                        <span><strong>Payment:</strong> {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod}</span>
+                        <button
+                          className="order-summary-toggle"
+                          onClick={() => toggleSummary(order.order_id)}
+                        >
+                          {expandedSummaries.has(order.order_id) ? "▲" : "▼"} Summary
+                        </button>
+                      </div>
+
+                      {expandedSummaries.has(order.order_id) && (
+                        <div className="order-summary-details">
+                          <div className="order-summary-details-inner">
+                            <div>
+                              <h5>Order Summary</h5>
+                              <p><strong>Total Paid:</strong> ৳{order.amount.toFixed(2)}</p>
+                              <p><strong>Payment Method:</strong> {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod}</p>
+                            </div>
+                            <div>
+                              <h5>Shipping Details</h5>
+                              <p><strong>Name:</strong> {order.fullName}</p>
+                              <p><strong>Mobile:</strong> {order.phone}</p>
+                              <p><strong>Address:</strong> {order.address}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Progress Bar */}
                       {!isCancelled ? (

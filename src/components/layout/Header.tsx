@@ -337,7 +337,11 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               className="category-menu-btn"
               aria-label="Open Category Sidebar"
             >
-              <List size={22} strokeWidth={1.75} />
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
             </button>
 
             {/* ── Logo ── */}
@@ -498,7 +502,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             ))}
 
             <Link href="/cart" className="cart-btn" aria-label="Cart" style={{ textDecoration: "none" }}>
-              🛒
+              <ShoppingCart size={20} strokeWidth={1.75} />
               <span className="cart-count">{cartCount}</span>
             </Link>
           </nav>
@@ -643,13 +647,13 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     <span className="sidebar-user-view-profile">View Profile →</span>
                   </div>
                 </Link>
-                <button
+                {/* <button
                   className="sidebar-user-logout-pill"
                   onClick={() => { logout(); setIsSidebarOpen(false); }}
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                   Logout
-                </button>
+                </button> */}
               </div>
             ) : (
               <button

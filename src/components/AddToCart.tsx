@@ -27,6 +27,8 @@ export default function AddToCarts() {
   const [address, setAddress] = useState("");
   const [deliveryArea, setDeliveryArea] = useState<"inside" | "outside">("inside");
   const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [onlineMethod, setOnlineMethod] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [orderedItems, setOrderedItems] = useState<any[]>([]);
@@ -157,7 +159,9 @@ export default function AddToCarts() {
             full_name: name,
             phone: phone,
             address: `${address}, ${district}`,
-            payment_type: paymentMethod.toUpperCase(),
+            payment_type: paymentMethod === "ONLINE" ? `ONLINE_${onlineMethod.toUpperCase()}` : paymentMethod.toUpperCase(),
+            transaction_id: paymentMethod === "ONLINE" ? transactionId : "",
+            delivery_charge: deliveryCharge,
             ...(user ? { user_id: user.id } : {}),
           }),
         }
@@ -185,7 +189,8 @@ export default function AddToCarts() {
           fullName: name,
           phone: phone,
           address: `${address}, ${district}`,
-          paymentMethod: paymentMethod.toUpperCase(),
+          paymentMethod: paymentMethod === "ONLINE" ? `ONLINE_${onlineMethod.toUpperCase()}` : paymentMethod.toUpperCase(),
+          transaction_id: paymentMethod === "ONLINE" ? transactionId : "",
           amount: total,
           status: "pending",
           created_at: new Date().toISOString(),
@@ -276,7 +281,7 @@ export default function AddToCarts() {
     doc.text(`Customer Name: ${name}`, 15, 76);
     doc.text(`Mobile Number: ${phone}`, 15, 82);
     doc.text(`Delivery Address: ${address}, ${district}`, 15, 88);
-    const paymentLabel = paymentMethod === "COD" ? "Cash on Delivery" : paymentMethod === "BKASH" ? "bKash / Nagad Wallet" : "Card Payment";
+    const paymentLabel = paymentMethod === "COD" ? "Cash on Delivery" : paymentMethod === "ONLINE" ? `Online (${onlineMethod.toUpperCase()})` : paymentMethod;
     doc.text(`Payment Method: ${paymentLabel}`, 15, 94);
 
     // Items Header
@@ -350,7 +355,8 @@ export default function AddToCarts() {
               <p style={{ margin: "4px 0" }}><strong>Phone:</strong> {phone}</p>
               <p style={{ margin: "4px 0" }}><strong>Address:</strong> {address}</p>
               <p style={{ margin: "4px 0" }}><strong>Delivery:</strong> {deliveryArea === "inside" ? "Dhaka City (৳80)" : "Outside Dhaka (৳150)"}</p>
-              <p style={{ margin: "4px 0" }}><strong>Payment:</strong> {paymentMethod === "cod" ? "Cash on Delivery" : paymentMethod === "bkash" ? "bKash / Nagad" : "Card Payment"}</p>
+              <p style={{ margin: "4px 0" }}><strong>Payment:</strong> {paymentMethod === "COD" ? "Cash on Delivery" : `Online (${onlineMethod.toUpperCase()})`}</p>
+              {transactionId && <p style={{ margin: "4px 0" }}><strong>Transaction ID:</strong> {transactionId}</p>}
             </div>
             <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap", marginTop: "24px" }}>
               <button
@@ -385,7 +391,7 @@ export default function AddToCarts() {
             <div className="empty-cart-icon">🛒</div>
             <h2 className="empty-cart-title">Your Cart is Empty</h2>
             <p className="empty-cart-desc">
-              Looks like you haven't added anything to your cart yet. Explore our top gadgets and accessories!
+              Looks like you haven't added anything to your cart yet. Explore our
             </p>
             <Link href="/" className="continue-shopping">
               Shop Now
@@ -652,7 +658,7 @@ export default function AddToCarts() {
                         </div>
                       </label>
 
-                      {/* BKASH */}
+                      {/* Online Payment */}
                       <label
                         style={{
                           display: "flex",
@@ -662,55 +668,82 @@ export default function AddToCarts() {
                           border: "1px solid #ddd",
                           borderRadius: "8px",
                           cursor: "pointer",
-                          background: paymentMethod === "BKASH" ? "#fdfbfb" : "#fff",
-                          borderColor: paymentMethod === "BKASH" ? "var(--primary)" : "#ddd",
+                          background: paymentMethod === "ONLINE" ? "#fdfbfb" : "#fff",
+                          borderColor: paymentMethod === "ONLINE" ? "var(--primary)" : "#ddd",
                         }}
                       >
                         <input
                           type="radio"
                           name="payment"
-                          checked={paymentMethod === "BKASH"}
-                          onChange={() => setPaymentMethod("BKASH")}
+                          checked={paymentMethod === "ONLINE"}
+                          onChange={() => { setPaymentMethod("ONLINE"); setOnlineMethod(""); setTransactionId(""); }}
                         />
                         <div>
                           <strong style={{ fontSize: "14px", display: "block" }}>
-                            bKash Payment
+                            Online Payment
                           </strong>
                           <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                            Pay instantly using bKash
+                            Pay via bKash / Nagad / Rocket / Upay
                           </span>
                         </div>
                       </label>
 
-                      {/* NAGAD */}
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          padding: "12px",
-                          border: "1px solid #ddd",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          background: paymentMethod === "NAGAD" ? "#fdfbfb" : "#fff",
-                          borderColor: paymentMethod === "NAGAD" ? "var(--primary)" : "#ddd",
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name="payment"
-                          checked={paymentMethod === "NAGAD"}
-                          onChange={() => setPaymentMethod("NAGAD")}
-                        />
-                        <div>
-                          <strong style={{ fontSize: "14px", display: "block" }}>
-                            Nagad Payment
-                          </strong>
-                          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                            Pay using Nagad mobile banking
-                          </span>
+                      {paymentMethod === "ONLINE" && (
+                        <div style={{ padding: "16px", background: "#fafafa", borderRadius: "8px", border: "1px solid var(--border-light)", display: "flex", flexDirection: "column", gap: "14px" }}>
+                          <p style={{ margin: 0, fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Select your payment method:</p>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                            {[
+                              { id: "bkash", label: "bKash", color: "#E2136E" },
+                              { id: "nagad", label: "Nagad", color: "#F5821F" },
+                              { id: "rocket", label: "Rocket", color: "#ED1C24" },
+                              { id: "upay", label: "Upay", color: "#0EA5E9" },
+                            ].map((m) => (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => setOnlineMethod(m.id)}
+                                style={{
+                                  padding: "10px",
+                                  borderRadius: "8px",
+                                  border: onlineMethod === m.id ? `2px solid ${m.color}` : "1px solid var(--border)",
+                                  background: onlineMethod === m.id ? "#fff" : "#fff",
+                                  fontWeight: onlineMethod === m.id ? "700" : "500",
+                                  color: onlineMethod === m.id ? m.color : "var(--text-secondary)",
+                                  cursor: "pointer",
+                                  fontSize: "13px",
+                                  transition: "all 0.2s",
+                                }}
+                              >
+                                {m.label}
+                              </button>
+                            ))}
+                          </div>
+
+                          {onlineMethod && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "12px", background: "#fff", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                              <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>
+                                Send payment to this number:
+                              </p>
+                              <p style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "var(--text-primary)", letterSpacing: "1px" }}>
+                                01635275630
+                              </p>
+                              <div style={{ borderTop: "1px dashed var(--border-light)", paddingTop: "10px" }}>
+                                <label style={{ fontSize: "12px", fontWeight: "600", color: "var(--text-secondary)", display: "block", marginBottom: "6px" }}>
+                                  Transaction ID
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="Enter your transaction ID"
+                                  value={transactionId}
+                                  onChange={(e) => setTransactionId(e.target.value)}
+                                  style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+                                  required={paymentMethod === "ONLINE"}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </label>
+                      )}
 
                     </div>
                   </div>

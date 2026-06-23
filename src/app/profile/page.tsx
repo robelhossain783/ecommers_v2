@@ -336,6 +336,7 @@ export default function ProfilePage() {
                     <span>Order History ({orders.length})</span>
                   </button>
                 </nav>
+
               </div>
 
               {/* RIGHT COLUMN: DETAIL TABS */}
@@ -607,6 +608,7 @@ export default function ProfilePage() {
                             </div>
                           ))}
                         </div>
+
                       </div>
                     )}
                   </div>
