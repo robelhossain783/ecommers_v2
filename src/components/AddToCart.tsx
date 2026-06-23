@@ -385,7 +385,7 @@ export default function AddToCarts() {
             <div className="empty-cart-icon">🛒</div>
             <h2 className="empty-cart-title">Your Cart is Empty</h2>
             <p className="empty-cart-desc">
-              Looks like you haven't added anything to your cart yet. Explore our top gadgets and accessories!
+              Looks like you haven't added anything to your cart yet. Explore our
             </p>
             <Link href="/" className="continue-shopping">
               Shop Now
