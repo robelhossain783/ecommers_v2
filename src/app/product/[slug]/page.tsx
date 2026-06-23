@@ -564,7 +564,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                               setReviews((prev) => [data.review, ...prev]);
                               setReviewComment("");
                               setReviewRating(5);
-                              setReviewSuccess("✅ Thank you! Your review has been submitted.");
+                              setReviewSuccess("Thank you! Your review has been submitted.");
                             } else {
                               const err = await res.json();
                               setReviewError(err?.comment?.[0] || err?.name?.[0] || "Failed to submit review.");
@@ -639,7 +639,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <div className="section-header">
               <h2 className="section-title">Related Products</h2>
             </div>
-            <div className="products-row">
+            <div className="products-scroll">
               {relatedProducts.map((p) => (
                 <ProductCard
                   key={p.id}

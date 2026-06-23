@@ -19,6 +19,7 @@ export default function NewArrivalsAllPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [sortBy, setSortBy] = useState("");
 
   const handleSeeMore = () => {
     setLoadingMore(true);
@@ -68,9 +69,12 @@ export default function NewArrivalsAllPage() {
     addToCart(product, 1);
   };
 
+  const sortedProducts = [...products];
+  if (sortBy === "price-asc") sortedProducts.sort((a, b) => Number(a.sell_price) - Number(b.sell_price));
+  if (sortBy === "price-desc") sortedProducts.sort((a, b) => Number(b.sell_price) - Number(a.sell_price));
+
   return (
     <>
-      {/* <TopBar /> */}
       <Header />
 
       <div className="category-products-container">
@@ -84,9 +88,14 @@ export default function NewArrivalsAllPage() {
         {/* Header Section */}
         <div className="category-products-header">
           <h1 className="category-products-title">All Products</h1>
-          {/* <p className="category-products-count">
-            Explore our curated selection of <strong>{products.length}</strong> premium gadgets and accessories
-          </p> */}
+          <div className="category-header-sort">
+            <label>Sort by:</label>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="">Default</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
         </div>
 
         {/* Products Grid */}
@@ -97,10 +106,10 @@ export default function NewArrivalsAllPage() {
               Loading awesome products...
             </h2>
           </div>
-        ) : products.length > 0 ? (
+        ) : sortedProducts.length > 0 ? (
           <>
             <div className="products-row">
-              {products.slice(0, visibleCount).map((product) => (
+              {sortedProducts.slice(0, visibleCount).map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -109,7 +118,7 @@ export default function NewArrivalsAllPage() {
               ))}
             </div>
 
-            {visibleCount < products.length && (
+            {visibleCount < sortedProducts.length && (
               <div style={{ display: "flex", justifyContent: "center", marginTop: "40px" }}>
                 <button
                   onClick={handleSeeMore}

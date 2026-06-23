@@ -218,6 +218,7 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
   // Drag state
   const isDragging = useRef(false);
@@ -231,6 +232,16 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
     }
     load();
   }, []);
+
+  useEffect(() => {
+    const el = sliderRef.current;
+    if (!el) return;
+    const check = () => setHasOverflow(el.scrollWidth > el.clientWidth);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [products]);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -284,66 +295,68 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
         <h2 className="section-title">New Arrival</h2>
 
         {/* Arrow buttons */}
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            onClick={() => scrollBy("left")}
-            aria-label="Scroll left"
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              border: "1.5px solid rgba(232,50,10,0.5)",
-              background: "rgba(232,50,10,0.08)",
-              color: "#e8320a",
-              fontSize: "16px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.2s ease",
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#e8320a";
-              e.currentTarget.style.color = "#fff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(232,50,10,0.08)";
-              e.currentTarget.style.color = "#e8320a";
-            }}
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => scrollBy("right")}
-            aria-label="Scroll right"
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              border: "1.5px solid rgba(232,50,10,0.5)",
-              background: "rgba(232,50,10,0.08)",
-              color: "#e8320a",
-              fontSize: "16px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.2s ease",
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#e8320a";
-              e.currentTarget.style.color = "#fff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(232,50,10,0.08)";
-              e.currentTarget.style.color = "#e8320a";
-            }}
-          >
-            ›
-          </button>
-        </div>
+        {hasOverflow && (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => scrollBy("left")}
+              aria-label="Scroll left"
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                border: "1.5px solid rgba(232,50,10,0.5)",
+                background: "rgba(232,50,10,0.08)",
+                color: "#e8320a",
+                fontSize: "16px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#e8320a";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(232,50,10,0.08)";
+                e.currentTarget.style.color = "#e8320a";
+              }}
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => scrollBy("right")}
+              aria-label="Scroll right"
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                border: "1.5px solid rgba(232,50,10,0.5)",
+                background: "rgba(232,50,10,0.08)",
+                color: "#e8320a",
+                fontSize: "16px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#e8320a";
+                e.currentTarget.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(232,50,10,0.08)";
+                e.currentTarget.style.color = "#e8320a";
+              }}
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
 
       {/* HORIZONTAL SLIDER */}

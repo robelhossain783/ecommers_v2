@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-// import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
@@ -12,38 +11,15 @@ import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 
-const ICON_MAPPING: Record<string, string> = {
-  // "gadget": "🔌",
-  // "gadgets": "🔌",
-  // "mobile-phone": "📱",
-  // "mobile": "📱",
-  // "phone": "📱",
-  // "phones": "📱",
-  // "laptop": "💻",
-  // "laptops": "💻",
-  // "tablet": "📟",
-  // "tablets": "📟",
-  // "smart-watch": "⌚",
-  // "smartwatch": "⌚",
-  // "wallet": "💼",
-  // "wallets": "💼",
-  // "backpack": "🎒",
-  // "backpacks": "🎒",
-  // "airpods": "🎧",
-  // "speakers": "🔊",
-  // "home-appliances": "🏠",
-};
-
 function CategoryProductsContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { addToCart } = useCart();
   const categorySlug = searchParams.get("category") || "";
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [categoriesList, setCategoriesList] = useState<any[]>([]);
   const [categoryTitle, setCategoryTitle] = useState("Category");
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("");
   const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
@@ -52,29 +28,26 @@ function CategoryProductsContent() {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
-        // 1. Fetch Categories list dynamically
-        let fetchedCategories: any[] = [];
+        // Resolve title
+        let foundName = "";
         try {
           const catRes = await fetch(`${baseUrl}/api/categories/list/`);
           if (catRes.ok) {
-            fetchedCategories = await catRes.json();
-            setCategoriesList(fetchedCategories);
+            const cats = await catRes.json();
+            const found = cats.find((cat: any) =>
+              cat.slug?.toLowerCase() === categorySlug.toLowerCase() ||
+              cat.name?.toLowerCase().replace(/\s+/g, "-") === categorySlug.toLowerCase()
+            );
+            if (found) foundName = found.name;
           }
         } catch (err) {
-          console.error("Failed to load backend categories list:", err);
+          console.error("Failed to load categories:", err);
         }
 
-        // Resolve title
-        const foundCat = fetchedCategories.find((cat) =>
-          cat.slug?.toLowerCase() === categorySlug.toLowerCase() ||
-          cat.name?.toLowerCase().replace(/\s+/g, "-") === categorySlug.toLowerCase()
-        );
-
-        if (foundCat) {
-          const icon = ICON_MAPPING[foundCat.slug?.toLowerCase()] || "";
-          setCategoryTitle(`${icon} ${foundCat.name}`);
+        if (foundName) {
+          setCategoryTitle(foundName);
         } else if (categorySlug) {
-          setCategoryTitle(`${categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}`);
+          setCategoryTitle(categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1));
         } else {
           setCategoryTitle("All Categories");
         }
@@ -126,6 +99,10 @@ function CategoryProductsContent() {
     }, 3000);
   };
 
+  const sortedProducts = [...products];
+  if (sortBy === "price-asc") sortedProducts.sort((a, b) => Number(a.sell_price) - Number(b.sell_price));
+  if (sortBy === "price-desc") sortedProducts.sort((a, b) => Number(b.sell_price) - Number(a.sell_price));
+
   if (loading) {
     return (
       <div style={{ textAlign: "center", padding: "100px 0" }}>
@@ -144,21 +121,21 @@ function CategoryProductsContent() {
         <span style={{ color: "var(--text-primary)", fontWeight: "600" }}>{categoryTitle}</span>
       </div>
 
-      {/* Category Header Banner */}
       <div className="category-products-header">
         <h1 className="category-products-title">{categoryTitle}</h1>
+        <div className="category-header-sort">
+          <label>Sort by:</label>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="">Default</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+          </select>
+        </div>
       </div>
-      {/* <div className="category-products-header">
-        <h1 className="category-products-title">{categoryTitle}</h1>
-        <p className="category-products-count">
-          Showing <strong>{products.length}</strong> dynamic items in this category
-        </p>
-      </div> */}
 
-      {/* Product Display Grid or Empty State */}
-      {products.length > 0 ? (
+      {sortedProducts.length > 0 ? (
         <div className="products-row">
-          {products.map((product) => (
+          {sortedProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -175,39 +152,7 @@ function CategoryProductsContent() {
             Our team is working hard to restock this category soon!
           </p>
 
-          {/* <h3 style={{ fontSize: "14px", fontWeight: "700", marginBottom: "16px", color: "var(--text-secondary)" }}>
-            Explore Other Hot Categories:
-          </h3>
-          <div className="browse-categories-grid">
-            {categoriesList.length > 0 ? (
-              categoriesList.slice(0, 4).map((cat) => {
-                const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-");
-                const icon = ICON_MAPPING[slug.toLowerCase()] || "";
-                return (
-                  <Link key={cat.id} href={`/category_product?category=${slug}`} className="browse-category-card">
-                    {icon} {cat.name}
-                  </Link>
-                );
-              })
-            ) : (
-              <>
-                <Link href="/category_product?category=mobile-phone" className="browse-category-card">
-                  📱 Mobile Phones
-                </Link>
-                <Link href="/category_product?category=smart-watch" className="browse-category-card">
-                  ⌚ Smart Watches
-                </Link>
-                <Link href="/category_product?category=speakers" className="browse-category-card">
-                  🔊 Speakers
-                </Link>
-                <Link href="/category_product?category=laptops" className="browse-category-card">
-                  💻 Laptops
-                </Link>
-              </>
-            )}
-          </div> */}
-
-        <div style={{ marginTop: "40px" }}>
+        <div style={{ marginTop: "32px" }}>
           <Link href="/" className="continue-shopping" style={{ background: "var(--primary)", color: "#fff", padding: "12px 32px", borderRadius: "30px", fontWeight: "700", fontSize: "14px" }}>
             Back to Home Store
           </Link>
@@ -242,7 +187,6 @@ function CategoryProductsContent() {
 export default function CategoryProductsPage() {
   return (
     <>
-      {/* <TopBar /> */}
       <Header />
       <Suspense fallback={
         <div style={{ textAlign: "center", padding: "100px 0" }}>
