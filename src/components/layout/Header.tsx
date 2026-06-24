@@ -347,7 +347,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             {/* ── Logo ── */}
             <a href="/" className="logo" aria-label="BuyFest Home">
               <span className="logo-text">
-                <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+                <span className="logo-buy">Buy</span><span className="logo-fest">Fest</span>
               </span>
             </a>
           </div>
@@ -534,7 +534,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               </div>
             </div>
 
-            <a href="/" className="sub-nav-link">Offer</a>
+            <Link href="/offer" className="sub-nav-link">Offer</Link>
             <Link href="/orders" className="sub-nav-link">Orders</Link>
             <Link href="/contact-us" className="sub-nav-link">Contact Us</Link>
           </div>
@@ -716,7 +716,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               </div>
 
               {/* Offer */}
-              <Link href="/" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+              <Link href="/offer" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
                 <TicketPercent size={18} strokeWidth={2} />
                 <span>Offers</span>
               </Link>
@@ -760,7 +760,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
             {/* Logo */}
             <div className="auth-modal-brand">
-              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+              <span className="logo-buy">Buy</span><span className="logo-fest">Fest</span>
             </div>
 
             {/* Tabs */}

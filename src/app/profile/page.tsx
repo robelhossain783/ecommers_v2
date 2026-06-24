@@ -17,7 +17,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  FileText
+  FileText,
+  Pencil
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
@@ -91,33 +92,57 @@ export default function ProfilePage() {
     if (!user) return;
     async function fetchOrders() {
       setOrdersLoading(true);
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       try {
         // Step 1: Try by user_id
-        const res = await fetch(`${BASE_URL}/api/orders/customer/?user_id=${user.id}`);
+        const res = await fetch(`${BASE_URL}/api/orders/customer/?user_id=${user.id}`, { headers, cache: "no-store" });
+        let rawOrders: any[] = [];
+
         if (res.ok) {
           const data = await res.json();
-          let fetchedOrders: Order[] = data.data || [];
-
-          // Step 2: Fallback — backend may not save user_id, search by phone
-          if (fetchedOrders.length === 0 && user.phone) {
-            const listRes = await fetch(`${BASE_URL}/api/orders/list/`);
-            if (listRes.ok) {
-              const listData = await listRes.json();
-              const allOrders: Order[] = listData.data || [];
-              fetchedOrders = allOrders.filter((ord: Order) => {
-                const ordDigits = ord.phone ? ord.phone.replace(/\D/g, "") : "";
-                const userDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
-                return (
-                  ordDigits.length >= 10 &&
-                  userDigits.length >= 10 &&
-                  ordDigits.slice(-10) === userDigits.slice(-10)
-                );
-              });
-            }
-          }
-
-          setOrders(fetchedOrders);
+          rawOrders = data.data || [];
         }
+
+        // Step 2: Fallback — API by user_id failed or empty, search by phone
+        if (rawOrders.length === 0 && user.phone) {
+          const listRes = await fetch(`${BASE_URL}/api/orders/list/`, { headers, cache: "no-store" });
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const allOrders: any[] = listData.data || [];
+            const userDigits = user.phone.replace(/\D/g, "");
+            rawOrders = allOrders.filter((ord: any) => {
+              const ordDigits = ord.phone ? ord.phone.replace(/\D/g, "") : "";
+              return ordDigits.length >= 10 && userDigits.length >= 10 && ordDigits.slice(-10) === userDigits.slice(-10);
+            });
+          }
+        }
+
+        // Map to Order interface
+        const mapped: Order[] = rawOrders.map((ord: any) => ({
+          id: ord.id,
+          status: ord.status || "pending",
+          payment_type: ord.payment_type || "COD",
+          full_name: ord.full_name || "",
+          phone: ord.phone || "",
+          address: ord.address || "",
+          created_at: ord.created_at || "",
+          total_amount: ord.total_amount || ord.amount || "0",
+          amount: ord.amount || "0",
+          items: (ord.items || []).map((item: any) => ({
+            id: item.id,
+            product: {
+              name: item.product?.name || "Product",
+              image: item.product?.image || null,
+            },
+            quantity: item.quantity || 1,
+            price: item.price || "0",
+          })),
+        }));
+
+        setOrders(mapped);
       } catch (err) {
         console.error("Failed to fetch customer orders:", err);
       } finally {
@@ -126,6 +151,8 @@ export default function ProfilePage() {
     }
     fetchOrders();
   }, [user]);
+
+  const displayOrders = orders;
 
   const handleLoginClick = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -358,12 +385,26 @@ export default function ProfilePage() {
                 {activeTab === "info" && (
                   <div className="profile-tab-pane">
                     <div className="tab-pane-header">
-                      <h2 className="tab-pane-title">Personal Information</h2>
-                      <p className="tab-pane-desc">
-                        {isEditing
-                          ? "Update your personal information and delivery destination details."
-                          : "View your personal profile details."}
-                      </p>
+                      <div className="tab-pane-header-top">
+                        <div>
+                          <h2 className="tab-pane-title">Personal Information</h2>
+                          <p className="tab-pane-desc">
+                            {isEditing
+                              ? "Update your personal information and delivery destination details."
+                              : "View your personal profile details."}
+                          </p>
+                        </div>
+                        {!isEditing && (
+                          <button
+                            type="button"
+                            className="profile-edit-toggle-btn"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            <Pencil size={16} />
+                            <span>Edit Profile</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {!isEditing ? (
@@ -390,15 +431,6 @@ export default function ProfilePage() {
                             <span className="detail-label">Shipping Address</span>
                             <span className="detail-value address-value">{user.address || "—"}</span>
                           </div>
-                        </div>
-                        <div className="profile-view-actions">
-                          <button
-                            type="button"
-                            className="profile-edit-toggle-btn"
-                            onClick={() => setIsEditing(true)}
-                          >
-                            Update Profile
-                          </button>
                         </div>
                       </div>
                     ) : (
@@ -532,7 +564,7 @@ export default function ProfilePage() {
                         <Loader2 className="spinner" size={30} />
                         <p>Fetching your orders history...</p>
                       </div>
-                    ) : orders.length === 0 ? (
+                    ) : displayOrders.length === 0 ? (
                       <div className="orders-empty-state">
                         <div className="empty-state-icon"><ShoppingBag size={40} /></div>
                         <h3>No Orders Found</h3>
@@ -555,7 +587,7 @@ export default function ProfilePage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {orders.map((order) => (
+                              {displayOrders.map((order) => (
                                 <tr key={order.id}>
                                   <td className="order-id">#BF-{order.id}</td>
                                   <td>{formatDate(order.created_at)}</td>
@@ -580,7 +612,7 @@ export default function ProfilePage() {
 
                         {/* Mobile: Card View */}
                         <div className="profile-orders-mobile-list">
-                          {orders.map((order) => (
+                          {displayOrders.map((order) => (
                             <div key={order.id} className="order-mobile-card">
                               <div className="order-card-header">
                                 <span className="order-card-id">#BF-{order.id}</span>
