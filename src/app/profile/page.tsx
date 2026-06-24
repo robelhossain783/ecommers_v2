@@ -17,7 +17,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  FileText
+  FileText,
+  Pencil
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
@@ -358,12 +359,26 @@ export default function ProfilePage() {
                 {activeTab === "info" && (
                   <div className="profile-tab-pane">
                     <div className="tab-pane-header">
-                      <h2 className="tab-pane-title">Personal Information</h2>
-                      <p className="tab-pane-desc">
-                        {isEditing
-                          ? "Update your personal information and delivery destination details."
-                          : "View your personal profile details."}
-                      </p>
+                      <div className="tab-pane-header-top">
+                        <div>
+                          <h2 className="tab-pane-title">Personal Information</h2>
+                          <p className="tab-pane-desc">
+                            {isEditing
+                              ? "Update your personal information and delivery destination details."
+                              : "View your personal profile details."}
+                          </p>
+                        </div>
+                        {!isEditing && (
+                          <button
+                            type="button"
+                            className="profile-edit-toggle-btn"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            <Pencil size={16} />
+                            <span>Edit Profile</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {!isEditing ? (
@@ -390,15 +405,6 @@ export default function ProfilePage() {
                             <span className="detail-label">Shipping Address</span>
                             <span className="detail-value address-value">{user.address || "—"}</span>
                           </div>
-                        </div>
-                        <div className="profile-view-actions">
-                          <button
-                            type="button"
-                            className="profile-edit-toggle-btn"
-                            onClick={() => setIsEditing(true)}
-                          >
-                            Update Profile
-                          </button>
                         </div>
                       </div>
                     ) : (

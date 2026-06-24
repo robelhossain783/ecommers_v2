@@ -8,7 +8,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="footer-brand">
             <span className="logo-text">
-              <span className="logo-buy">BUY</span><span className="logo-fest">FEST</span>
+              <span className="logo-buy">Buy</span><span className="logo-fest">Fest</span>
             </span>
 
             <p className="footer-desc">
