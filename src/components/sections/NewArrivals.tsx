@@ -246,7 +246,6 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
   const handleAddToCart = (product: Product) => {
     addToCart(product);
     onAddToCart?.();
-    router.push("/cart");
   };
 
   // ---- Arrow scroll ----

@@ -21,12 +21,16 @@ interface CheckoutContentProps {
 function CheckoutContent({ slug }: CheckoutContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { clearCart } = useCart();
+  const { cart, clearCart } = useCart();
   const { user } = useAuth();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [checkoutItems, setCheckoutItems] = useState<{ product: Product; quantity: number }[]>([]);
+  const [purchasedItems, setPurchasedItems] = useState<{ product: Product; quantity: number }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
+
+  // Helper variables for single product checkout backward compatibility
+  const product = checkoutItems.length > 0 ? checkoutItems[0].product : null;
+  const quantity = checkoutItems.length > 0 ? checkoutItems[0].quantity : 1;
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -92,27 +96,37 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
     }
   }, [addressOption, user]);
 
-  // Load product slug details
+  // Load product slug details or load from cart context
   useEffect(() => {
     if (!slug) return;
+    if (slug === "cart") {
+      setCheckoutItems(cart);
+      setLoading(false);
+      return;
+    }
+
     async function loadProduct() {
       setLoading(true);
       try {
         const data = await getProductBySlug(slug);
-        setProduct(data);
-
-        // Read qty query parameter
-        const qtyParam = searchParams.get("qty");
-        const qtyVal = qtyParam ? parseInt(qtyParam, 10) : 1;
-        setQuantity(qtyVal > 0 ? qtyVal : 1);
+        if (data) {
+          // Read qty query parameter
+          const qtyParam = searchParams.get("qty");
+          const qtyVal = qtyParam ? parseInt(qtyParam, 10) : 1;
+          const finalQty = qtyVal > 0 ? qtyVal : 1;
+          setCheckoutItems([{ product: data, quantity: finalQty }]);
+        } else {
+          setCheckoutItems([]);
+        }
       } catch (err) {
         console.error("Error loading checkout product:", err);
+        setCheckoutItems([]);
       } finally {
         setLoading(false);
       }
     }
     loadProduct();
-  }, [slug, searchParams]);
+  }, [slug, searchParams, cart]);
 
   if (loading) {
     return (
@@ -123,11 +137,13 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
     );
   }
 
-  if (!product) {
+  if (checkoutItems.length === 0 && !orderPlaced) {
     return (
       <div className="product-details-container" style={{ textAlign: "center", padding: "100px 16px" }}>
         <h2 style={{ fontSize: "24px", color: "var(--primary)", marginBottom: "8px" }}>Checkout Error</h2>
-        <p style={{ color: "var(--text-secondary)", marginBottom: "24px" }}>The selected product could not be loaded for checkout.</p>
+        <p style={{ color: "var(--text-secondary)", marginBottom: "24px" }}>
+          {slug === "cart" ? "Your cart is empty." : "The selected product could not be loaded for checkout."}
+        </p>
         <Link href="/" className="continue-shopping" style={{ background: "var(--primary)", color: "#fff", padding: "10px 24px", borderRadius: "var(--radius)", fontWeight: "600" }}>
           Back to Home
         </Link>
@@ -136,8 +152,9 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   }
 
   // Calculate pricing
-  const unitPrice = Number(product.sell_price);
-  const subtotal = unitPrice * quantity;
+  const subtotal = checkoutItems.reduce((acc, item) => {
+    return acc + Number(item.product.sell_price || 0) * item.quantity;
+  }, 0);
   const deliveryCharge = district.toLowerCase() === "dhaka" ? 80 : 150;
 
   // Dynamic coupon rules
@@ -186,23 +203,37 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
     setIsSubmitting(true);
 
     try {
+      // Save purchased items state first, before clearing cart
+      setPurchasedItems(checkoutItems);
+
+      const isCartOrder = slug === "cart";
+      const requestBody: any = {
+        type: isCartOrder ? "cart" : "buy_now",
+        full_name: fullName,
+        phone: mobileNumber,
+        address: `${address}, ${district}`,
+        payment_type: paymentMethod === "ONLINE" ? `ONLINE_${onlineMethod.toUpperCase()}` : paymentMethod.toUpperCase(),
+        transaction_id: paymentMethod === "ONLINE" ? transactionId : "",
+        delivery_charge: deliveryCharge,
+        ...(user ? { user_id: user.id } : {}),
+      };
+
+      if (isCartOrder) {
+        requestBody.items = checkoutItems.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity
+        }));
+      } else {
+        requestBody.product_id = product?.id;
+        requestBody.quantity = quantity;
+      }
+
       const response = await fetch(`${BASE_URL}/api/create-order/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          type: "buy_now",
-          product_id: product.id,
-          quantity: quantity,
-          full_name: fullName,
-          phone: mobileNumber,
-          address: `${address}, ${district}`,
-          payment_type: paymentMethod === "ONLINE" ? `ONLINE_${onlineMethod.toUpperCase()}` : paymentMethod.toUpperCase(),
-          transaction_id: paymentMethod === "ONLINE" ? transactionId : "",
-          delivery_charge: deliveryCharge,
-          ...(user ? { user_id: user.id } : {}),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -225,9 +256,15 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
           address: `${address}, ${district}`,
           paymentMethod: paymentMethod === "ONLINE" ? `ONLINE_${onlineMethod.toUpperCase()}` : paymentMethod.toUpperCase(),
           transaction_id: paymentMethod === "ONLINE" ? transactionId : "",
-          product_name: product.name,
-          product_image: product.image,
-          quantity: quantity,
+          product_name: isCartOrder 
+            ? checkoutItems.map(item => `${item.product.name} (Qty: ${item.quantity})`).join(", ")
+            : (product?.name || ""),
+          product_image: isCartOrder 
+            ? (checkoutItems[0]?.product?.image || "")
+            : (product?.image || ""),
+          quantity: isCartOrder 
+            ? checkoutItems.reduce((sum, item) => sum + item.quantity, 0)
+            : quantity,
           amount: grandTotal,
           status: "pending",
           created_at: new Date().toISOString()
@@ -327,28 +364,33 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
 
     doc.line(15, 112, 195, 112);
 
-    // Item row
+    // Item rows
     doc.setFont("Helvetica", "normal");
-    doc.text(product.name, 15, 120);
-    doc.text(String(quantity), 150, 120, { align: "center" });
-    doc.text(`BDT ${(Number(product.sell_price) * quantity).toFixed(2)}`, 185, 120, { align: "right" });
+    let currentY = 120;
+    purchasedItems.forEach((item) => {
+      const splitName = doc.splitTextToSize(item.product.name, 120);
+      doc.text(splitName, 15, currentY);
+      doc.text(String(item.quantity), 150, currentY, { align: "center" });
+      doc.text(`BDT ${(Number(item.product.sell_price || 0) * item.quantity).toFixed(2)}`, 185, currentY, { align: "right" });
+      currentY += (splitName.length * 6) + 4;
+    });
 
-    doc.line(15, 126, 195, 126);
+    doc.line(15, currentY - 2, 195, currentY - 2);
 
     // Summary Section
-    doc.text("Delivery Charge:", 130, 134);
-    doc.text(`BDT ${deliveryCharge.toFixed(2)}`, 185, 134, { align: "right" });
+    doc.text("Delivery Charge:", 130, currentY + 6);
+    doc.text(`BDT ${deliveryCharge.toFixed(2)}`, 185, currentY + 6, { align: "right" });
 
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("Total Paid:", 130, 142);
-    doc.text(`BDT ${grandTotal.toFixed(2)}`, 185, 142, { align: "right" });
+    doc.text("Total Paid:", 130, currentY + 14);
+    doc.text(`BDT ${grandTotal.toFixed(2)}`, 185, currentY + 14, { align: "right" });
 
     // Footer
     doc.setFont("Helvetica", "italic");
     doc.setFontSize(9);
     doc.setTextColor(150, 150, 150);
-    doc.text("Thank you for shopping with www.buyfestbd.com", 105, 165, { align: "center" });
+    doc.text("Thank you for shopping with www.buyfestbd.com", 105, currentY + 30, { align: "center" });
 
     doc.save("order-receipt.pdf");
   };
@@ -368,7 +410,16 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
             <div style={{ background: "#f8f9fa", borderRadius: "8px", padding: "20px", textAlign: "left", marginBottom: "32px", border: "1px solid #eee" }}>
               <h4 style={{ fontSize: "16px", fontWeight: "700", borderBottom: "1px solid #eee", paddingBottom: "10px", marginBottom: "12px" }}>Order Specifications</h4>
               <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Order Reference:</strong> <span style={{ color: "var(--primary)", fontWeight: "700" }}>{orderId}</span></p>
-              <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Item Purchased:</strong> {product.name} (Qty: {quantity})</p>
+              <div style={{ margin: "6px 0", fontSize: "14px" }}>
+                <strong>Items Purchased:</strong>
+                <ul style={{ margin: "4px 0 0 20px", padding: 0 }}>
+                  {purchasedItems.map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: "4px" }}>
+                      {item.product.name} (Qty: {item.quantity}) - ৳{Number(item.product.sell_price || 0) * item.quantity}
+                    </li>
+                  ))}
+                </ul>
+              </div>
               <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Mobile Number:</strong> {mobileNumber}</p>
               <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Shipping Address:</strong> {address}, {district}</p>
               <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Payment Method:</strong> {paymentMethod === "COD" ? "Cash on Delivery" : `Online (${onlineMethod.toUpperCase()})`}</p>
@@ -740,36 +791,43 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   🛍️ Order Summary
                 </h3>
 
-                {/* Product Detail Card */}
-                <div style={{ display: "flex", gap: "12px", marginBottom: "18px", paddingBottom: "16px", borderBottom: "1px solid #f5f5f5" }}>
-                  <div style={{ width: "70px", height: "70px", background: "#f8f9fa", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "1px solid #eee", flexShrink: 0 }}>
-                    {product.image ? (
-                      <Image
-                        src={product.image.startsWith("http") ? product.image : `${BASE_URL}${product.image}`}
-                        alt={product.name}
-                        width={60}
-                        height={60}
-                        style={{ objectFit: "contain" }}
-                        unoptimized
-                      />
-                    ) : (
-                      <span style={{ fontSize: "11px", color: "#999" }}>No Image</span>
-                    )}
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: "14px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "4px", lineHeight: "1.3" }}>{product.name}</h4>
-                    <p style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Category: {product.category?.name || "Gadgets"}</p>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--primary)" }}>৳{unitPrice}</span>
-                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>x {quantity}</span>
-                    </div>
-                  </div>
+                {/* Product Detail Cards */}
+                <div style={{ maxHeight: "280px", overflowY: "auto", marginBottom: "18px", paddingBottom: "8px", borderBottom: "1px solid #f5f5f5" }}>
+                  {checkoutItems.map((item, idx) => {
+                    const itemUnitPrice = Number(item.product.sell_price || 0);
+                    return (
+                      <div key={idx} style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+                        <div style={{ width: "60px", height: "60px", background: "#f8f9fa", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "1px solid #eee", flexShrink: 0 }}>
+                          {item.product.image ? (
+                            <Image
+                              src={item.product.image.startsWith("http") ? item.product.image : `${BASE_URL}${item.product.image}`}
+                              alt={item.product.name}
+                              width={50}
+                              height={50}
+                              style={{ objectFit: "contain" }}
+                              unoptimized
+                            />
+                          ) : (
+                            <span style={{ fontSize: "10px", color: "#999" }}>No Image</span>
+                          )}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "2px", lineHeight: "1.3" }}>{item.product.name}</h4>
+                          <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "2px" }}>Category: {item.product.category?.name || "Gadgets"}</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontSize: "12px", fontWeight: "700", color: "var(--primary)" }}>৳{itemUnitPrice}</span>
+                            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>x {item.quantity}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Item Billing Info */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ color: "var(--text-secondary)" }}>Subtotal ({quantity} items)</span>
+                    <span style={{ color: "var(--text-secondary)" }}>Subtotal ({checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
                     <strong style={{ color: "var(--text-primary)" }}>৳{subtotal}</strong>
                   </div>
 

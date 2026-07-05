@@ -10,6 +10,7 @@ import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 import { newArrivals as staticArrivals, brandProductMap } from "@/data";
+import { ChevronRight } from "lucide-react";
 
 function CategoryProductsContent() {
   const searchParams = useSearchParams();
@@ -114,12 +115,12 @@ function CategoryProductsContent() {
 
   return (
     <div className="category-products-container">
-      {/* Dynamic breadcrumb */}
-      <div style={{ display: "flex", gap: "8px", fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>
-        <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
-        <span>/</span>
-        <span style={{ color: "var(--text-primary)", fontWeight: "600" }}>{categoryTitle}</span>
-      </div>
+      {/* Breadcrumb */}
+      <nav className="product-breadcrumb">
+        <Link href="/">Home</Link>
+        <ChevronRight size={12} strokeWidth={2.5} />
+        <span>{categoryTitle}</span>
+      </nav>
 
       <div className="category-products-header">
         <h1 className="category-products-title">{categoryTitle}</h1>

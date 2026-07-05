@@ -38,7 +38,10 @@ import {
   FolderOpen,
   Coffee,
   Utensils,
-  TicketPercent
+  TicketPercent,
+  Trash2,
+  Minus,
+  Plus
 } from "lucide-react";
 import { searchProducts } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
@@ -84,7 +87,14 @@ function getCategoryIcon(slug: string) {
 }
 
 export default function Header({ cartCount: propCartCount }: HeaderProps) {
-  const { cartCount: contextCartCount } = useCart();
+  const {
+    cart,
+    removeFromCart,
+    updateQuantity,
+    cartCount: contextCartCount,
+    isCartDrawerOpen,
+    setCartDrawerOpen
+  } = useCart();
   const { user, login, register, logout } = useAuth();
   const cartCount = propCartCount ?? contextCartCount;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -504,10 +514,14 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               </button>
             ))}
 
-            <Link href="/cart" className="cart-btn" aria-label="Cart" style={{ textDecoration: "none" }}>
+            <button
+              onClick={() => setCartDrawerOpen(true)}
+              className="cart-btn"
+              aria-label="Cart"
+            >
               <ShoppingCart size={20} strokeWidth={1.75} />
               <span className="cart-count">{cartCount}</span>
-            </Link>
+            </button>
           </nav>
         </div>
 
@@ -555,13 +569,17 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <MenuIcon size={20} />
             <span>Menu</span>
           </button>
-          <Link href="/cart" className={`mb-nav-item ${pathname === "/cart" ? "active" : ""}`}>
+          <button
+            onClick={() => setCartDrawerOpen(true)}
+            className={`mb-nav-item ${isCartDrawerOpen ? "active" : ""}`}
+            style={{ background: "none", border: "none", cursor: "pointer" }}
+          >
             <div className="mb-cart-icon-wrap">
               <ShoppingCart size={20} />
               {cartCount > 0 && <span className="mb-cart-count">{cartCount}</span>}
             </div>
             <span>Cart</span>
-          </Link>
+          </button>
           <Link href="/orders" className={`mb-nav-item ${pathname === "/orders" ? "active" : ""}`}>
             <ClipboardList size={20} />
             <span>Orders</span>
@@ -737,10 +755,17 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               </Link>
 
               {/* Cart */}
-              <Link href="/cart" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
+              <button
+                className="sidebar-nav-item"
+                style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer" }}
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  setCartDrawerOpen(true);
+                }}
+              >
                 <ShoppingCart size={18} strokeWidth={2} />
                 <span>Cart</span>
-              </Link>
+              </button>
 
               {/* Contact Us */}
               <Link href="/contact-us" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
@@ -870,12 +895,113 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               </form>
             )}
 
-            <p className="auth-guest-note">
+            {/* <p className="auth-guest-note">
               💡 You can also <Link href="/orders" className="auth-guest-link" onClick={() => setIsAuthModalOpen(false)}>track orders</Link> without an account
-            </p>
+            </p> */}
           </div>
         </div>
       )}
+
+      {/* ── Cart Drawer Slide ── */}
+      <div className={`cart-drawer-overlay ${isCartDrawerOpen ? "open" : ""}`} onClick={() => setCartDrawerOpen(false)}>
+        <div className="cart-drawer-container" onClick={(e) => e.stopPropagation()}>
+          <div className="cart-drawer-header">
+            <div className="cart-drawer-title">
+              <ShoppingCart size={20} strokeWidth={2} />
+              <span>My Cart ({cartCount})</span>
+            </div>
+            <button className="cart-drawer-close-btn" onClick={() => setCartDrawerOpen(false)}>✕</button>
+          </div>
+
+          <div className="cart-drawer-body">
+            {cart.length === 0 ? (
+              <div className="cart-drawer-empty">
+                <div className="cart-drawer-empty-icon">
+                  <ShoppingCart size={54} strokeWidth={1.2} />
+                </div>
+                <div className="cart-drawer-empty-text">Your cart is currently empty.</div>
+                <button className="cart-drawer-shop-btn" onClick={() => setCartDrawerOpen(false)}>Continue Shopping</button>
+              </div>
+            ) : (
+              cart.map((item) => {
+                const itemPrice = Number(item.product.sell_price || 0);
+                const imageSrc = item.product.image
+                  ? item.product.image.startsWith("http")
+                    ? item.product.image
+                    : `${BASE_URL}${item.product.image}`
+                  : null;
+
+                return (
+                  <div key={item.product.id} className="cart-drawer-item">
+                    <div className="cart-drawer-item-img-wrap">
+                      {imageSrc ? (
+                        <img src={imageSrc} alt={item.product.name} className="cart-drawer-item-img" />
+                      ) : (
+                        <span style={{ fontSize: "10px", color: "#ccc" }}>No Image</span>
+                      )}
+                    </div>
+                    <div className="cart-drawer-item-info">
+                      <div className="cart-drawer-item-top">
+                        <h4 className="cart-drawer-item-name">{item.product.name}</h4>
+                        <button
+                          onClick={() => removeFromCart(item.product.id)}
+                          className="cart-drawer-item-delete"
+                          title="Remove item"
+                        >
+                          <X size={16} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                      <div className="cart-drawer-item-meta">
+                        <span className="cart-drawer-item-unit">৳{itemPrice} each</span>
+                        <div className="cart-drawer-qty-control">
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            className="cart-drawer-qty-btn"
+                          >
+                            <Minus size={12} strokeWidth={3} />
+                          </button>
+                          <span className="cart-drawer-qty-val">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            className="cart-drawer-qty-btn"
+                          >
+                            <Plus size={12} strokeWidth={3} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="cart-drawer-item-total">
+                        ৳{itemPrice * item.quantity}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {cart.length > 0 && (
+            <div className="cart-drawer-footer">
+              <div className="cart-drawer-summary">
+                <span className="cart-drawer-summary-label">Subtotal</span>
+                <span className="cart-drawer-summary-val">
+                  ৳{cart.reduce((total, item) => total + Number(item.product.sell_price || 0) * item.quantity, 0)}
+                </span>
+              </div>
+              <Link
+                href="/checkout/cart"
+                onClick={() => setCartDrawerOpen(false)}
+                className="cart-drawer-checkout-btn"
+              >
+                <ShoppingCart size={18} strokeWidth={2} />
+                Proceed to Checkout
+              </Link>
+              <Link href="/" className="cart-drawer-shop-btn" onClick={() => setCartDrawerOpen(false)}>
+                Continue Shopping
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 }
