@@ -318,6 +318,7 @@ import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
+import { Lock } from "lucide-react";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
@@ -347,12 +348,17 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  const [searchResults, setSearchResults] = useState<Order[] | null>(null);
-  const [searchVal, setSearchVal] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searchMsg, setSearchMsg] = useState("");
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.ceil(orders.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const ordersToDisplay = orders.slice(startIndex, startIndex + pageSize);
 
   const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set());
+
+  // Reset to page 1 when orders list changes
+  useEffect(() => { setCurrentPage(1); }, [orders.length]);
 
   const toggleSummary = (orderId: string) => {
     setExpandedSummaries(prev => {
@@ -385,14 +391,13 @@ export default function MyOrdersPage() {
           cache: "no-store",
         });
 
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+        let allOrders: any[] = [];
+        if (response.ok) {
+          const result = await response.json();
+          allOrders = result.data || [];
         }
 
-        const result = await response.json();
-        let allOrders: any[] = result.data || [];
-
-        // Step 2: Fallback — if backend didn't link user_id, search by phone
+        // Step 2: Fallback — backend user_id failed or empty, search by phone
         if (allOrders.length === 0 && user.phone) {
           const listRes = await fetch(`${BASE_URL}/api/orders/list/`, {
             headers: { "Content-Type": "application/json" },
@@ -401,15 +406,10 @@ export default function MyOrdersPage() {
           if (listRes.ok) {
             const listResult = await listRes.json();
             const allBackendOrders: any[] = listResult.data || [];
-            // Match by the user's registered phone number
+            const userDigits = user.phone.replace(/\D/g, "");
             allOrders = allBackendOrders.filter((ord: any) => {
               const ordDigits = ord.phone ? ord.phone.replace(/\D/g, "") : "";
-              const userDigits = user.phone ? user.phone.replace(/\D/g, "") : "";
-              return (
-                ordDigits.length >= 10 &&
-                userDigits.length >= 10 &&
-                ordDigits.slice(-10) === userDigits.slice(-10)
-              );
+              return ordDigits.length >= 10 && userDigits.length >= 10 && ordDigits.slice(-10) === userDigits.slice(-10);
             });
           }
         }
@@ -450,86 +450,6 @@ export default function MyOrdersPage() {
   }, [user, authLoading]);
 
 
-  // ── Search: filter purely from already-fetched API data ─────────────────────
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = searchVal.trim();
-
-    if (!query) {
-      setSearchResults(null);
-      setSearchMsg("");
-      return;
-    }
-
-    setSearching(true);
-    setSearchMsg("");
-
-    try {
-      // Re-fetch fresh data on every search so results are never stale
-      const response = await fetch(`${BASE_URL}/api/orders/list/`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        cache: "no-store",
-      });
-
-      if (!response.ok) throw new Error("Backend API error");
-
-      const result = await response.json();
-      const allBackendOrders: any[] = result.data || [];
-
-      const matched = allBackendOrders.filter((ord: any) => {
-        const orderRef = ord.order_id || `ORDER-${ord.id}`;
-        const phoneMatch =
-          ord.phone?.trim() === query || ord.phone?.trim().includes(query);
-        const refMatch =
-          orderRef.toLowerCase() === query.toLowerCase() ||
-          orderRef.toLowerCase().includes(query.toLowerCase());
-        return phoneMatch || refMatch;
-      });
-
-      if (matched.length > 0) {
-        const mappedOrders: Order[] = matched.map((ord: any) => {
-          const itemsList = (ord.items || []).map((item: any) => ({
-            product_name: item.product?.name || "Premium Gadget",
-            product_image: item.product?.image || null,
-            quantity: item.quantity || 1,
-            price: Number(item.price || item.product?.sell_price || 0),
-          }));
-
-          return {
-            order_id: ord.order_id || `ORDER-${ord.id}`,
-            fullName: ord.full_name,
-            phone: ord.phone,
-            address: ord.address,
-            paymentMethod: ord.payment_type || "COD",
-            amount: Number(ord.total_amount || ord.amount || 0),
-            status: ord.status || "pending",
-            created_at: ord.created_at || new Date().toISOString(),
-            items: itemsList,
-          };
-        });
-
-        setSearchResults(mappedOrders);
-        setSearchMsg(
-          `🎉 Found ${mappedOrders.length} order(s) matching your query!`
-        );
-      } else {
-        setSearchResults([]);
-        setSearchMsg(
-          "❌ No orders found matching that Mobile Number or Order Reference."
-        );
-      }
-    } catch (err) {
-      console.error("Search failed:", err);
-      setSearchResults([]);
-      setSearchMsg("❌ Could not reach the server. Please try again later.");
-    } finally {
-      setSearching(false);
-    }
-  };
-
   const getProgressWidth = (status: string) => {
     switch (status.toLowerCase()) {
       case "pending":
@@ -545,8 +465,13 @@ export default function MyOrdersPage() {
     }
   };
 
-  // What to display: search results (if a search ran) OR the full API list
-  const ordersToDisplay = searchResults !== null ? searchResults : orders;
+  const handleLoginClick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      const loginBtn = document.getElementById("account-login-btn");
+      if (loginBtn) loginBtn.click();
+    }, 400);
+  };
 
   return (
     <>
@@ -574,381 +499,385 @@ export default function MyOrdersPage() {
           </span>
         </div>
 
-        {/* Header Section */}
-        <div className="orders-title-sec">
-          <div>
-            <h1>
-              {user
-                ? `${user.first_name ? user.first_name + "'s " : ""}Order History`
-                : "Order History & Tracking"}
-            </h1>
-            <p
-              style={{
-                color: "var(--text-secondary)",
-                marginTop: "4px",
-                fontSize: "13px",
-              }}
-            >
-              {user
-                ? `Welcome back, ${user.first_name || user.username}! Here are all your orders.`
-                : "Track placed orders, view shipping details, and check real-time status."}
-            </p>
+        {!authLoading && !user ? (
+          <div className="profile-auth-gate">
+            <div className="auth-gate-card">
+              <div className="auth-gate-icon-wrap">
+                <Lock size={36} />
+              </div>
+              <h2 className="auth-gate-title">Login Required</h2>
+              <p className="auth-gate-desc">
+                You must be logged in to view and track your orders.
+              </p>
+              <button onClick={handleLoginClick} className="auth-gate-btn">Sign In</button>
+            </div>
           </div>
-
-          {/* Search Box */}
-          <form onSubmit={handleSearch} className="order-search-box">
-            <input
-              type="text"
-              className="order-search-input"
-              placeholder="Enter Mobile No or Order Ref..."
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="order-search-btn"
-              disabled={searching}
-            >
-              {searching ? "Searching..." : "Track"}
-            </button>
-          </form>
-        </div>
-
-        {/* Search message */}
-        {searchMsg && (
-          <div
-            style={{
-              padding: "12px 16px",
-              borderRadius: "8px",
-              background:
-                searchResults && searchResults.length > 0
-                  ? "#f6ffed"
-                  : "#fff2f0",
-              border:
-                searchResults && searchResults.length > 0
-                  ? "1px solid #b7eb8f"
-                  : "1px solid #ffccc7",
-              color:
-                searchResults && searchResults.length > 0
-                  ? "#389e0d"
-                  : "#ff4d4f",
-              fontSize: "13px",
-              fontWeight: "600",
-              marginBottom: "24px",
-            }}
-          >
-            {searchMsg}
-          </div>
-        )}
-
-        {/* Loading / Error states */}
-        {(authLoading || loading) && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "80px 32px",
-              fontSize: "15px",
-              color: "var(--text-secondary)",
-            }}
-          >
-            ⏳ Loading your orders…
-          </div>
-        )}
-
-        {!authLoading && !loading && loadError && (
-          <div
-            style={{
-              padding: "16px",
-              background: "#fff2f0",
-              border: "1px solid #ffccc7",
-              borderRadius: "8px",
-              color: "#ff4d4f",
-              fontWeight: "600",
-              fontSize: "13px",
-              marginBottom: "24px",
-            }}
-          >
-            {loadError}
-          </div>
-        )}
-
-        {/* Orders list */}
-        {!authLoading && !loading && !loadError && (
-
+        ) : (
           <>
-            {ordersToDisplay.length > 0 ? (
-              <div className="orders-list">
-                {ordersToDisplay.map((order) => {
-                  const orderDateStr = new Date(
-                    order.created_at
-                  ).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  });
 
-                  const isCancelled =
-                    order.status.toLowerCase() === "cancelled";
+            {/* Header Section */}
+            <div className="orders-title-sec">
+              <div>
+                <h1>
+                  {user
+                    ? `Order History`
+                    : "Order History & Tracking"}
+                </h1>
+                <p
+                  style={{
+                    color: "var(--text-secondary)",
+                    marginTop: "4px",
+                    fontSize: "13px",
+                  }}
+                >
+                  {user
+                    ? `Welcome back, ${user.first_name || user.username}! Here are all your orders.`
+                    : "Track placed orders, view shipping details, and check real-time status."}
+                </p>
+              </div>
 
-                  return (
-                    <div key={order.order_id} className="order-history-card">
-                      {/* Card Top */}
-                      <div className="order-card-header">
-                        <div>
-                          <div className="order-ref">
-                            Order Reference:{" "}
-                            <span>{order.order_id}</span>
-                          </div>
-                          <div className="order-date">
-                            Placed on {orderDateStr}
-                          </div>
-                        </div>
-                        <span
-                          className={`order-status-badge ${order.status.toLowerCase()}`}
-                        >
-                          {order.status}
-                        </span>
-                      </div>
+            </div>
 
-                      {/* Card Body */}
-                      <div className="order-card-body">
-                        {order.items && order.items.length > 0 ? (
-                          order.items.map((item, idx) => (
-                            <div key={idx} className="order-item-detail" style={{ borderBottom: idx < order.items.length - 1 ? "1px solid var(--border-light)" : "none", paddingBottom: idx < order.items.length - 1 ? "10px" : "0", marginBottom: idx < order.items.length - 1 ? "10px" : "0" }}>
-                              <div className="order-item-img-wrap">
-                                {item.product_image ? (
-                                  <Image
-                                    src={
-                                      item.product_image.startsWith("http")
-                                        ? item.product_image
-                                        : `${BASE_URL}${item.product_image}`
-                                    }
-                                    alt={item.product_name}
-                                    width={42}
-                                    height={42}
-                                    unoptimized
-                                  />
-                                ) : (
-                                  <span style={{ fontSize: "10px", color: "#aaa" }}>No Image</span>
-                                )}
+            {/* Loading / Error states */}
+            {(authLoading || loading) && (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "80px 32px",
+                  fontSize: "15px",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                ⏳ Loading your orders…
+              </div>
+            )}
+
+            {!authLoading && !loading && loadError && (
+              <div
+                style={{
+                  padding: "16px",
+                  background: "#fff2f0",
+                  border: "1px solid #ffccc7",
+                  borderRadius: "8px",
+                  color: "#ff4d4f",
+                  fontWeight: "600",
+                  fontSize: "13px",
+                  marginBottom: "24px",
+                }}
+              >
+                {loadError}
+              </div>
+            )}
+
+            {/* Orders list */}
+            {!authLoading && !loading && !loadError && (
+
+              <>
+                {ordersToDisplay.length > 0 ? (
+                  <>
+                    <div className="orders-list">
+                      {ordersToDisplay.map((order) => {
+                        const orderDateStr = new Date(
+                          order.created_at
+                        ).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+
+                        const isCancelled =
+                          order.status.toLowerCase() === "cancelled";
+
+                        return (
+                          <div key={order.order_id} className="order-history-card">
+                            {/* Card Top */}
+                            <div className="order-card-header">
+                              <div>
+                                <div className="order-ref">
+                                  Order Reference:{" "}
+                                  <span>{order.order_id}</span>
+                                </div>
+                                <div className="order-date">
+                                  Placed on {orderDateStr}
+                                </div>
                               </div>
-                              <div className="order-item-info">
-                                <div className="order-item-name">{item.product_name}</div>
-                                <div className="order-item-meta">Qty: {item.quantity} &middot; ৳{item.price.toFixed(2)}</div>
-                              </div>
+                              <span
+                                className={`order-status-badge ${order.status.toLowerCase()}`}
+                              >
+                                {order.status}
+                              </span>
                             </div>
-                          ))
-                        ) : (
-                          <p style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "13px" }}>No items found</p>
-                        )}
-                      </div>
 
-                      {/* Summary toggle */}
-                      <div className="order-info-bar">
-                        <span><strong>Payment:</strong> {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod}</span>
+                            {/* Card Body */}
+                            <div className="order-card-body">
+                              {order.items && order.items.length > 0 ? (
+                                order.items.map((item, idx) => (
+                                  <div key={idx} className="order-item-detail" style={{ borderBottom: idx < order.items.length - 1 ? "1px solid var(--border-light)" : "none", paddingBottom: idx < order.items.length - 1 ? "10px" : "0", marginBottom: idx < order.items.length - 1 ? "10px" : "0" }}>
+                                    <div className="order-item-img-wrap">
+                                      {item.product_image ? (
+                                        <Image
+                                          src={
+                                            item.product_image.startsWith("http")
+                                              ? item.product_image
+                                              : `${BASE_URL}${item.product_image}`
+                                          }
+                                          alt={item.product_name}
+                                          width={42}
+                                          height={42}
+                                          unoptimized
+                                        />
+                                      ) : (
+                                        <span style={{ fontSize: "10px", color: "#aaa" }}>No Image</span>
+                                      )}
+                                    </div>
+                                    <div className="order-item-info">
+                                      <div className="order-item-name">{item.product_name}</div>
+                                      <div className="order-item-meta">Qty: {item.quantity} &middot; ৳{item.price.toFixed(2)}</div>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <p style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "13px" }}>No items found</p>
+                              )}
+                            </div>
+
+                            {/* Summary toggle */}
+                            <div className="order-info-bar">
+                              <span><strong>Payment:</strong> {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod}</span>
+                              <button
+                                className="order-summary-toggle"
+                                onClick={() => toggleSummary(order.order_id)}
+                              >
+                                {expandedSummaries.has(order.order_id) ? "▲" : "▼"} Summary
+                              </button>
+                            </div>
+
+                            {expandedSummaries.has(order.order_id) && (
+                              <div className="order-summary-details">
+                                <div className="order-summary-details-inner">
+                                  <div>
+                                    <h5>Order Summary</h5>
+                                    <p><strong>Total Paid:</strong> ৳{order.amount.toFixed(2)}</p>
+                                    <p><strong>Payment Method:</strong> {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod}</p>
+                                  </div>
+                                  <div>
+                                    <h5>Shipping Details</h5>
+                                    <p><strong>Name:</strong> {order.fullName}</p>
+                                    <p><strong>Mobile:</strong> {order.phone}</p>
+                                    <p><strong>Address:</strong> {order.address}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Progress Bar */}
+                            {!isCancelled ? (
+                              <div className="order-progress-bar-container">
+                                <div className="order-progress-track">
+                                  <div
+                                    className="order-progress-line"
+                                    style={{
+                                      width: getProgressWidth(order.status),
+                                    }}
+                                  />
+
+                                  <div className="order-progress-step completed">
+                                    <div className="order-progress-dot">✓</div>
+                                    <span className="order-progress-text">
+                                      Confirmed
+                                    </span>
+                                  </div>
+
+                                  <div
+                                    className={`order-progress-step ${order.status.toLowerCase() === "processing" ||
+                                      order.status.toLowerCase() === "completed"
+                                      ? "completed"
+                                      : ""
+                                      }`}
+                                  >
+                                    <div className="order-progress-dot">⚙️</div>
+                                    <span className="order-progress-text">
+                                      Processing
+                                    </span>
+                                  </div>
+
+                                  <div
+                                    className={`order-progress-step ${order.status.toLowerCase() === "completed"
+                                      ? "completed"
+                                      : ""
+                                      }`}
+                                  >
+                                    <div className="order-progress-dot">🎁</div>
+                                    <span className="order-progress-text">
+                                      Completed
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  marginTop: "20px",
+                                  padding: "10px 16px",
+                                  background: "#fff1f0",
+                                  border: "1px solid #ffa39e",
+                                  borderRadius: "var(--radius)",
+                                  color: "#cf1322",
+                                  fontSize: "12px",
+                                  fontWeight: "600",
+                                }}
+                              >
+                                🛑 This order has been cancelled. Please place a new
+                                order or contact support.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="orders-pagination">
                         <button
-                          className="order-summary-toggle"
-                          onClick={() => toggleSummary(order.order_id)}
+                          className="pagination-btn"
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         >
-                          {expandedSummaries.has(order.order_id) ? "▲" : "▼"} Summary
+                          ‹ Prev
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            className={`pagination-btn ${page === currentPage ? "active" : ""}`}
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button
+                          className="pagination-btn"
+                          disabled={currentPage === totalPages}
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        >
+                          Next ›
                         </button>
                       </div>
-
-                      {expandedSummaries.has(order.order_id) && (
-                        <div className="order-summary-details">
-                          <div className="order-summary-details-inner">
-                            <div>
-                              <h5>Order Summary</h5>
-                              <p><strong>Total Paid:</strong> ৳{order.amount.toFixed(2)}</p>
-                              <p><strong>Payment Method:</strong> {order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod}</p>
-                            </div>
-                            <div>
-                              <h5>Shipping Details</h5>
-                              <p><strong>Name:</strong> {order.fullName}</p>
-                              <p><strong>Mobile:</strong> {order.phone}</p>
-                              <p><strong>Address:</strong> {order.address}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Progress Bar */}
-                      {!isCancelled ? (
-                        <div className="order-progress-bar-container">
-                          <div className="order-progress-track">
-                            <div
-                              className="order-progress-line"
-                              style={{
-                                width: getProgressWidth(order.status),
-                              }}
-                            />
-
-                            <div className="order-progress-step completed">
-                              <div className="order-progress-dot">✓</div>
-                              <span className="order-progress-text">
-                                Confirmed
-                              </span>
-                            </div>
-
-                            <div
-                              className={`order-progress-step ${order.status.toLowerCase() === "processing" ||
-                                order.status.toLowerCase() === "completed"
-                                ? "completed"
-                                : ""
-                                }`}
-                            >
-                              <div className="order-progress-dot">⚙️</div>
-                              <span className="order-progress-text">
-                                Processing
-                              </span>
-                            </div>
-
-                            <div
-                              className={`order-progress-step ${order.status.toLowerCase() === "completed"
-                                ? "completed"
-                                : ""
-                                }`}
-                            >
-                              <div className="order-progress-dot">🎁</div>
-                              <span className="order-progress-text">
-                                Completed
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            marginTop: "20px",
-                            padding: "10px 16px",
-                            background: "#fff1f0",
-                            border: "1px solid #ffa39e",
-                            borderRadius: "var(--radius)",
-                            color: "#cf1322",
-                            fontSize: "12px",
-                            fontWeight: "600",
-                          }}
-                        >
-                          🛑 This order has been cancelled. Please place a new
-                          order or contact support.
-                        </div>
-                      )}
+                    )}
+                  </>) : !user ? (
+                    <div
+                      style={{
+                        background: "var(--bg-white)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-lg)",
+                        padding: "80px 32px",
+                        textAlign: "center",
+                        boxShadow: "var(--shadow-sm)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "72px",
+                          display: "block",
+                          marginBottom: "16px",
+                        }}
+                      >
+                        🔍
+                      </span>
+                      <h2
+                        style={{
+                          fontSize: "22px",
+                          fontWeight: "800",
+                          marginBottom: "12px",
+                        }}
+                      >
+                        Track Your Order
+                      </h2>
+                      <p
+                        style={{
+                          color: "var(--text-secondary)",
+                          maxWidth: "480px",
+                          margin: "0 auto 32px",
+                          lineHeight: "1.6",
+                        }}
+                      >
+                        Please enter your <strong>Mobile Number</strong> or <strong>Order Reference</strong> in the search bar above to trace your order status and details.
+                      </p>
+                      <Link
+                        href="/"
+                        className="continue-shopping"
+                        style={{
+                          background: "var(--primary)",
+                          color: "#fff",
+                          padding: "12px 32px",
+                          borderRadius: "30px",
+                          fontWeight: "700",
+                          textDecoration: "none",
+                          display: "inline-block",
+                        }}
+                      >
+                        Shop Now
+                      </Link>
                     </div>
-                  );
-                })}
-              </div>
-            ) : !user && searchResults === null ? (
-              <div
-                style={{
-                  background: "var(--bg-white)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-lg)",
-                  padding: "80px 32px",
-                  textAlign: "center",
-                  boxShadow: "var(--shadow-sm)",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "72px",
-                    display: "block",
-                    marginBottom: "16px",
-                  }}
-                >
-                  🔍
-                </span>
-                <h2
-                  style={{
-                    fontSize: "22px",
-                    fontWeight: "800",
-                    marginBottom: "12px",
-                  }}
-                >
-                  Track Your Order
-                </h2>
-                <p
-                  style={{
-                    color: "var(--text-secondary)",
-                    maxWidth: "480px",
-                    margin: "0 auto 32px",
-                    lineHeight: "1.6",
-                  }}
-                >
-                  Please enter your <strong>Mobile Number</strong> or <strong>Order Reference</strong> in the search bar above to trace your order status and details.
-                </p>
-                <Link
-                  href="/"
-                  className="continue-shopping"
-                  style={{
-                    background: "var(--primary)",
-                    color: "#fff",
-                    padding: "12px 32px",
-                    borderRadius: "30px",
-                    fontWeight: "700",
-                    textDecoration: "none",
-                    display: "inline-block",
-                  }}
-                >
-                  Shop Now
-                </Link>
-              </div>
-            ) : (
-              <div
-                style={{
-                  background: "var(--bg-white)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-lg)",
-                  padding: "80px 32px",
-                  textAlign: "center",
-                  boxShadow: "var(--shadow-sm)",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "72px",
-                    display: "block",
-                    marginBottom: "16px",
-                  }}
-                >
-                  🛍️
-                </span>
-                <h2
-                  style={{
-                    fontSize: "22px",
-                    fontWeight: "800",
-                    marginBottom: "12px",
-                  }}
-                >
-                  No Orders Found
-                </h2>
-                <p
-                  style={{
-                    color: "var(--text-secondary)",
-                    maxWidth: "480px",
-                    margin: "0 auto 32px",
-                    lineHeight: "1.6",
-                  }}
-                >
-                  No matching orders were found. If you've placed an order, please double check your <strong>Mobile Number</strong> or <strong>Order Reference</strong> above.
-                </p>
-                <Link
-                  href="/"
-                  className="continue-shopping"
-                  style={{
-                    background: "var(--primary)",
-                    color: "#fff",
-                    padding: "12px 32px",
-                    borderRadius: "30px",
-                    fontWeight: "700",
-                    textDecoration: "none",
-                    display: "inline-block",
-                  }}
-                >
-                  Shop Now
-                </Link>
-              </div>
+                  ) : (
+                  <div
+                    style={{
+                      background: "var(--bg-white)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-lg)",
+                      padding: "80px 32px",
+                      textAlign: "center",
+                      boxShadow: "var(--shadow-sm)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "72px",
+                        display: "block",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      🛍️
+                    </span>
+                    <h2
+                      style={{
+                        fontSize: "22px",
+                        fontWeight: "800",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      No Orders Found
+                    </h2>
+                    <p
+                      style={{
+                        color: "var(--text-secondary)",
+                        maxWidth: "480px",
+                        margin: "0 auto 32px",
+                        lineHeight: "1.6",
+                      }}
+                    >
+                      No matching orders were found. If you've placed an order, please double check your <strong>Mobile Number</strong> or <strong>Order Reference</strong> above.
+                    </p>
+                    <Link
+                      href="/"
+                      className="continue-shopping"
+                      style={{
+                        background: "var(--primary)",
+                        color: "#fff",
+                        padding: "12px 32px",
+                        borderRadius: "30px",
+                        fontWeight: "700",
+                        textDecoration: "none",
+                        display: "inline-block",
+                      }}
+                    >
+                      Shop Now
+                    </Link>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
