@@ -7,9 +7,14 @@ export default function Footer() {
         <div className="footer-grid">
           {/* Brand */}
           <div className="footer-brand">
-            <span className="logo-text">
-              <span className="logo-buy">Buy</span><span className="logo-fest">Fest</span>
-            </span>
+            <a href="/" aria-label="BuyFest Home" style={{ display: "inline-block" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/official_logo_3.png"
+                alt="BuyFest Logo"
+                className="logo-img"
+              />
+            </a>
 
             <p className="footer-desc">
               Bangladesh&apos;s trusted e-commerce store for phones, gadgets &amp; accessories. <br />

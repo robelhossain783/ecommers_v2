@@ -346,9 +346,12 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
             {/* ── Logo ── */}
             <a href="/" className="logo" aria-label="BuyFest Home">
-              <span className="logo-text">
-                <span className="logo-buy">Buy</span><span className="logo-fest">Fest</span>
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/official_logo_3.png"
+                alt="BuyFest Logo"
+                className="logo-img"
+              />
             </a>
           </div>
 
@@ -760,7 +763,12 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
             {/* Logo */}
             <div className="auth-modal-brand">
-              <span className="logo-buy">Buy</span><span className="logo-fest">Fest</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/official_logo_3.png"
+                alt="BuyFest Logo"
+                className="auth-modal-logo"
+              />
             </div>
 
             {/* Tabs */}
