@@ -51,9 +51,17 @@ export default function Footer() {
           <div className="footer-col">
             <h4>About Us</h4>
             <ul className="footer-links">
-              {["About Us", "Corporate", "Order Tracking", "Careers", "Contact Us"].map((item) => (
-                <li key={item}><a href={`/${item.toLowerCase().replace(/ \/ /g, "-").replace(/ /g, "-")}`}>{item}</a></li>
-              ))}
+              {["About Us", "Terms & Conditions", "Careers", "Contact Us"].map((item) => {
+                let href = `/${item.toLowerCase().replace(/ \/ /g, "-").replace(/ /g, "-")}`;
+                if (item === "Terms & Conditions") {
+                  href = "/terms-and-conditions";
+                }
+                return (
+                  <li key={item}>
+                    <a href={href}>{item}</a>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

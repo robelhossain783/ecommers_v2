@@ -200,7 +200,6 @@ export default function NewTrends() {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
-    router.push("/cart");
   };
 
   const handleSeeMore = () => {

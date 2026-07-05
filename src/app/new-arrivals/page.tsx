@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 // import TopBar from "@/components/layout/TopBar";
+import { ChevronRight } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
@@ -78,12 +79,12 @@ export default function NewArrivalsAllPage() {
       <Header />
 
       <div className="category-products-container">
-        {/* Breadcrumb navigation */}
-        <div style={{ display: "flex", gap: "8px", fontSize: "13px", color: "var(--text-muted)", marginBottom: "20px" }}>
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
-          <span>/</span>
-          <span style={{ color: "var(--text-primary)", fontWeight: "600" }}>All Products</span>
-        </div>
+        {/* Breadcrumb */}
+        <nav className="product-breadcrumb">
+          <Link href="/">Home</Link>
+          <ChevronRight size={12} strokeWidth={2.5} />
+          <span>All Products</span>
+        </nav>
 
         {/* Header Section */}
         <div className="category-products-header">

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-// import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
@@ -13,6 +12,7 @@ import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { FaWhatsapp } from "react-icons/fa";
+import { ShoppingCart, Zap, AlertCircle, MessageSquare, Minus, Plus, ChevronRight, Package, Truck, RotateCcw, ShieldCheck } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
@@ -31,7 +31,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<"details" | "specs" | "shipping" | "reviews">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "reviews">("details");
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
@@ -141,10 +141,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   if (loading) {
     return (
       <>
-        {/* <TopBar /> */}
         <Header />
-        <div className="product-details-container" style={{ textAlign: "center", padding: "100px 0" }}>
-          <h2>Loading product details...</h2>
+        <div className="product-details-container">
+          <div className="product-page-status">
+            <div className="product-page-spinner" />
+            <p>Loading product details...</p>
+          </div>
         </div>
         <Footer />
       </>
@@ -154,16 +156,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   if (!product) {
     return (
       <>
-        {/* <TopBar /> */}
         <Header />
-        <div className="product-details-container" style={{ textAlign: "center", padding: "100px 0" }}>
-          <h2>Product Not Found</h2>
-          <p style={{ margin: "20px 0", color: "var(--text-muted)" }}>
-            The product you are looking for does not exist or has been removed.
-          </p>
-          <Link href="/" className="continue-shopping">
-            Back to Home
-          </Link>
+        <div className="product-details-container">
+          <div className="product-page-status">
+            <Package size={48} strokeWidth={1.2} />
+            <h2>Product Not Found</h2>
+            <p>The product you are looking for does not exist or has been removed.</p>
+            <Link href="/" className="continue-shopping">Back to Home</Link>
+          </div>
         </div>
         <Footer />
       </>
@@ -198,37 +198,47 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
       <div className="product-details-container">
         {/* BREADCRUMB */}
-        <div style={{ display: "flex", gap: "8px", fontSize: "13px", color: "var(--text-muted)", marginBottom: "24px" }}>
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</Link>
-          <span>/</span>
-
-          <Link
-            href={`/category_product/?category=${product.category?.slug}`}
-            style={{ color: "inherit", textDecoration: "none" }}
-          >
+        <nav className="product-breadcrumb">
+          <Link href="/">Home</Link>
+          <ChevronRight size={12} strokeWidth={2.5} />
+          <Link href={`/category_product/?category=${product.category?.slug}`}>
             {product.category?.name || "Product"}
           </Link>
-
-          <span></span>
-
-        </div>
+          <ChevronRight size={12} strokeWidth={2.5} />
+          <span>{product.name}</span>
+        </nav>
 
         {/* MAIN DETAIL GRID */}
         <div className="product-detail-grid">
           {/* LEFT: IMAGE & GALLERY SECTION */}
           <div className="product-detail-left-column">
-            <div className="product-detail-image-sec">
-              {activeImage ? (
-                <Image
-                  src={activeImage.startsWith("http") ? activeImage : `${BASE_URL}${activeImage}`}
-                  alt={product.name}
-                  width={400}
-                  height={400}
-                  className="product-detail-image"
-                  unoptimized
-                />
-              ) : (
-                <div style={{ fontSize: "24px", color: "#ccc" }}>No Product Image</div>
+            <div className="product-detail-image-wrapper">
+              <div className="product-detail-image-sec">
+                {activeImage ? (
+                  <div className="product-detail-image-inner">
+                    <Image
+                      src={activeImage.startsWith("http") ? activeImage : `${BASE_URL}${activeImage}`}
+                      alt={product.name}
+                      width={400}
+                      height={400}
+                      className="product-detail-image"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="product-no-image">No Product Image</div>
+                )}
+              </div>
+              {hasDiscount && (
+                <div className="product-detail-image-discount">
+                  <span className="discount-pct">-{Math.round((discount / regularPrice) * 100)}%</span>
+                  <span className="discount-amount">৳{discount} OFF</span>
+                </div>
+              )}
+              {allImages.length > 1 && (
+                <div className="product-detail-image-counter">
+                  {allImages.indexOf(activeImage || product.image || "") + 1}/{allImages.length}
+                </div>
               )}
             </div>
 
@@ -262,62 +272,74 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           {/* INFO SECTION */}
           <div className="product-detail-info-sec">
-            <div>
-              <span className="product-detail-category-badge">
-                {product.category?.name || "Gadget"}
+            <span className="product-detail-category-badge">
+              {product.category?.name || "Gadget"}
+            </span>
+
+            <h1 className="product-detail-title">{product.name}</h1>
+
+            <div className={`product-detail-stock-badge ${inStock ? "" : "out"}`}>
+              <span className="stock-dot" />
+              <span>
+                {inStock ? `In Stock (${product.stock} available)` : "Stock Out"}
               </span>
-
-              <h1 className="product-detail-title">{product.name}</h1>
-
-              <div className={`product-detail-stock-badge ${inStock ? "" : "out"}`}>
-                {/* <span style={{ fontSize: "16px" }}>{inStock ? "🟢" : "🔴"}</span> */}
-                <span>
-                  {inStock ? `In Stock (Available: ${product.stock})` : "Stock Out"}
-                </span>
-              </div>
-
-              {/* PRICES */}
-              <div className="product-detail-prices-wrapper">
-                <span className="product-detail-sell-price">৳{sellPrice}</span>
-                {hasDiscount && (
-                  <>
-                    <span className="product-detail-regular-price">৳{regularPrice}</span>
-                    <span className="product-detail-discount-badge">
-                      ৳{discount} OFF
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* BRIEF DESCRIPTION */}
-              <p className="product-detail-desc">
-                {product.description || "No description available for this premium gadget. Experience state-of-the-art features, top-tier performance, and modern ergonomics, backed by manufacturer support."}
-              </p>
             </div>
 
-            {/* ACTIONS */}
+            {/* PRICES */}
+            <div className="product-detail-prices-wrapper">
+              <span className="product-detail-sell-price">৳{sellPrice.toLocaleString('en-US')}</span>
+              {hasDiscount && (
+                <>
+                  <span className="product-detail-regular-price">৳{regularPrice.toLocaleString('en-US')}</span>
+                  <span className="product-detail-discount-badge">
+                    -{Math.round((discount / regularPrice) * 100)}%
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* TRUST BADGES */}
+            <div className="product-trust-badges">
+              <div className="trust-badge-item">
+                <Truck size={16} strokeWidth={1.5} />
+                <span>Free Delivery</span>
+              </div>
+              <div className="trust-badge-item">
+                <RotateCcw size={16} strokeWidth={1.5} />
+                <span>Easy Returns</span>
+              </div>
+              <div className="trust-badge-item">
+                <ShieldCheck size={16} strokeWidth={1.5} />
+                <span>Secure Payment</span>
+              </div>
+            </div>
+
+            {/* BUY BOX */}
             {inStock ? (
-              <div className="product-detail-actions">
-                <div className="quantity-control">
-                  <button onClick={handleDecrement} className="quantity-control-btn">−</button>
-                  <input
-                    type="text"
-                    value={quantity}
-                    readOnly
-                    className="quantity-input"
-                  />
-                  <button onClick={handleIncrement} className="quantity-control-btn">+</button>
+              <div className="product-buy-box">
+                <div className="product-buy-box-row">
+                  <span className="product-buy-box-label">Quantity</span>
+                  <div className="quantity-control">
+                    <button onClick={handleDecrement} className="quantity-control-btn">
+                      <Minus size={14} strokeWidth={3} />
+                    </button>
+                    <input type="text" value={quantity} readOnly className="quantity-input" />
+                    <button onClick={handleIncrement} className="quantity-control-btn">
+                      <Plus size={14} strokeWidth={3} />
+                    </button>
+                  </div>
+                  <span className="product-buy-box-total">= ৳{sellPrice * quantity}</span>
                 </div>
 
                 <div className="product-detail-btn-group">
                   <button onClick={handleAddToCart} className="product-detail-add-btn">
-                    🛒 Add to Cart
+                    <ShoppingCart size={16} strokeWidth={2} />
+                    Add to Cart
                   </button>
-
                   <button onClick={handleBuyNow} className="product-detail-buy-btn">
-                    ⚡ Buy Now
+                    <Zap size={16} strokeWidth={2} />
+                    Buy Now
                   </button>
-
                   <a
                     href={whatsappUrl}
                     target="_blank"
@@ -329,53 +351,28 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </div>
 
                 {stockLimitMsg && (
-                  <div style={{
-                    width: "100%",
-                    color: "#e8320a",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    background: "rgba(232, 50, 10, 0.06)",
-                    padding: "8px 12px",
-                    borderRadius: "6px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    marginTop: "12px",
-                    border: "1px solid rgba(232, 50, 10, 0.15)",
-                    boxSizing: "border-box"
-                  }}>
-                    <span>⚠️</span> {stockLimitMsg}
+                  <div className="product-stock-error">
+                    <AlertCircle size={14} />
+                    <span>{stockLimitMsg}</span>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="product-detail-actions">
-                <div className="quantity-control disabled" style={{ opacity: 0.5, pointerEvents: "none" }}>
-                  <button className="quantity-control-btn" disabled>−</button>
-                  <input
-                    type="text"
-                    value="0"
-                    readOnly
-                    className="quantity-input"
-                  />
-                  <button className="quantity-control-btn" disabled>+</button>
+              <div className="product-buy-box">
+                <div className="quantity-control disabled">
+                  <button className="quantity-control-btn" disabled>
+                    <Minus size={14} strokeWidth={3} />
+                  </button>
+                  <input type="text" value="0" readOnly className="quantity-input" />
+                  <button className="quantity-control-btn" disabled>
+                    <Plus size={14} strokeWidth={3} />
+                  </button>
                 </div>
 
                 <div className="product-detail-btn-group">
-                  <button className="product-detail-add-btn" disabled style={{ background: "#f3f4f6", color: "#9ca3af", borderColor: "#e5e7eb", cursor: "not-allowed", opacity: 0.8 }}>
-                    Stock Out
-                  </button>
-
-                  <button className="product-detail-buy-btn" disabled style={{ background: "#f3f4f6", color: "#9ca3af", borderColor: "#e5e7eb", cursor: "not-allowed", opacity: 0.8 }}>
-                    Stock Out
-                  </button>
-
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="product-detail-whatsapp-btn"
-                  >
+                  <button className="product-detail-add-btn disabled" disabled>Stock Out</button>
+                  <button className="product-detail-buy-btn disabled" disabled>Stock Out</button>
+                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="product-detail-whatsapp-btn">
                     <FaWhatsapp size={16} /> WhatsApp
                   </a>
                 </div>
@@ -393,12 +390,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             >
               Description
             </button>
-            <button
-              onClick={() => setActiveTab("specs")}
-              className={`tab-btn ${activeTab === "specs" ? "active" : ""}`}
-            >
-              Specifications
-            </button>
             {/* <button
               onClick={() => setActiveTab("shipping")}
               className={`tab-btn ${activeTab === "shipping" ? "active" : ""}`}
@@ -415,54 +406,13 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
           <div className="tab-content">
             {activeTab === "details" && (
-              <div>
-                <h3 style={{ marginBottom: "12px", color: "var(--text-primary)" }}>Product Overview</h3>
-                <p style={{ lineHeight: "1.7", color: "var(--text-secondary)" }}>
+              <div className="tab-details-content">
+                <h3>Product Overview</h3>
+                <p>
                   {product.description || "This premium device brings advanced features and exceptional power. Designed meticulously with quality materials, it provides unmatched reliability and convenience for your daily work and lifestyle."}
                 </p>
               </div>
             )}
-
-            {activeTab === "specs" && (
-              <table className="spec-table">
-                <tbody>
-                  <tr>
-                    <td className="spec-label">Product Name</td>
-                    <td className="spec-value">{product.name}</td>
-                  </tr>
-                  <tr>
-                    <td className="spec-label">Category</td>
-                    <td className="spec-value">{product.category?.name || "Premium Gadgets"}</td>
-                  </tr>
-                  <tr>
-                    <td className="spec-label">URL Slug</td>
-                    <td className="spec-value">{product.slug}</td>
-                  </tr>
-                  <tr>
-                    <td className="spec-label">Internal Code</td>
-                    <td className="spec-value">#PRD-{product.id}</td>
-                  </tr>
-                  <tr>
-                    <td className="spec-label">Availability</td>
-                    <td className="spec-value">{inStock ? "Available (In Stock)" : "Out of stock"}</td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-            {/* 
-            {activeTab === "shipping" && (
-              <div>
-                <h3 style={{ marginBottom: "12px", color: "var(--text-primary)" }}>Fast & Secured Delivery</h3>
-                <p style={{ lineHeight: "1.7", color: "var(--text-secondary)", marginBottom: "16px" }}>
-                  📦 <strong>Dhaka City:</strong> Same-day or Next-day home delivery (Standard charge: ৳80).<br />
-                  🚚 <strong>Outside Dhaka:</strong> 2 to 3 days delivery via partner courier services (Standard charge: ৳150).
-                </p>
-                <h3 style={{ marginBottom: "12px", color: "var(--text-primary)" }}>EMI Options</h3>
-                <p style={{ lineHeight: "1.7", color: "var(--text-secondary)" }}>
-                  💳 Pay in easy monthly installments (EMI) up to 36 months using credit cards from leading banks in Bangladesh (UCB, City Bank, EBL, DBBL, etc.). Contact outlets for offline EMI support.
-                </p>
-              </div>
-            )} */}
 
             {activeTab === "reviews" && (
               <div className="reviews-tab-container">
@@ -501,7 +451,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                   </div>
                 ) : (
                   <div className="review-empty">
-                    <span style={{ fontSize: "40px" }}>💬</span>
+                    <MessageSquare size={40} strokeWidth={1.2} />
                     <p>No reviews yet. Be the first to share your experience!</p>
                   </div>
                 )}
@@ -635,7 +585,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
         {/* RELATED PRODUCTS */}
         {relatedProducts.length > 0 && (
-          <div style={{ marginTop: "48px" }}>
+          <div className="product-related-section">
             <div className="section-header">
               <h2 className="section-title">Related Products</h2>
             </div>
