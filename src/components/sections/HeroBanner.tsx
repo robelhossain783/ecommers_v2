@@ -161,7 +161,6 @@ export default function HeroBanner() {
               {/* Shop Now Button overlay */}
               <div className="hero-banner-button">
                 {slide.cta || "Shop Now"}
-                <ChevronRight size={16} />
               </div>
             </Link>
           ))}
