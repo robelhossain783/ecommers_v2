@@ -10,7 +10,7 @@ import ProductCard from "@/components/ui/ProductCard";
 import { getNewArrival2 } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
-import { newArrivals as staticArrivals, brandProductMap } from "@/data";
+import { newArrivals as staticArrivals } from "@/data";
 
 const PAGE_SIZE = 30;
 
@@ -34,14 +34,11 @@ export default function NewArrivalsAllPage() {
     async function loadAllProducts() {
       setLoading(true);
       try {
-        // Fetch all products from Backend API
-        const apiProducts = await getNewArrival2();
+        // Fetch only New Arrival products from Backend API
+        const apiProducts = await getNewArrival2({ is_new_arrivals: true });
 
         // Prepare static fallbacks
-        const staticList = [
-          ...staticArrivals,
-          ...Object.values(brandProductMap).flat()
-        ] as Product[];
+        const staticList = staticArrivals as Product[];
 
         // Use api products if available, else fall back to static
         const allProducts = apiProducts.length > 0 ? apiProducts : staticList;
@@ -57,7 +54,7 @@ export default function NewArrivalsAllPage() {
 
         setProducts(uniqueProducts);
       } catch (error) {
-        console.error("Failed to fetch all products:", error);
+        console.error("Failed to fetch new arrival products:", error);
       } finally {
         setLoading(false);
       }
@@ -83,12 +80,12 @@ export default function NewArrivalsAllPage() {
         <nav className="product-breadcrumb">
           <Link href="/">Home</Link>
           <ChevronRight size={12} strokeWidth={2.5} />
-          <span>All Products</span>
+          <span>New Arrivals</span>
         </nav>
 
         {/* Header Section */}
         <div className="category-products-header">
-          <h1 className="category-products-title">All Products</h1>
+          <h1 className="category-products-title">New Arrivals</h1>
           <div className="category-header-sort">
             <label>Sort by:</label>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
