@@ -202,6 +202,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
 import { getNewArrival2 } from "@/lib/api";
@@ -292,112 +293,143 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
       {/* HEADER */}
       <div className="section-header">
         <h2 className="section-title">New Arrival</h2>
-
-        {/* Arrow buttons */}
-        {hasOverflow && (
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={() => scrollBy("left")}
-              aria-label="Scroll left"
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                border: "1.5px solid rgba(232,50,10,0.5)",
-                background: "rgba(232,50,10,0.08)",
-                color: "#e8320a",
-                fontSize: "16px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#e8320a";
-                e.currentTarget.style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(232,50,10,0.08)";
-                e.currentTarget.style.color = "#e8320a";
-              }}
-            >
-              ‹
-            </button>
-            <button
-              onClick={() => scrollBy("right")}
-              aria-label="Scroll right"
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                border: "1.5px solid rgba(232,50,10,0.5)",
-                background: "rgba(232,50,10,0.08)",
-                color: "#e8320a",
-                fontSize: "16px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#e8320a";
-                e.currentTarget.style.color = "#fff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(232,50,10,0.08)";
-                e.currentTarget.style.color = "#e8320a";
-              }}
-            >
-              ›
-            </button>
-          </div>
-        )}
+        <Link href="/new-arrivals" className="see-all">
+          View All
+        </Link>
       </div>
 
       {/* HORIZONTAL SLIDER */}
       <style>{`
-        .new-arrival-slider::-webkit-scrollbar { display: none; }
+        .new-arrival-slider-wrapper {
+          position: relative;
+        }
+        .new-arrival-slider::-webkit-scrollbar {
+          display: none;
+        }
+        .slider-arrow-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(232,50,10,0.3);
+          background: #ffffff;
+          color: #e8320a;
+          font-size: 22px;
+          font-weight: bold;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (hover: hover) {
+          .slider-arrow-btn:hover {
+            background: #e8320a;
+            color: #ffffff;
+            border-color: #e8320a;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 6px 16px rgba(232, 50, 10, 0.3);
+          }
+        }
+        .slider-arrow-btn:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+        .slider-arrow-left {
+          left: -20px;
+        }
+        .slider-arrow-right {
+          right: -20px;
+        }
+
+        @media (max-width: 1024px) {
+          .slider-arrow-left {
+            left: 8px;
+          }
+          .slider-arrow-right {
+            right: 8px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .slider-arrow-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+          }
+          .slider-arrow-left {
+            left: 4px;
+          }
+          .slider-arrow-right {
+            right: 4px;
+          }
+        }
       `}</style>
-      <div
-        ref={sliderRef}
-        className="new-arrival-slider"
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "16px",
-          overflowX: "auto",
-          overflowY: "visible",
-          scrollSnapType: "x mandatory",
-          cursor: "grab",
-          paddingBottom: "12px",
-          paddingTop: "4px",
-          msOverflowStyle: "none",
-          scrollbarWidth: "none",
-        }}
-      >
-        {products.map((product) => (
-          <div
-            key={product.id}
-            style={{
-              flex: "0 0 auto",
-              width: "200px",
-              scrollSnapAlign: "start",
-            }}
+      
+      <div className="new-arrival-slider-wrapper">
+        {/* Left Arrow Button */}
+        {hasOverflow && (
+          <button
+            onClick={() => scrollBy("left")}
+            className="slider-arrow-btn slider-arrow-left"
+            aria-label="Scroll left"
           >
-            <ProductCard
-              product={product}
-              onAddToCart={() => handleAddToCart(product)}
-            />
-          </div>
-        ))}
+            ‹
+          </button>
+        )}
+
+        {/* Right Arrow Button */}
+        {hasOverflow && (
+          <button
+            onClick={() => scrollBy("right")}
+            className="slider-arrow-btn slider-arrow-right"
+            aria-label="Scroll right"
+          >
+            ›
+          </button>
+        )}
+
+        <div
+          ref={sliderRef}
+          className="new-arrival-slider"
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "16px",
+            overflowX: "auto",
+            overflowY: "visible",
+            scrollSnapType: "x mandatory",
+            cursor: "grab",
+            paddingBottom: "12px",
+            paddingTop: "4px",
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
+          }}
+        >
+          {products.map((product) => (
+            <div
+              key={product.id}
+              style={{
+                flex: "0 0 auto",
+                width: "200px",
+                scrollSnapAlign: "start",
+              }}
+            >
+              <ProductCard
+                product={product}
+                onAddToCart={() => handleAddToCart(product)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
