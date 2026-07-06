@@ -78,6 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         sessionStorage.setItem("buyfest_customer", JSON.stringify(customerUser));
         sessionStorage.setItem("buyfest_last_activity", Date.now().toString());
+        if (data.access) localStorage.setItem("token", data.access);
+        if (data.refresh) localStorage.setItem("refreshToken", data.refresh);
       } catch (e) { }
       return { success: true };
     } catch {
@@ -108,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       sessionStorage.removeItem("buyfest_customer");
       sessionStorage.removeItem("buyfest_last_activity");
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
     } catch (e) { }
   }, []);
 

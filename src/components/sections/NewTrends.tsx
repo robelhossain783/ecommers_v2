@@ -226,7 +226,7 @@ export default function NewTrends() {
 
       {/* HEADER */}
       <div className="section-header">
-        <h2 className="section-title">Top Selling Product</h2>
+        <h2 className="section-title">Just For You</h2>
         <Link href="/new-arrivals" className="see-all">
           View All
         </Link>

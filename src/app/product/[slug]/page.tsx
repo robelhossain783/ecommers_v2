@@ -34,6 +34,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [activeTab, setActiveTab] = useState<"details" | "reviews">("details");
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   // Reviews state
   const [reviews, setReviews] = useState<{ id: number; name: string; rating: number; comment: string; created_at: string; avatar_url?: string | null }[]>([]);
@@ -215,7 +216,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <div className="product-detail-image-wrapper">
               <div className="product-detail-image-sec">
                 {activeImage ? (
-                  <div className="product-detail-image-inner">
+                  <div className="product-detail-image-inner" onClick={() => setLightboxImage(activeImage)} style={{ cursor: "zoom-in" }}>
                     <Image
                       src={activeImage.startsWith("http") ? activeImage : `${BASE_URL}${activeImage}`}
                       alt={product.name}
@@ -281,7 +282,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <div className={`product-detail-stock-badge ${inStock ? "" : "out"}`}>
               <span className="stock-dot" />
               <span>
-                {inStock ? `In Stock (${product.stock} available)` : "Stock Out"}
+                {inStock ? `In Stock` : "Stock Out"}
               </span>
             </div>
 
@@ -302,7 +303,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <div className="product-trust-badges">
               <div className="trust-badge-item">
                 <Truck size={16} strokeWidth={1.5} />
-                <span>Free Delivery</span>
+                <span>Fast Delivery</span>
               </div>
               <div className="trust-badge-item">
                 <RotateCcw size={16} strokeWidth={1.5} />
@@ -328,7 +329,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                       <Plus size={14} strokeWidth={3} />
                     </button>
                   </div>
-                  <span className="product-buy-box-total">= ৳{sellPrice * quantity}</span>
+                  <span className="product-buy-box-total">৳{sellPrice * quantity}</span>
                 </div>
 
                 <div className="product-detail-btn-group">
@@ -408,9 +409,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             {activeTab === "details" && (
               <div className="tab-details-content">
                 <h3>Product Overview</h3>
-                <p>
-                  {product.description || "This premium device brings advanced features and exceptional power. Designed meticulously with quality materials, it provides unmatched reliability and convenience for your daily work and lifestyle."}
-                </p>
+                <FormattedDescription text={product.description || "This premium device brings advanced features and exceptional power. Designed meticulously with quality materials, it provides unmatched reliability and convenience for your daily work and lifestyle."} />
               </div>
             )}
 
@@ -602,7 +601,51 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         )}
       </div>
 
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <div className="product-lightbox-overlay" onClick={() => setLightboxImage(null)}>
+          <button className="product-lightbox-close" onClick={() => setLightboxImage(null)} type="button">
+            &times;
+          </button>
+          <div className="product-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <Image
+              src={lightboxImage.startsWith("http") ? lightboxImage : `${BASE_URL}${lightboxImage}`}
+              alt={product?.name || "Product image"}
+              width={800}
+              height={800}
+              className="product-lightbox-image"
+              unoptimized
+            />
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
+  );
+}
+
+function FormattedDescription({ text }: { text: string }) {
+  const blocks = text.split(/\n\n+/);
+  return (
+    <div className="formatted-desc">
+      {blocks.map((block, i) => {
+        const lines = block.split("\n").filter(Boolean);
+        const isList = lines.length > 1 && lines.every((l) => /^[-*•]\s/.test(l));
+        if (isList) {
+          return (
+            <ul key={i} className="desc-list">
+              {lines.map((line, j) => (
+                <li key={j}>{line.replace(/^[-*•]\s+/, "")}</li>
+              ))}
+            </ul>
+          );
+        }
+        if (lines.length === 1 && /^[A-Z][A-Za-z\s]+:$/.test(lines[0])) {
+          return <h4 key={i} className="desc-subheading">{lines[0]}</h4>;
+        }
+        return <p key={i}>{block}</p>;
+      })}
+    </div>
   );
 }

@@ -3,33 +3,62 @@
 import React, { useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Phone, Mail, MessageSquare, Send, CheckCircle2, MapPin, Clock } from "lucide-react";
+import {
+  Phone, Mail, Send, CheckCircle2, MapPin, Clock,
+  MessageSquare, User, AlertCircle, LogIn
+} from "lucide-react";
 import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { useAuth } from "@/context/AuthContext";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 export default function ContactUsPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const { user } = useAuth();
+
+  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setShowLoginPrompt(false);
 
-    // Simulate submission delay
-    setTimeout(() => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/feedback/customer-feedback/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        let msg = "Failed to send.";
+        try { const d = await res.json(); msg = d.detail || d.error || Object.values(d).flat().join(", ") || msg; } catch {}
+        alert(msg);
+        setIsSubmitting(false);
+        return;
+      }
+
       setIsSubmitting(false);
       setIsSubmitted(true);
-      // Reset form
-      setName("");
-      setEmail("");
-      setPhone("");
-      setSubject("");
-      setMessage("");
-    }, 1200);
+      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+    } catch {
+      alert("Network error. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,57 +80,42 @@ export default function ContactUsPage() {
               <h2 className="contact-info-section-title">Get in Touch</h2>
 
               <div className="contact-info-list">
-                {/* Hotline */}
                 <div className="contact-info-item">
-                  <div className="contact-info-icon-wrap">
-                    <Phone size={20} />
-                  </div>
+                  <div className="contact-info-icon-wrap"><Phone size={20} /></div>
                   <div className="contact-info-details">
                     <h4>Hotline Number</h4>
                     <a href="tel:01635275630">01635275630</a>
                   </div>
                 </div>
 
-                {/* WhatsApp */}
                 <div className="contact-info-item">
                   <div className="contact-info-icon-wrap" style={{ background: "#e8f8f0", color: "#10b981" }}>
                     <FaWhatsapp size={22} />
                   </div>
                   <div className="contact-info-details">
                     <h4>WhatsApp</h4>
-                    <a href="https://wa.me/+8801635275630" target="_blank" rel="noopener noreferrer">
-                      +880 1635275630
-                    </a>
+                    <a href="https://wa.me/+8801635275630" target="_blank" rel="noopener noreferrer">+880 1635275630</a>
                   </div>
                 </div>
 
-                {/* Email */}
                 <div className="contact-info-item">
-                  <div className="contact-info-icon-wrap">
-                    <Mail size={20} />
-                  </div>
+                  <div className="contact-info-icon-wrap"><Mail size={20} /></div>
                   <div className="contact-info-details">
                     <h4>Email Address</h4>
                     <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a>
                   </div>
                 </div>
 
-                {/* Store Hours */}
                 <div className="contact-info-item">
-                  <div className="contact-info-icon-wrap">
-                    <Clock size={20} />
-                  </div>
+                  <div className="contact-info-icon-wrap"><Clock size={20} /></div>
                   <div className="contact-info-details">
                     <h4>Support Hours</h4>
                     <p>Everyday: 9:00 AM - 10:00 PM</p>
                   </div>
                 </div>
 
-                {/* Location */}
                 <div className="contact-info-item">
-                  <div className="contact-info-icon-wrap">
-                    <MapPin size={20} />
-                  </div>
+                  <div className="contact-info-icon-wrap"><MapPin size={20} /></div>
                   <div className="contact-info-details">
                     <h4>Our Location</h4>
                     <p>Dhaka, Bangladesh</p>
@@ -109,19 +123,12 @@ export default function ContactUsPage() {
                 </div>
               </div>
 
-              {/* Social Channels */}
               <div className="contact-social-wrap">
                 <h4 className="contact-social-title">Follow Us</h4>
                 <div className="contact-social-links">
-                  <a href="https://wa.me/+8801635275630" className="contact-social-btn" target="_blank" rel="noopener noreferrer">
-                    <FaWhatsapp size={18} />
-                  </a>
-                  <a href="https://facebook.com/buyfestbd" className="contact-social-btn" target="_blank" rel="noopener noreferrer">
-                    <FaFacebookF size={16} />
-                  </a>
-                  <a href="https://instagram.com/buyfestbd" className="contact-social-btn" target="_blank" rel="noopener noreferrer">
-                    <FaInstagram size={18} />
-                  </a>
+                  <a href="https://wa.me/+8801635275630" className="contact-social-btn" target="_blank" rel="noopener noreferrer"><FaWhatsapp size={18} /></a>
+                  <a href="https://facebook.com/buyfestbd" className="contact-social-btn" target="_blank" rel="noopener noreferrer"><FaFacebookF size={16} /></a>
+                  <a href="https://instagram.com/buyfestbd" className="contact-social-btn" target="_blank" rel="noopener noreferrer"><FaInstagram size={18} /></a>
                 </div>
               </div>
             </div>
@@ -130,95 +137,98 @@ export default function ContactUsPage() {
             <div className="contact-form-card">
               {!isSubmitted ? (
                 <>
-                  <h2 className="contact-form-title">Send a Message</h2>
-                  <p className="contact-form-desc">
-                    Fill out the form below and our customer support team will get back to you shortly.
-                  </p>
+                  <div className="contact-form-header">
+                    <div className="contact-form-icon-wrap">
+                      <MessageSquare size={22} />
+                    </div>
+                    <div>
+                      <h2 className="contact-form-title">Send your feedback</h2>
+                      <p className="contact-form-desc">
+                        We'd love to hear from you. Fill out the form and we'll get back to you shortly.
+                      </p>
+                    </div>
+                  </div>
 
                   <form onSubmit={handleSubmit} className="contact-form">
                     <div className="contact-form-row">
                       <div className="contact-input-group">
-                        <label className="contact-input-label">Your Name *</label>
-                        <input
-                          type="text"
-                          required
-                          className="contact-input"
-                          placeholder="John Doe"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
+                        <label className="contact-input-label">
+                          <User size={13} />
+                          Your Name <span className="contact-required">*</span>
+                        </label>
+                        <input type="text" required className="contact-input" placeholder="John Doe"
+                          value={form.name} onChange={update("name")} />
                       </div>
                       <div className="contact-input-group">
-                        <label className="contact-input-label">Email Address *</label>
-                        <input
-                          type="email"
-                          required
-                          className="contact-input"
-                          placeholder="john@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+                        <label className="contact-input-label">
+                          <Mail size={13} />
+                          Email Address <span className="contact-required">*</span>
+                        </label>
+                        <input type="email" required className="contact-input" placeholder="john@example.com"
+                          value={form.email} onChange={update("email")} />
                       </div>
                     </div>
 
                     <div className="contact-form-row">
                       <div className="contact-input-group">
-                        <label className="contact-input-label">Phone Number (Optional)</label>
-                        <input
-                          type="tel"
-                          className="contact-input"
-                          placeholder="e.g. 01700000000"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                        />
+                        <label className="contact-input-label">
+                          <Phone size={13} />
+                          Phone Number
+                        </label>
+                        <input type="tel" className="contact-input" placeholder="e.g. 01700000000"
+                          value={form.phone} onChange={update("phone")} />
                       </div>
                       <div className="contact-input-group">
-                        <label className="contact-input-label">Subject *</label>
-                        <input
-                          type="text"
-                          required
-                          className="contact-input"
-                          placeholder="How can we help?"
-                          value={subject}
-                          onChange={(e) => setSubject(e.target.value)}
-                        />
+                        <label className="contact-input-label">
+                          <AlertCircle size={13} />
+                          Subject <span className="contact-required">*</span>
+                        </label>
+                        <input type="text" required className="contact-input" placeholder="How can we help?"
+                          value={form.subject} onChange={update("subject")} />
                       </div>
                     </div>
 
                     <div className="contact-input-group">
-                      <label className="contact-input-label">Message *</label>
-                      <textarea
-                        required
-                        rows={5}
-                        className="contact-input contact-textarea"
+                      <label className="contact-input-label">
+                        <MessageSquare size={13} />
+                        Message <span className="contact-required">*</span>
+                      </label>
+                      <textarea required rows={5} className="contact-input contact-textarea"
                         placeholder="Write your message details here..."
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                      />
+                        value={form.message} onChange={update("message")} />
                     </div>
 
                     <button type="submit" className="contact-submit-btn" disabled={isSubmitting}>
                       {isSubmitting ? (
-                        <>Sending Message...</>
+                        <span className="contact-btn-loading">
+                          <span className="contact-spinner" />
+                          Sending Message...
+                        </span>
                       ) : (
-                        <>
-                          <Send size={16} />
-                          <span>Send Message</span>
-                        </>
+                        <><Send size={16} /><span>Send Message</span></>
                       )}
                     </button>
+
+                    {showLoginPrompt && (
+                      <div className="contact-login-prompt">
+                        <LogIn size={15} />
+                        <span>Please <button type="button" className="contact-login-prompt-link" onClick={() => {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                          setTimeout(() => document.getElementById("account-login-btn")?.click(), 400);
+                        }}>Sign in</button> to send your message.</span>
+                      </div>
+                    )}
                   </form>
                 </>
               ) : (
                 <div className="contact-success-card">
-                  <div className="contact-success-icon">
-                    <CheckCircle2 size={56} strokeWidth={1.5} />
-                  </div>
+                  <div className="contact-success-icon"><CheckCircle2 size={56} strokeWidth={1.5} /></div>
                   <h2 className="contact-success-title">Thank You!</h2>
                   <p className="contact-success-text">
                     Your message has been successfully sent. Our support team will review your inquiry and contact you via email as soon as possible.
                   </p>
                   <button className="contact-reset-btn" onClick={() => setIsSubmitted(false)}>
+                    <Send size={15} />
                     Send Another Message
                   </button>
                 </div>
