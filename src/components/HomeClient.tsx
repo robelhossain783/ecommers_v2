@@ -26,12 +26,13 @@ export default function HomeClient() {
         <HeroBanner />
         {/* <TrustBadges /> */}
         <CategoriesSection />
+        <NewArrivals />
         <NewTrends />
         {/* <FeaturedProducts /> */}
         {/* <PromoBanners /> */}
         <NotificationBanner />
 
-        <NewArrivals />
+        {/* <NewArrivals /> */}
 
         {/* <AcSection /> */}
         {/* <TopBrandProducts /> */}

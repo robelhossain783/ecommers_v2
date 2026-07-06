@@ -461,6 +461,10 @@ export default function AdminManagementPage() {
       setAuthError("❌ Username and password are required!");
       return;
     }
+    if (password.length < 6) {
+      setAuthError("❌ Password must be at least 6 characters!");
+      return;
+    }
     setAuthLoading(true);
     try {
       const token = localStorage.getItem("adminAccessToken");

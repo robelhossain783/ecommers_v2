@@ -318,7 +318,7 @@ import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
-import { Lock } from "lucide-react";
+import { Lock, ChevronRight } from "lucide-react";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
@@ -479,25 +479,11 @@ export default function MyOrdersPage() {
 
       <div className="orders-page-container">
         {/* Breadcrumbs */}
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            fontSize: "13px",
-            color: "var(--text-muted)",
-            marginBottom: "20px",
-          }}
-        >
-          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
-            Home
-          </Link>
-          <span>/</span>
-          <span
-            style={{ color: "var(--text-primary)", fontWeight: "600" }}
-          >
-            My Orders
-          </span>
-        </div>
+        <nav className="product-breadcrumb">
+          <Link href="/">Home</Link>
+          <ChevronRight size={12} strokeWidth={2.5} />
+          <span>My Orders</span>
+        </nav>
 
         {!authLoading && !user ? (
           <div className="profile-auth-gate">

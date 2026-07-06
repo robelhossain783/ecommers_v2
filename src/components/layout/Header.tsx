@@ -307,6 +307,10 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
+    if (regPassword.length < 6) {
+      setAuthError("Password must be at least 6 characters");
+      return;
+    }
     if (regPassword !== regPassword2) {
       setAuthError("Passwords do not match");
       return;
@@ -877,7 +881,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 </div>
                 <div className="auth-field">
                   <label className="auth-label">Password <span className="auth-required">*</span></label>
-                  <input className="auth-input" type="password" placeholder="Create a password" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required autoComplete="new-password" id="auth-reg-password" />
+                  <input className="auth-input" type="password" placeholder="Create a password (min 6 chars)" value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required minLength={6} autoComplete="new-password" id="auth-reg-password" />
                 </div>
                 <div className="auth-field">
                   <label className="auth-label">Confirm Password <span className="auth-required">*</span></label>

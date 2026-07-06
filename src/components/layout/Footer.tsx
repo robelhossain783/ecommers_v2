@@ -1,4 +1,4 @@
-import { FaFacebookF, FaInstagram, FaWhatsapp, FaEnvelope } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaWhatsapp, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -17,12 +17,13 @@ export default function Footer() {
             </a>
 
             <p className="footer-desc">
-              Bangladesh&apos;s trusted e-commerce store for phones, gadgets &amp; accessories. <br />
-              Authentic products, fast delivery.
+              Bangladesh&apos;s trusted e-commerce store for dedicated to providing safe delivery.
+
             </p>
             <div className="footer-contact">
               <p><FaWhatsapp /> <a href="tel:01635275630">01635275630</a></p>
               <p>< FaEnvelope /> <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a></p>
+              <p><FaMapMarkerAlt /> Savar, Dhaka, Bangladesh</p>
               {/* <p>< FaEnvelope /> <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a></p> */}
             </div>
           </div>
