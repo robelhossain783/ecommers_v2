@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,15 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
+
+const PHONE_REGEX = /^01\d{9}$/;
+
+function wordCount(text: string) {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+const MAX_CHARS = 1500;
+const MAX_WORDS = 150;
 
 interface CheckoutContentProps {
   slug: string;
@@ -48,11 +57,6 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
 
   const receiverNumber = "01635275630";
 
-  // Purchase state
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderId, setOrderId] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // Shipping Address Options
   const [addressOption, setAddressOption] = useState<"profile" | "new">("profile");
   const hasProfileAddress = !!(user && (user.address || user.phone));
@@ -60,6 +64,37 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const nameDisabled = addressOption === "profile" && !!(user?.first_name || user?.last_name || user?.username);
   const phoneDisabled = addressOption === "profile" && !!user?.phone;
   const addressDisabled = addressOption === "profile" && !!user?.address;
+
+  // Validation
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  function validate(checkName = true, checkPhone = true, checkAddress = true) {
+    const errs: Record<string, string> = {};
+    if (checkName) {
+      if (!fullName.trim()) errs.fullName = "Full name is required";
+      else if (fullName.length > MAX_CHARS) errs.fullName = `Maximum ${MAX_CHARS.toLocaleString()} characters allowed`;
+      else if (wordCount(fullName) > MAX_WORDS) errs.fullName = `Maximum ${MAX_WORDS} words allowed`;
+    }
+    if (checkPhone) {
+      if (!mobileNumber.trim()) errs.mobileNumber = "Mobile number is required";
+      else if (!PHONE_REGEX.test(mobileNumber.trim())) errs.mobileNumber = "Enter a valid 11-digit Bangladeshi number (e.g. 01700000000)";
+    }
+    if (checkAddress) {
+      if (!address.trim()) errs.address = "Address is required";
+      else if (address.length > MAX_CHARS) errs.address = `Maximum ${MAX_CHARS.toLocaleString()} characters allowed`;
+      else if (wordCount(address) > MAX_WORDS) errs.address = `Maximum ${MAX_WORDS} words allowed`;
+    }
+    return errs;
+  }
+
+  const errors = useMemo(() => validate(!nameDisabled, !phoneDisabled, !addressDisabled), [fullName, mobileNumber, address, nameDisabled, phoneDisabled, addressDisabled]);
+
+  const blur = (field: string) => () => setTouched((prev) => ({ ...prev, [field]: true }));
+
+  // Purchase state
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Determine initial address option based on profile completeness
   useEffect(() => {
@@ -195,8 +230,11 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName || !mobileNumber || !address || !district) {
-      alert("⚠️ Please fill in all required shipping fields.");
+    setTouched({ fullName: true, mobileNumber: true, address: true });
+
+    const fieldErrors = validate(!nameDisabled, !phoneDisabled, !addressDisabled);
+    if (Object.keys(fieldErrors).length > 0) {
+      alert("⚠️ Please fix the highlighted fields.");
       return;
     }
 
@@ -501,6 +539,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   <input
                     type="text"
                     required
+                    maxLength={MAX_CHARS}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
@@ -509,17 +548,21 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: "1px solid #ddd",
+                      border: `1px solid ${touched.fullName && errors.fullName ? "#ef4444" : "#ddd"}`,
                       fontSize: "14px",
                       outline: "none",
                       transition: "all 0.2s",
-                      background: nameDisabled ? "#f5f5f5" : "#fff",
+                      background: nameDisabled ? "#f5f5f5" : touched.fullName && errors.fullName ? "#fef2f2" : "#fff",
                       cursor: nameDisabled ? "not-allowed" : "text",
                       color: nameDisabled ? "#666" : "var(--text-primary)",
                     }}
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
-                    onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                    onBlur={(e) => { if (!errors.fullName) e.target.style.borderColor = "#ddd"; blur("fullName")(); }}
                   />
+                  {touched.fullName && errors.fullName && (
+                    <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 500, marginTop: "4px", display: "block" }}>{errors.fullName}</span>
+                  )}
+
                 </div>
 
                 {/* Mobile Number */}
@@ -531,23 +574,24 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                     value={mobileNumber}
                     onChange={(e) => setMobileNumber(e.target.value)}
                     placeholder="Enter 11-digit mobile number"
-                    pattern="[0-9]{11}"
-                    title="Please enter a valid 11-digit phone number"
                     disabled={phoneDisabled}
                     style={{
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: "1px solid #ddd",
+                      border: `1px solid ${touched.mobileNumber && errors.mobileNumber ? "#ef4444" : "#ddd"}`,
                       fontSize: "14px",
                       outline: "none",
-                      background: phoneDisabled ? "#f5f5f5" : "#fff",
+                      background: phoneDisabled ? "#f5f5f5" : touched.mobileNumber && errors.mobileNumber ? "#fef2f2" : "#fff",
                       cursor: phoneDisabled ? "not-allowed" : "text",
                       color: phoneDisabled ? "#666" : "var(--text-primary)",
                     }}
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
-                    onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                    onBlur={(e) => { if (!errors.mobileNumber) e.target.style.borderColor = "#ddd"; blur("mobileNumber")(); }}
                   />
+                  {touched.mobileNumber && errors.mobileNumber && (
+                    <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 500, marginTop: "4px", display: "block" }}>{errors.mobileNumber}</span>
+                  )}
                 </div>
 
                 {/* District */}
@@ -576,6 +620,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "var(--text-secondary)" }}>Full Address *</label>
                   <textarea
                     required
+                    maxLength={MAX_CHARS}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Village/Area, House No, Road, Flat Number, Landmarks"
@@ -585,18 +630,22 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                       width: "100%",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: "1px solid #ddd",
+                      border: `1px solid ${touched.address && errors.address ? "#ef4444" : "#ddd"}`,
                       fontSize: "14px",
                       fontFamily: "inherit",
                       resize: "none",
                       outline: "none",
-                      background: addressDisabled ? "#f5f5f5" : "#fff",
+                      background: addressDisabled ? "#f5f5f5" : touched.address && errors.address ? "#fef2f2" : "#fff",
                       cursor: addressDisabled ? "not-allowed" : "text",
                       color: addressDisabled ? "#666" : "var(--text-primary)",
                     }}
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
-                    onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                    onBlur={(e) => { if (!errors.address) e.target.style.borderColor = "#ddd"; blur("address")(); }}
                   />
+                  {touched.address && errors.address && (
+                    <span style={{ fontSize: "12px", color: "#ef4444", fontWeight: 500, marginTop: "4px", display: "block" }}>{errors.address}</span>
+                  )}
+
                 </div>
 
                 {/* Coupon Code Section */}

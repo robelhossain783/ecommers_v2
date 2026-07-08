@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import {
@@ -11,20 +11,52 @@ import { FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
+
+const PHONE_REGEX = /^01\d{9}$/;
+
+function wordCount(text: string) {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+function validate(form: { name: string; email: string; phone: string; subject: string; message: string }) {
+  const errors: Record<string, string> = {};
+  if (!form.name.trim()) errors.name = "Name is required";
+  if (!form.email.trim()) errors.email = "Email is required";
+  else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = "Invalid email format";
+  if (form.phone.trim() && !PHONE_REGEX.test(form.phone.trim())) errors.phone = "Enter a valid 11-digit Bangladeshi number (e.g. 01700000000)";
+  if (!form.subject.trim()) errors.subject = "Subject is required";
+  if (!form.message.trim()) errors.message = "Message is required";
+  else if (form.message.length > 1500) errors.message = "Maximum 1,500 characters allowed";
+  else if (wordCount(form.message) > 250) errors.message = "Maximum 250 words allowed";
+  return errors;
+}
+
 export default function ContactUsPage() {
   const { user } = useAuth();
 
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
+  const errors = useMemo(() => validate(form), [form]);
+
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const blur = (field: string) => () => setTouched((prev) => ({ ...prev, [field]: true }));
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setShowLoginPrompt(false);
+
+    setTouched({ name: true, email: true, phone: true, subject: true, message: true });
+
+    const fieldErrors = validate(form);
+    if (Object.keys(fieldErrors).length > 0) return;
 
     if (!user) {
       setShowLoginPrompt(true);
@@ -55,6 +87,7 @@ export default function ContactUsPage() {
       setIsSubmitting(false);
       setIsSubmitted(true);
       setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      setTouched({});
     } catch {
       alert("Network error. Please try again.");
       setIsSubmitting(false);
@@ -149,23 +182,25 @@ export default function ContactUsPage() {
                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="contact-form">
+                  <form onSubmit={handleSubmit} className="contact-form" noValidate>
                     <div className="contact-form-row">
                       <div className="contact-input-group">
                         <label className="contact-input-label">
                           <User size={13} />
                           Your Name <span className="contact-required">*</span>
                         </label>
-                        <input type="text" required className="contact-input" placeholder="John Doe"
-                          value={form.name} onChange={update("name")} />
+                        <input type="text" required className={`contact-input${touched.name && errors.name ? " contact-input-error" : ""}`} placeholder="John Doe"
+                          value={form.name} onChange={update("name")} onBlur={blur("name")} />
+                        {touched.name && errors.name && <span className="contact-error-text">{errors.name}</span>}
                       </div>
                       <div className="contact-input-group">
                         <label className="contact-input-label">
                           <Mail size={13} />
                           Email Address <span className="contact-required">*</span>
                         </label>
-                        <input type="email" required className="contact-input" placeholder="john@example.com"
-                          value={form.email} onChange={update("email")} />
+                        <input type="email" required className={`contact-input${touched.email && errors.email ? " contact-input-error" : ""}`} placeholder="john@example.com"
+                          value={form.email} onChange={update("email")} onBlur={blur("email")} />
+                        {touched.email && errors.email && <span className="contact-error-text">{errors.email}</span>}
                       </div>
                     </div>
 
@@ -175,16 +210,18 @@ export default function ContactUsPage() {
                           <Phone size={13} />
                           Phone Number
                         </label>
-                        <input type="tel" className="contact-input" placeholder="e.g. 01700000000"
-                          value={form.phone} onChange={update("phone")} />
+                        <input type="tel" className={`contact-input${touched.phone && errors.phone ? " contact-input-error" : ""}`} placeholder="e.g. 01700000000"
+                          value={form.phone} onChange={update("phone")} onBlur={blur("phone")} />
+                        {touched.phone && errors.phone && <span className="contact-error-text">{errors.phone}</span>}
                       </div>
                       <div className="contact-input-group">
                         <label className="contact-input-label">
                           <AlertCircle size={13} />
                           Subject <span className="contact-required">*</span>
                         </label>
-                        <input type="text" required className="contact-input" placeholder="How can we help?"
-                          value={form.subject} onChange={update("subject")} />
+                        <input type="text" required className={`contact-input${touched.subject && errors.subject ? " contact-input-error" : ""}`} placeholder="How can we help?"
+                          value={form.subject} onChange={update("subject")} onBlur={blur("subject")} />
+                        {touched.subject && errors.subject && <span className="contact-error-text">{errors.subject}</span>}
                       </div>
                     </div>
 
@@ -193,9 +230,10 @@ export default function ContactUsPage() {
                         <MessageSquare size={13} />
                         Message <span className="contact-required">*</span>
                       </label>
-                      <textarea required rows={5} className="contact-input contact-textarea"
+                      <textarea required rows={5} maxLength={1500} className={`contact-input contact-textarea${touched.message && errors.message ? " contact-input-error" : ""}`}
                         placeholder="Write your message details here..."
-                        value={form.message} onChange={update("message")} />
+                        value={form.message} onChange={update("message")} onBlur={blur("message")} />
+                      {touched.message && errors.message && <span className="contact-error-text">{errors.message}</span>}
                     </div>
 
                     <button type="submit" className="contact-submit-btn" disabled={isSubmitting}>
