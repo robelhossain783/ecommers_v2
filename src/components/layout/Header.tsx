@@ -3,7 +3,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import {
   List,
@@ -131,22 +131,34 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const [regPassword, setRegPassword] = useState("");
   const [regPassword2, setRegPassword2] = useState("");
 
+  const ITEMS_PER_PAGE = 10;
+
   // Desktop search state (always-visible bar)
   const [desktopQuery, setDesktopQuery] = useState("");
-  const [desktopResults, setDesktopResults] = useState<Product[]>([]);
+  const [desktopAllResults, setDesktopAllResults] = useState<Product[]>([]);
+  const [desktopVisibleCount, setDesktopVisibleCount] = useState(ITEMS_PER_PAGE);
   const [isDesktopSearching, setIsDesktopSearching] = useState(false);
   const [showDesktopDropdown, setShowDesktopDropdown] = useState(false);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
   const desktopDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const desktopDropdownRef = useRef<HTMLDivElement>(null);
+
+  const desktopResults = useMemo(() => desktopAllResults.slice(0, desktopVisibleCount), [desktopAllResults, desktopVisibleCount]);
+  const desktopHasMore = desktopVisibleCount < desktopAllResults.length;
 
   // Mobile search state (icon → expand)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [mobileQuery, setMobileQuery] = useState("");
-  const [mobileResults, setMobileResults] = useState<Product[]>([]);
+  const [mobileAllResults, setMobileAllResults] = useState<Product[]>([]);
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(ITEMS_PER_PAGE);
   const [isMobileSearching, setIsMobileSearching] = useState(false);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const mobileDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
+
+  const mobileResults = useMemo(() => mobileAllResults.slice(0, mobileVisibleCount), [mobileAllResults, mobileVisibleCount]);
+  const mobileHasMore = mobileVisibleCount < mobileAllResults.length;
 
   const [categoriesList, setCategoriesList] = useState<any[]>([
     { name: "Gadgets", slug: "gadget", icon: "🔌" },
@@ -181,25 +193,54 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   useEffect(() => {
     if (desktopDebounceRef.current) clearTimeout(desktopDebounceRef.current);
     if (!desktopQuery.trim()) {
-      setDesktopResults([]);
+      setDesktopAllResults([]);
       setShowDesktopDropdown(false);
       return;
     }
+    setDesktopVisibleCount(ITEMS_PER_PAGE);
     setIsDesktopSearching(true);
     setShowDesktopDropdown(true);
     desktopDebounceRef.current = setTimeout(async () => {
       const results = await searchProducts(desktopQuery);
-      setDesktopResults(results.slice(0, 8));
+      setDesktopAllResults(results);
       setIsDesktopSearching(false);
     }, 350);
     return () => { if (desktopDebounceRef.current) clearTimeout(desktopDebounceRef.current); };
   }, [desktopQuery]);
+
+  // ── Desktop scroll-to-load-more ──
+  useEffect(() => {
+    const el = desktopDropdownRef.current;
+    if (!el || !showDesktopDropdown || !desktopQuery.trim()) return;
+    const onScroll = () => {
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 60 && desktopHasMore && !isDesktopSearching) {
+        setDesktopVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, desktopAllResults.length));
+      }
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [showDesktopDropdown, desktopQuery, desktopHasMore, isDesktopSearching, desktopAllResults.length]);
+
+  // ── Mobile scroll-to-load-more ──
+  useEffect(() => {
+    const el = mobileDropdownRef.current;
+    if (!el || !mobileQuery.trim()) return;
+    const onScroll = () => {
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 60 && mobileHasMore && !isMobileSearching) {
+        setMobileVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, mobileAllResults.length));
+      }
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [mobileQuery, mobileHasMore, isMobileSearching, mobileAllResults.length]);
 
   // Close desktop dropdown on outside click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (desktopSearchRef.current && !desktopSearchRef.current.contains(e.target as Node)) {
         setShowDesktopDropdown(false);
+        setDesktopAllResults([]);
+        setDesktopVisibleCount(ITEMS_PER_PAGE);
       }
     };
     document.addEventListener("mousedown", handleClick);
@@ -210,14 +251,15 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   useEffect(() => {
     if (mobileDebounceRef.current) clearTimeout(mobileDebounceRef.current);
     if (!mobileQuery.trim()) {
-      setMobileResults([]);
+      setMobileAllResults([]);
       setIsMobileSearching(false);
       return;
     }
+    setMobileVisibleCount(ITEMS_PER_PAGE);
     setIsMobileSearching(true);
     mobileDebounceRef.current = setTimeout(async () => {
       const results = await searchProducts(mobileQuery);
-      setMobileResults(results.slice(0, 8));
+      setMobileAllResults(results);
       setIsMobileSearching(false);
     }, 350);
     return () => { if (mobileDebounceRef.current) clearTimeout(mobileDebounceRef.current); };
@@ -231,7 +273,8 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
   const closeMobileSearch = useCallback(() => {
     setIsMobileSearchOpen(false);
     setMobileQuery("");
-    setMobileResults([]);
+    setMobileAllResults([]);
+    setMobileVisibleCount(ITEMS_PER_PAGE);
   }, []);
 
   // Close mobile search on Escape
@@ -387,18 +430,21 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 id="desktop-search-input"
               />
               {desktopQuery && (
-                <button className="hds-clear" onClick={() => { setDesktopQuery(""); setShowDesktopDropdown(false); }} aria-label="Clear search">✕</button>
+                <button className="hds-clear" onClick={() => { setDesktopQuery(""); setShowDesktopDropdown(false); setDesktopAllResults([]); setDesktopVisibleCount(ITEMS_PER_PAGE); }} aria-label="Clear search">✕</button>
               )}
             </div>
 
             {showDesktopDropdown && desktopQuery.trim() && (
-              <div className="header-search-dropdown">
+              <div className="header-search-dropdown" ref={desktopDropdownRef}>
                 <SearchDropdownContent
                   isSearching={isDesktopSearching}
                   results={desktopResults}
                   query={desktopQuery}
-                  onClose={() => { setShowDesktopDropdown(false); setDesktopQuery(""); }}
+                  onClose={() => { setShowDesktopDropdown(false); setDesktopQuery(""); setDesktopAllResults([]); setDesktopVisibleCount(ITEMS_PER_PAGE); }}
                 />
+                {!isDesktopSearching && desktopHasMore && (
+                  <div className="header-search-more">Scroll for more</div>
+                )}
               </div>
             )}
           </div>
@@ -433,13 +479,16 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     <button className="header-search-close-btn" onClick={closeMobileSearch} aria-label="Close search">✕</button>
                   </div>
                   {mobileQuery.trim() && (
-                    <div className="header-search-dropdown">
+                    <div className="header-search-dropdown" ref={mobileDropdownRef}>
                       <SearchDropdownContent
                         isSearching={isMobileSearching}
                         results={mobileResults}
                         query={mobileQuery}
                         onClose={closeMobileSearch}
                       />
+                      {!isMobileSearching && mobileHasMore && (
+                        <div className="header-search-more">Scroll for more</div>
+                      )}
                     </div>
                   )}
                 </div>
