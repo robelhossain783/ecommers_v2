@@ -817,9 +817,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ width: "100%", background: isSubmitting ? "#888" : "#ff5500", color: "#fff", fontSize: "16px", fontWeight: "800", padding: "14px 20px", borderRadius: "30px", cursor: isSubmitting ? "not-allowed" : "pointer", transition: "all 0.2s", boxShadow: isSubmitting ? "none" : "0 4px 12px rgba(46, 125, 50, 0.2)", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px" }}
-                  onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.transform = "translateY(-1px)")}
-                  onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.transform = "none")}
+                  className="checkout-btn"
                 >
                   {isSubmitting ? (
                     <>
