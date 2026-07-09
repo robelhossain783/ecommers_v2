@@ -1564,19 +1564,24 @@ export default function AdminManagementPage() {
           font-size: 14px;
           padding: 14px 28px;
           border-radius: 8px;
-          transition: all 0.2s;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           display: inline-flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
+          cursor: pointer;
+          letter-spacing: 0.3px;
+          border: none;
         }
         .form-button:hover:not(:disabled) {
           filter: brightness(1.1);
           transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(232, 50, 10, 0.25);
         }
         .form-button:disabled {
           background: #555;
           cursor: not-allowed;
+          opacity: 0.6;
         }
         .msg-box {
           padding: 12px 18px;
@@ -1642,8 +1647,10 @@ export default function AdminManagementPage() {
           border-radius: 6px;
           font-size: 12px;
           font-weight: 600;
-          transition: all 0.2s;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           border: 1px solid var(--border-refresh-btn);
+          cursor: pointer;
+          letter-spacing: 0.3px;
         }
         .refresh-btn:hover {
           background: var(--bg-card-hover);

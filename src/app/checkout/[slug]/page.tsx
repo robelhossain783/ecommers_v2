@@ -44,7 +44,8 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   // Form states
   const [fullName, setFullName] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
-  const [district, setDistrict] = useState("Dhaka");
+  const [districts, setDistricts] = useState<{ name: string; delivery_charge: number }[]>([]);
+  const [district, setDistrict] = useState("");
   const [address, setAddress] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -131,6 +132,19 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
     }
   }, [addressOption, user]);
 
+  // Fetch districts from backend
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/districts/`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDistricts(data);
+        if (data.length > 0) setDistrict(data[0].name);
+      })
+      .catch(() => {
+        setDistricts([]);
+      });
+  }, []);
+
   // Load product slug details or load from cart context
   useEffect(() => {
     if (!slug) return;
@@ -190,7 +204,8 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const subtotal = checkoutItems.reduce((acc, item) => {
     return acc + Number(item.product.sell_price || 0) * item.quantity;
   }, 0);
-  const deliveryCharge = district.toLowerCase() === "dhaka" ? 80 : 150;
+  const selectedDistrict = districts.find((d) => d.name === district);
+  const deliveryCharge = selectedDistrict?.delivery_charge ?? 0;
 
   // Dynamic coupon rules
   const handleApplyCoupon = (e: React.MouseEvent) => {
@@ -604,14 +619,11 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                     onFocus={(e) => e.target.style.borderColor = "var(--primary)"}
                     onBlur={(e) => e.target.style.borderColor = "#ddd"}
                   >
-                    <option value="Dhaka">Dhaka (Delivery Charge: ৳80)</option>
-                    <option value="Chattogram">Chattogram (Delivery Charge: ৳150)</option>
-                    <option value="Sylhet">Sylhet (Delivery Charge: ৳150)</option>
-                    <option value="Rajshahi">Rajshahi (Delivery Charge: ৳150)</option>
-                    <option value="Barishal">Barishal (Delivery Charge: ৳150)</option>
-                    <option value="Khulna">Khulna (Delivery Charge: ৳150)</option>
-                    <option value="Rangpur">Rangpur (Delivery Charge: ৳150)</option>
-                    <option value="Mymensingh">Mymensingh (Delivery Charge: ৳150)</option>
+                    {districts.map((d) => (
+                      <option key={d.name} value={d.name}>
+                        {d.name} (Delivery Charge: ৳{d.delivery_charge})
+                      </option>
+                    ))}
                   </select>
                 </div>
 

@@ -10,7 +10,7 @@ import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 import { useCart } from "@/context/CartContext";
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 20;
 
 export default function AllProductsPage() {
   const { addToCart } = useCart();
@@ -110,30 +110,7 @@ export default function AllProductsPage() {
                 <button
                   onClick={handleSeeMore}
                   disabled={loadingMore}
-                  style={{
-                    background: "linear-gradient(135deg, #e8320a 0%, #ff6b35 100%)",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "10px",
-                    padding: "12px 36px",
-                    fontSize: "14px",
-                    fontWeight: "700",
-                    cursor: loadingMore ? "not-allowed" : "pointer",
-                    transition: "all 0.25s ease",
-                    boxShadow: "0 4px 16px rgba(232,50,10,0.3)",
-                    letterSpacing: "0.3px",
-                    opacity: loadingMore ? 0.7 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loadingMore) {
-                      e.currentTarget.style.transform = "translateY(-2px)";
-                      e.currentTarget.style.boxShadow = "0 8px 24px rgba(232,50,10,0.45)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(232,50,10,0.3)";
-                  }}
+                  className={`nt-see-more-btn${loadingMore ? " nt-see-more-loading" : ""}`}
                 >
                   {loadingMore ? "Loading..." : "See More"}
                 </button>
