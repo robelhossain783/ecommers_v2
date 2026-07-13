@@ -134,7 +134,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
 
   // Fetch districts from backend
   useEffect(() => {
-    fetch(`${BASE_URL}/api/districts/`)
+    fetch(`${BASE_URL}/api/district/list/`)
       .then((res) => res.json())
       .then((data) => {
         setDistricts(data);
