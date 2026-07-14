@@ -5613,9 +5613,9 @@ img {
 }
 
 .auth-tab-btn.active {
-  background: var(--primary);
+  background: #E85D04;
   color: #fff;
-  box-shadow: 0 2px 10px rgba(232, 50, 10, 0.3);
+  box-shadow: 0 2px 10px rgba(232, 93, 4, 0.22);
 }
 
 .auth-error-msg {
@@ -5700,18 +5700,18 @@ img {
   border-radius: var(--btn-radius-lg);
   padding: 13px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   margin-top: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  letter-spacing: 0.3px;
-  background: var(--logo-orange);
+  letter-spacing: 0.4px;
+  background: linear-gradient(135deg, #E85D04 0%, #DC2F02 100%);
   color: #fff;
   border: none;
-  box-shadow: 0 4px 15px rgba(240, 90, 40, 0.3);
+  box-shadow: 0 4px 14px rgba(220, 47, 2, 0.22);
   transition: var(--btn-transition);
 }
 
@@ -5719,23 +5719,23 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 55%);
   pointer-events: none;
 }
 
 .auth-submit-btn:hover:not(:disabled) {
-  background: #d94e1f;
-  box-shadow: 0 8px 25px rgba(240, 90, 40, 0.45);
+  background: linear-gradient(135deg, #cf5204 0%, #c02a02 100%);
+  box-shadow: 0 8px 20px rgba(220, 47, 2, 0.32);
   transform: translateY(-2px);
 }
 
 .auth-submit-btn:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
-  box-shadow: 0 2px 8px rgba(240, 90, 40, 0.2);
+  box-shadow: 0 2px 8px rgba(220, 47, 2, 0.18);
 }
 
 .auth-submit-btn:focus-visible {
-  outline: 2px solid var(--logo-orange);
+  outline: 2px solid #E85D04;
   outline-offset: 3px;
 }
 
@@ -9112,4 +9112,199 @@ img {
   color: var(--btn-ghost-hover-color);
   box-shadow: var(--btn-shadow-hover);
   transform: var(--btn-lift);
+}
+
+
+/* ==========================================================================
+   MOBILE RESPONSIVE FIXES — HOME PAGE & CHECKOUT PAGE
+   ========================================================================== */
+
+/* section-gap utility class — used in CategoriesSection, NewArrivals, NewTrends */
+.section-gap {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* ── HOME PAGE: product grid smaller columns on very small screens ── */
+@media (max-width: 360px) {
+  .products-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .nar-slider-item {
+    width: 155px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .see-all {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .category-item {
+    width: 100px;
+    padding: 12px 6px 10px;
+  }
+
+  .cat-icon-wrap {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .cat-icon-emoji {
+    font-size: 22px !important;
+  }
+
+  .cat-name {
+    font-size: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 17px;
+  }
+
+  .nar-slider-item {
+    width: 165px;
+  }
+
+  .products-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ── HOME PAGE: trust badges on very small ── */
+@media (max-width: 480px) {
+  .home-main > * + * {
+    margin-top: 24px;
+  }
+}
+
+/* ── CHECKOUT PAGE — Mobile Responsive Fixes ── */
+
+/* Root wrapper: reduce padding on small screens */
+.checkout-page-root {
+  background: #fafafa;
+  min-height: 80vh;
+  padding: 32px 0 60px;
+}
+
+@media (max-width: 768px) {
+  .checkout-page-root {
+    padding: 16px 0 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-page-root {
+    padding: 10px 0 30px;
+  }
+}
+
+/* Checkout form left panel — reduce padding on mobile */
+.checkout-form-left {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 600px) {
+  .checkout-form-left {
+    padding: 16px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-form-left {
+    padding: 14px 12px;
+    border-radius: 6px;
+  }
+}
+
+/* Checkout order summary right panel */
+.checkout-order-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Coupon row: stack on very small screens */
+@media (max-width: 380px) {
+  .checkout-coupon-row {
+    flex-direction: column !important;
+  }
+
+  .checkout-coupon-row input {
+    width: 100% !important;
+  }
+
+  .checkout-coupon-row button {
+    width: 100% !important;
+    padding: 10px !important;
+  }
+}
+
+/* Payment method buttons grid on mobile */
+@media (max-width: 400px) {
+  .checkout-payment-methods-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Order confirmation success screen buttons */
+@media (max-width: 480px) {
+  .checkout-success-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .checkout-success-actions > * {
+    text-align: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* Checkout grid: already has !important override for < 900px,
+   but add extra tweaks for smaller screens */
+@media (max-width: 640px) {
+  .checkout-grid {
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-grid {
+    gap: 12px !important;
+  }
+
+  .checkout-btn {
+    font-size: 14px;
+    padding: 13px 16px;
+  }
+}
+
+/* Order success card on mobile */
+@media (max-width: 600px) {
+  .checkout-success-card {
+    padding: 24px 16px !important;
+    margin: 16px auto !important;
+  }
+}
+
+/* ── FOOTER mobile fix ── */
+@media (max-width: 480px) {
+  .footer-bottom {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
 }
