@@ -449,11 +449,11 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   };
 
   return (
-    <div className="checkout-page-root" style={{ background: "#fafafa", minHeight: "80vh", padding: "32px 0 60px" }}>
+    <div className="checkout-page-root">
       <div className="container">
         {orderPlaced ? (
           // Success State UI
-          <div style={{ maxWidth: "650px", margin: "40px auto", padding: "40px 24px", background: "#fff", borderRadius: "12px", border: "1px solid var(--border)", boxShadow: "0 8px 30px rgba(0,0,0,0.05)", textAlign: "center" }}>
+          <div className="checkout-success-card" style={{ maxWidth: "650px", margin: "40px auto", padding: "40px 24px", background: "#fff", borderRadius: "12px", border: "1px solid var(--border)", boxShadow: "0 8px 30px rgba(0,0,0,0.05)", textAlign: "center" }}>
             <span style={{ fontSize: "72px", display: "block", marginBottom: "16px" }}>🎉</span>
             <h2 style={{ fontSize: "30px", fontWeight: "800", color: "#2e7d32", marginBottom: "12px" }}>Order Confirmed!</h2>
             <p style={{ fontSize: "16px", color: "var(--text-secondary)", marginBottom: "32px" }}>
@@ -480,7 +480,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
               <p style={{ margin: "6px 0", fontSize: "14px" }}><strong>Total Payable:</strong> ৳{grandTotal}</p>
             </div>
 
-            <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+            <div className="checkout-success-actions" style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
               <button
                 onClick={handleDownloadReceipt}
                 style={{
@@ -509,10 +509,10 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
           </div>
         ) : (
           // Split checkout layout
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "32px" }} className="checkout-grid">
+          <div className="checkout-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "32px" }}>
 
             {/* LEFT SIDE: ORDER FORM */}
-            <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid var(--border)", padding: "28px", boxShadow: "var(--shadow-sm)" }}>
+            <div className="checkout-form-left">
               <h2 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px", borderBottom: "2px solid var(--border-light)", paddingBottom: "12px" }}>
                 <span></span> Shipping & Billing Information
               </h2>
@@ -660,10 +660,10 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
 
                 </div>
 
-                {/* Coupon Code Section */}
-                <div style={{ background: "#fdf8f6", border: "1px dashed #ffccc7", borderRadius: "8px", padding: "16px", marginBottom: "24px" }}>
+                {/* Coupon Code Section — MUTED (not implemented yet) */}
+                {/* <div style={{ background: "#fdf8f6", border: "1px dashed #ffccc7", borderRadius: "8px", padding: "16px", marginBottom: "24px" }}>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "700", marginBottom: "8px", color: "var(--primary)" }}>🏷️ Apply Coupon Code</label>
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <div className="checkout-coupon-row" style={{ display: "flex", gap: "8px" }}>
                     <input
                       type="text"
                       placeholder="e.g. enter coupon code if have"
@@ -683,10 +683,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                   </div>
                   {couponError && <p style={{ color: "#d43f3a", fontSize: "12px", fontWeight: "600", marginTop: "6px" }}>{couponError}</p>}
                   {couponSuccessMsg && <p style={{ color: "#389e0d", fontSize: "12px", fontWeight: "600", marginTop: "6px" }}>{couponSuccessMsg}</p>}
-                  {/* <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "8px", fontStyle: "italic" }}>
-                    * Tip: Try <strong style={{ color: "var(--text-secondary)" }}>SAVE10</strong> for 10% off or <strong style={{ color: "var(--text-secondary)" }}>BF10</strong> up to ৳100 discount!
-                  </p> */}
-                </div>
+                </div> */}
 
 
                 {/* Payment Method */}
@@ -768,7 +765,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                     {paymentMethod === "ONLINE" && (
                       <div style={{ padding: "16px", background: "#fafafa", borderRadius: "8px", border: "1px solid var(--border-light)", display: "flex", flexDirection: "column", gap: "14px" }}>
                         <p style={{ margin: 0, fontSize: "13px", fontWeight: "600", color: "var(--text-secondary)" }}>Select your payment method:</p>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                        <div className="checkout-payment-methods-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                           {[
                             { id: "bkash", label: "bKash", color: "#E2136E" },
                             { id: "nagad", label: "Nagad", color: "#F5821F" },
@@ -844,7 +841,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
             </div>
 
             {/* RIGHT SIDE: ORDER SUMMARY */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div className="checkout-order-summary" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid var(--border)", padding: "24px", boxShadow: "var(--shadow-sm)", position: "sticky", top: "24px" }}>
                 <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "16px", borderBottom: "1px solid var(--border-light)", paddingBottom: "10px", color: "var(--text-primary)" }}>
                   🛍️ Order Summary
