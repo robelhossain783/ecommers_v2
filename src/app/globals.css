@@ -164,6 +164,7 @@ button {
   background: var(--logo-orange);
   color: #fff;
 }
+
 /* ─── END SHARED BUTTON UTILITIES ─── */
 
 img {
@@ -202,11 +203,11 @@ img {
   padding-bottom: 24px;
 }
 
-.home-main > * + * {
+.home-main>*+* {
   margin-top: 40px;
 }
 
-.home-main > :last-child {
+.home-main> :last-child {
   margin-bottom: 0;
 }
 
@@ -470,6 +471,7 @@ img {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -715,6 +717,7 @@ img {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1666,8 +1669,13 @@ img {
 }
 
 @media (max-width: 1024px) {
-  .nar-slider-arrow-left { left: 6px; }
-  .nar-slider-arrow-right { right: 6px; }
+  .nar-slider-arrow-left {
+    left: 6px;
+  }
+
+  .nar-slider-arrow-right {
+    right: 6px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1676,8 +1684,14 @@ img {
     height: 28px;
     font-size: 16px;
   }
-  .nar-slider-arrow-left { left: 4px; }
-  .nar-slider-arrow-right { right: 4px; }
+
+  .nar-slider-arrow-left {
+    left: 4px;
+  }
+
+  .nar-slider-arrow-right {
+    right: 4px;
+  }
 }
 
 /* NEW TRENDS SEE MORE BUTTON */
@@ -2989,7 +3003,7 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -3022,7 +3036,7 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -3055,7 +3069,7 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -3435,7 +3449,7 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -3830,7 +3844,7 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -5719,7 +5733,7 @@ img {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 55%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 55%);
   pointer-events: none;
 }
 
@@ -7531,8 +7545,15 @@ img {
 }
 
 @keyframes contact-fade-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .contact-btn-loading {
@@ -7551,7 +7572,9 @@ img {
 }
 
 @keyframes contact-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .contact-success-card {
@@ -9181,7 +9204,7 @@ img {
 
 /* ── HOME PAGE: trust badges on very small ── */
 @media (max-width: 480px) {
-  .home-main > * + * {
+  .home-main>*+* {
     margin-top: 24px;
   }
 }
@@ -9267,7 +9290,7 @@ img {
     align-items: stretch !important;
   }
 
-  .checkout-success-actions > * {
+  .checkout-success-actions>* {
     text-align: center !important;
     justify-content: center !important;
   }

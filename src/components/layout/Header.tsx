@@ -604,7 +604,6 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               </div>
             </div>
 
-            <Link href="/offer" className="sub-nav-link">Offer</Link>
             <Link href="/orders" className="sub-nav-link">Orders</Link>
             <Link href="/contact-us" className="sub-nav-link">Contact Us</Link>
           </div>
@@ -789,11 +788,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 )}
               </div>
 
-              {/* Offer */}
-              <Link href="/offer" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
-                <TicketPercent size={18} strokeWidth={2} />
-                <span>Offers</span>
-              </Link>
+
 
               {/* Orders */}
               <Link href="/orders" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
