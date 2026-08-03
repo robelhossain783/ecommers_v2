@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, RotateCcw, Headset, Truck, ShieldCheck, Sparkles } from "lucide-react";
 import { bannerSlides as mockBanners } from "@/data";
+
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
@@ -130,14 +131,14 @@ export default function HeroBanner() {
   }
 
   return (
-    <section className="hero-banner-container container">
+    <section className="hero-banner-section container">
+      {/* ── Full-width Banner Slider ── */}
       <div 
         className="hero-banner-slider"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Banner sliding track */}
         <div 
           className="hero-banner-track"
           style={{ transform: `translateX(-${active * 100}%)` }}
@@ -156,11 +157,21 @@ export default function HeroBanner() {
                   style={{ objectFit: "cover" }}
                   priority
                 />
+                <div className="hero-banner-overlay" />
               </div>
 
-              {/* Shop Now Button overlay */}
-              <div className="hero-banner-button">
-                {slide.cta || "Shop Now"}
+              {/* Content Overlay */}
+              <div className="hero-banner-content-box">
+                <span className="hero-banner-tag">
+                  <Sparkles size={11} /> Featured Store Collection
+                </span>
+                {slide.title && <h2 className="hero-banner-title">{slide.title}</h2>}
+                {slide.subtitle && <p className="hero-banner-subtitle">{slide.subtitle}</p>}
+                
+                <div className="hero-banner-button">
+                  <span>{slide.cta || "Shop Now"}</span>
+                  <ArrowRight size={14} />
+                </div>
               </div>
             </Link>
           ))}
@@ -183,7 +194,7 @@ export default function HeroBanner() {
           </div>
         )}
 
-        {/* Arrow Navigation (Desktop only) */}
+        {/* Arrow Navigation */}
         {bannerSlides.length > 1 && (
           <>
             <button 
@@ -209,6 +220,51 @@ export default function HeroBanner() {
           </>
         )}
       </div>
+
+
+      {/* ── Bottom E-Commerce Trust Value Pillars Bar ── */}
+      <div className="hero-trust-bar">
+        <div className="trust-pillar">
+          <div className="trust-pillar-icon">
+            <Truck size={20} />
+          </div>
+          <div className="trust-pillar-info">
+            <span className="trust-pillar-title">Free Express Shipping</span>
+            <span className="trust-pillar-sub">On orders over ৳999</span>
+          </div>
+        </div>
+
+        <div className="trust-pillar">
+          <div className="trust-pillar-icon">
+            <ShieldCheck size={20} />
+          </div>
+          <div className="trust-pillar-info">
+            <span className="trust-pillar-title">100% Authentic Products</span>
+            <span className="trust-pillar-sub">Official brand warranty</span>
+          </div>
+        </div>
+
+        <div className="trust-pillar">
+          <div className="trust-pillar-icon">
+            <RotateCcw size={20} />
+          </div>
+          <div className="trust-pillar-info">
+            <span className="trust-pillar-title">7-Day Replacement</span>
+            <span className="trust-pillar-sub">Easy & fast exchange</span>
+          </div>
+        </div>
+
+        <div className="trust-pillar">
+          <div className="trust-pillar-icon">
+            <Headset size={20} />
+          </div>
+          <div className="trust-pillar-info">
+            <span className="trust-pillar-title">24/7 Dedicated Support</span>
+            <span className="trust-pillar-sub">Call: 01635-275630</span>
+          </div>
+        </div>
+      </div>
+
     </section>
   );
 }

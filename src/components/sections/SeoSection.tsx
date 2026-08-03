@@ -1,53 +1,90 @@
+import { ShieldCheck, Truck, RotateCcw, CreditCard, Sparkles, PhoneCall, ShoppingBag } from "lucide-react";
+
 export default function SeoSection() {
   return (
     <div className="container section-gap">
       <div className="seo-section">
+        
+        <div className="seo-header-banner">
+          <div className="seo-brand-icon">
+            <ShoppingBag size={28} />
+          </div>
+          <div>
+            <h1>BuyFest BD — Your Trusted Online Shop in Bangladesh</h1>
+            <p className="seo-subtitle">
+              BuyFest BD is your go-to online store in Bangladesh for fashion, cosmetics, and everyday essentials.
+              We offer a handpicked selection of hoodies, jerseys, T-shirts, jeans, cosmetics, and food items —
+              all 100% authentic and sourced from trusted brands. Whether you&apos;re upgrading your wardrobe,
+              refreshing your beauty routine, or stocking up on groceries, we deliver quality and convenience to your door.
+            </p>
+          </div>
+        </div>
 
-        <h1>BuyFest BD — Your Trusted Online Shop in Bangladesh</h1>
-        <p>
-          BuyFest BD is your go-to online store in Bangladesh for fashion, cosmetics, and everyday essentials.
-          We offer a handpicked selection of hoodies, jerseys, T-shirts, jeans, cosmetics, and food items —
-          all 100% authentic and sourced from trusted brands. Whether you&apos;re upgrading your wardrobe,
-          refreshing your beauty routine, or stocking up on groceries, we deliver quality and convenience to your door.
-        </p>
+        <div className="seo-grid">
+          <div className="seo-card">
+            <div className="seo-card-header">
+              <ShoppingBag className="seo-icon" size={20} />
+              <h2>What We Sell</h2>
+            </div>
+            <p>
+              <strong>Fashion & Apparel</strong> — Hoodies, jerseys, T-shirts, and jeans for men and women. Trendy styles,
+              durable fabrics, and modern fits.<br />
+              <strong>Cosmetics & Personal Care</strong> — Skincare, makeup, haircare, and beauty essentials.<br />
+              <strong>Food & Groceries</strong> — Daily kitchen staples, snacks, and beverages.
+            </p>
+          </div>
 
-        <h2>What We Sell</h2>
-        <p>
-          <strong>Fashion & Apparel</strong> — Hoodies, jerseys, T-shirts, and jeans for men and women. Trendy styles,
-          durable fabrics, and modern fits for casual wear, college, gym, or hanging out.<br />
-          <strong>Cosmetics & Personal Care</strong> — Skincare, makeup, haircare, and beauty essentials.
-          Only authentic, safe, and high-quality products.<br />
-          <strong>Food & Groceries</strong> — Snacks, beverages, and daily kitchen staples at competitive prices.
-        </p>
+          <div className="seo-card">
+            <div className="seo-card-header">
+              <Truck className="seo-icon" size={20} />
+              <h2>Shipping & Delivery</h2>
+            </div>
+            <p>
+              We offer fast, trackable shipping to all 64 districts in Bangladesh. Orders are processed within 24 hours
+              and delivered through reliable courier partners.
+            </p>
+          </div>
 
-        <h2>Shipping & Delivery</h2>
-        <p>
-          We offer fast, trackable shipping to all districts in Bangladesh. Orders are processed within 24 hours
-          and delivered through trusted courier partners. Free delivery applies on qualifying orders.
-        </p>
+          <div className="seo-card">
+            <div className="seo-card-header">
+              <RotateCcw className="seo-icon" size={20} />
+              <h2>Return & Exchange</h2>
+            </div>
+            <p>
+              Damaged, defective, or incorrect items can be returned or exchanged within 7 days of delivery.
+              Hassle-free support guaranteed.
+            </p>
+          </div>
 
-        <h2>Return & Exchange Policy</h2>
-        <p>
-          Damaged, defective, or incorrect items can be returned or exchanged within 7 days of delivery.
-          Items must be unused and in original packaging. Contact our support team to get started.
-        </p>
+          <div className="seo-card">
+            <div className="seo-card-header">
+              <CreditCard className="seo-icon" size={20} />
+              <h2>Payment Methods</h2>
+            </div>
+            <p>
+              Cash on Delivery (COD), bKash, Nagad, and secure online card payments. Safe and encrypted transactions.
+            </p>
+          </div>
+        </div>
 
-        <h2>Payment Methods</h2>
-        <p>
-          We support cash on delivery (COD), bKash, Nagad, and online card payments. Your transactions are always secure.
-        </p>
+        <div className="seo-highlights-box">
+          <div className="seo-card-header">
+            <Sparkles className="seo-icon" size={20} />
+            <h2>Why Choose BuyFest BD</h2>
+          </div>
+          <div className="seo-pills-wrap">
+            <span className="seo-pill">✓ 100% Authentic Products</span>
+            <span className="seo-pill">✓ Affordable Prices & Deals</span>
+            <span className="seo-pill">✓ Fast Nationwide Shipping</span>
+            <span className="seo-pill">✓ Easy 7-Day Returns</span>
+            <span className="seo-pill">✓ 24/7 Dedicated Support</span>
+          </div>
+        </div>
 
-        <h2>Why Choose BuyFest BD</h2>
-        <p>
-          100% authentic products · Affordable prices & regular deals · Fast shipping nationwide · Easy 7-day returns ·
-          Friendly customer support · New arrivals every week
-        </p>
-
-        <h2>Contact Us</h2>
-        <p>
-          Call or WhatsApp: <strong>01635275630</strong> &nbsp;|&nbsp; Email: <strong>buyfestbd@gmail.com</strong>
-          &nbsp;|&nbsp; Follow us on Facebook for updates and offers.
-        </p>
+        <div className="seo-contact-footer">
+          <PhoneCall size={18} className="seo-icon-phone" />
+          <span>Need help? Call / WhatsApp: <strong>01635275630</strong> &nbsp;|&nbsp; Email: <strong>buyfestbd@gmail.com</strong></span>
+        </div>
 
       </div>
     </div>

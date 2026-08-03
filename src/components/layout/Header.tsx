@@ -578,35 +578,60 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           </nav>
         </div>
 
-        {/* Sub navigation */}
+        {/* ── Sub Navigation Bar ── */}
         <div className="sub-nav">
           <div className="sub-nav-inner">
-            <a href="/" className="sub-nav-link active">Home</a>
+
+            {/* Home */}
+            <a href="/" className="sub-nav-link active">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Home
+            </a>
+
+            {/* Categories simple dropdown */}
             <div className="sub-nav-dropdown">
-              <span className="sub-nav-link">Category ▾</span>
-              <div className="sub-nav-dropdown-menu">
+              <span className="sub-nav-link sub-nav-cat-trigger">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"5px"}}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                All Categories
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft:"4px"}} className="cat-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+
+              <div className="sub-nav-simple-dropdown">
                 {categoriesList.map((cat) => (
-                  <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="sub-nav-dropdown-item">
-                    <span className="cat-icon">
+                  <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="sub-nav-simple-item">
+                    <span className="sub-nav-simple-icon">
                       {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          style={{ width: "16px", height: "16px", objectFit: "contain", verticalAlign: "middle" }}
-                        />
+                        <img src={cat.image} alt={cat.name} className="sub-nav-simple-img" />
                       ) : (
                         getCategoryIcon(cat.slug)
                       )}
                     </span>
-                    <span className="cat-name">{cat.name}</span>
+                    <span className="sub-nav-simple-name">{cat.name}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sub-nav-simple-arrow"><polyline points="9 18 15 12 9 6"/></svg>
                   </Link>
                 ))}
               </div>
             </div>
 
-            <Link href="/offer" className="sub-nav-link">Offer</Link>
-            <Link href="/orders" className="sub-nav-link">Orders</Link>
-            <Link href="/contact-us" className="sub-nav-link">Contact Us</Link>
+            {/* New Arrivals */}
+            <Link href="/new-arrivals" className="sub-nav-link sub-nav-hot">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              New Arrivals
+              <span className="sub-nav-badge">New</span>
+            </Link>
+
+            {/* My Orders */}
+            <Link href="/orders" className="sub-nav-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+              My Orders
+            </Link>
+
+            {/* Contact Us */}
+            <Link href="/contact-us" className="sub-nav-link">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.04 3.33 2 2 0 0 1 3 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              Contact Us
+            </Link>
+
           </div>
         </div>
       </header>
@@ -735,7 +760,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 onClick={() => { openAuthModal("login"); setIsSidebarOpen(false); }}
               >
                 <div className="sidebar-user-avatar sidebar-user-avatar--guest">
-                  <User size={26} strokeWidth={1.5} color="#fff" />
+                  <User size={26} strokeWidth={1.5} color="#C5A880" />
                 </div>
                 <div className="sidebar-user-info">
                   <div className="sidebar-user-hello">Hello there!</div>
@@ -768,31 +793,36 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 </button>
 
                 {isCategoriesSidebarExpanded && (
-                  <div className="sidebar-accordion-content">
+                  <div className="sidebar-cat-list">
                     {categoriesList.map((cat) => (
-                      <Link key={cat.slug} href={`/category_product?category=${cat.slug}`} className="sidebar-sub-item" onClick={() => setIsSidebarOpen(false)}>
-                        <span className="sidebar-sub-item-icon">
+                      <Link
+                        key={cat.slug}
+                        href={`/category_product?category=${cat.slug}`}
+                        className="sidebar-cat-list-item"
+                        onClick={() => setIsSidebarOpen(false)}
+                      >
+                        <span className="sidebar-cat-list-icon">
                           {cat.image ? (
-                            <img
-                              src={cat.image}
-                              alt={cat.name}
-                              className="sidebar-sub-item-img"
-                            />
+                            <img src={cat.image} alt={cat.name} className="sidebar-cat-list-img" />
                           ) : (
                             getCategoryIcon(cat.slug)
                           )}
                         </span>
-                        <span className="sidebar-sub-item-name">{cat.name}</span>
+                        <span className="sidebar-cat-list-name">{cat.name}</span>
+                        <ChevronRight size={14} strokeWidth={2.5} className="sidebar-cat-list-arrow" />
                       </Link>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Offer */}
-              <Link href="/offer" className="sidebar-nav-item" onClick={() => setIsSidebarOpen(false)}>
-                <TicketPercent size={18} strokeWidth={2} />
-                <span>Offers</span>
+
+
+              {/* New Arrivals */}
+              <Link href="/new-arrivals" className="sidebar-nav-item sidebar-nav-hot" onClick={() => setIsSidebarOpen(false)}>
+                <Sparkles size={18} strokeWidth={2} color="#C5A880" />
+                <span className="sidebar-nav-hot-text">New Arrivals</span>
+                <span className="sub-nav-badge">NEW</span>
               </Link>
 
               {/* Orders */}
@@ -825,8 +855,21 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                 <span>Contact Us</span>
               </Link>
+
+              {/* Professional Hotline Card */}
+              <a href="tel:01635275630" className="sidebar-hotline-card">
+                <div className="sidebar-hotline-icon-box">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                </div>
+                <div className="sidebar-hotline-content">
+                  <span className="sidebar-hotline-label">Customer Support Hotline</span>
+                  <span className="sidebar-hotline-number">01635-275630</span>
+                </div>
+                <span className="sidebar-hotline-badge">CALL</span>
+              </a>
             </div>
           </div>
+
           <div className="category-sidebar-footer">
             <p className="category-sidebar-footer-text">Explore premium gadgets & accessories</p>
           </div>
