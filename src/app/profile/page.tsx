@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Link from "next/link";
-import Image from "next/image";
 import {
   User as UserIcon,
   Phone,
@@ -18,8 +17,18 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
-  Pencil
+  Pencil,
+  ShieldCheck,
+  LogOut,
+  Truck,
+  Headphones,
+  Key,
+  Clock,
+  Sparkles,
+  ChevronRight,
+  HelpCircle
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://127.0.0.1:8000";
 
@@ -47,8 +56,8 @@ interface Order {
 }
 
 export default function ProfilePage() {
-  const { user, isLoading, updateUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"info" | "orders">("info");
+  const { user, isLoading, updateUser, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<"info" | "orders" | "address" | "security">("info");
   const [isEditing, setIsEditing] = useState(false);
 
   // Form fields state
@@ -97,7 +106,6 @@ export default function ProfilePage() {
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       try {
-        // Step 1: Try by user_id
         const res = await fetch(`${BASE_URL}/api/orders/customer/?user_id=${user.id}`, { headers, cache: "no-store" });
         let rawOrders: any[] = [];
 
@@ -106,7 +114,6 @@ export default function ProfilePage() {
           rawOrders = data.data || [];
         }
 
-        // Step 2: Fallback — API by user_id failed or empty, search by phone
         if (rawOrders.length === 0 && user.phone) {
           const listRes = await fetch(`${BASE_URL}/api/orders/list/`, { headers, cache: "no-store" });
           if (listRes.ok) {
@@ -120,7 +127,6 @@ export default function ProfilePage() {
           }
         }
 
-        // Map to Order interface
         const mapped: Order[] = rawOrders.map((ord: any) => ({
           id: ord.id,
           status: ord.status || "pending",
@@ -152,7 +158,8 @@ export default function ProfilePage() {
     fetchOrders();
   }, [user]);
 
-  const displayOrders = orders;
+  const activeOrdersCount = orders.filter(o => o.status === "pending" || o.status === "processing").length;
+  const completedOrdersCount = orders.filter(o => o.status === "completed").length;
 
   const handleLoginClick = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -170,7 +177,6 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Show immediate preview
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
     setIsUploading(true);
@@ -192,11 +198,11 @@ export default function ProfilePage() {
       } else {
         const data = await res.json();
         setStatusMessage({ type: "error", text: data.error || "Failed to upload profile picture." });
-        setAvatarPreview(user.avatar || null); // revert preview on error
+        setAvatarPreview(user.avatar || null);
       }
     } catch {
       setStatusMessage({ type: "error", text: "Network error during avatar upload." });
-      setAvatarPreview(user.avatar || null); // revert preview
+      setAvatarPreview(user.avatar || null);
     } finally {
       setIsUploading(false);
     }
@@ -338,10 +344,28 @@ export default function ProfilePage() {
 
                 <div className="profile-user-summary">
                   <h3 className="profile-user-fullname">
-                    {user.first_name ? `${user.first_name} ${user.last_name}`.trim() : "New Customer"}
+                    {user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user.username}
                   </h3>
                   <p className="profile-user-username">@{user.username}</p>
-                  <span className="profile-badge">Customer Account</span>
+                  <span className="profile-badge">
+                    <Sparkles size={11} style={{ marginRight: "4px" }} /> VIP Customer
+                  </span>
+                </div>
+
+                {/* Quick Account Stats */}
+                <div className="profile-stats-row">
+                  <div className="profile-stat-box">
+                    <span className="stat-num">{orders.length}</span>
+                    <span className="stat-lbl">Orders</span>
+                  </div>
+                  <div className="profile-stat-box">
+                    <span className="stat-num">{activeOrdersCount}</span>
+                    <span className="stat-lbl">Active</span>
+                  </div>
+                  <div className="profile-stat-box">
+                    <span className="stat-num">{completedOrdersCount}</span>
+                    <span className="stat-lbl">Done</span>
+                  </div>
                 </div>
 
                 <div className="profile-sidebar-divider" />
@@ -362,7 +386,32 @@ export default function ProfilePage() {
                     <ShoppingBag size={18} />
                     <span>Order History ({orders.length})</span>
                   </button>
+                  <button
+                    onClick={() => { setActiveTab("address"); setStatusMessage({ type: "", text: "" }); }}
+                    className={`profile-nav-item ${activeTab === "address" ? "active" : ""}`}
+                  >
+                    <MapPin size={18} />
+                    <span>Shipping Address</span>
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab("security"); setStatusMessage({ type: "", text: "" }); }}
+                    className={`profile-nav-item ${activeTab === "security" ? "active" : ""}`}
+                  >
+                    <ShieldCheck size={18} />
+                    <span>Security & Help</span>
+                  </button>
                 </nav>
+
+                <div className="profile-sidebar-divider" />
+
+                {/* Logout Button */}
+                <button
+                  onClick={logout}
+                  className="profile-logout-btn"
+                >
+                  <LogOut size={16} />
+                  <span>Log Out Account</span>
+                </button>
 
               </div>
 
@@ -381,7 +430,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                {/* TAB CONTENT: PERSONAL DETAILS */}
+                {/* TAB 1: PERSONAL DETAILS */}
                 {activeTab === "info" && (
                   <div className="profile-tab-pane">
                     <div className="tab-pane-header">
@@ -391,7 +440,7 @@ export default function ProfilePage() {
                           <p className="tab-pane-desc">
                             {isEditing
                               ? "Update your personal information and delivery destination details."
-                              : "View your personal profile details."}
+                              : "View your registered personal profile details."}
                           </p>
                         </div>
                         {!isEditing && (
@@ -400,7 +449,7 @@ export default function ProfilePage() {
                             className="profile-edit-toggle-btn"
                             onClick={() => setIsEditing(true)}
                           >
-                            <Pencil size={16} />
+                            <Pencil size={15} />
                             <span>Edit Profile</span>
                           </button>
                         )}
@@ -428,8 +477,17 @@ export default function ProfilePage() {
                             <span className="detail-value">{user.phone || "—"}</span>
                           </div>
                           <div className="detail-item full-width">
-                            <span className="detail-label">Shipping Address</span>
+                            <span className="detail-label">Default Shipping Address</span>
                             <span className="detail-value address-value">{user.address || "—"}</span>
+                          </div>
+                        </div>
+
+                        {/* Account Verification & Security Note */}
+                        <div className="profile-security-badge-box">
+                          <ShieldCheck size={20} color="#C5A880" />
+                          <div>
+                            <h4>Verified BuyFest Account</h4>
+                            <p>Your credentials and saved data are protected under SSL 256-bit encryption.</p>
                           </div>
                         </div>
                       </div>
@@ -494,7 +552,7 @@ export default function ProfilePage() {
                               className="form-input"
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
-                              placeholder="e.g. +8801700000000"
+                              placeholder="e.g. 01700000000"
                             />
                           </div>
                         </div>
@@ -519,7 +577,6 @@ export default function ProfilePage() {
                             type="button"
                             className="profile-cancel-btn"
                             onClick={() => {
-                              // Reset state variables to persisted user details
                               setFirstName(user.first_name || "");
                               setLastName(user.last_name || "");
                               setEmail(user.email || "");
@@ -551,12 +608,12 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                {/* TAB CONTENT: ORDER HISTORY */}
+                {/* TAB 2: ORDER HISTORY */}
                 {activeTab === "orders" && (
                   <div className="profile-tab-pane">
                     <div className="tab-pane-header">
                       <h2 className="tab-pane-title">Order History</h2>
-                      <p className="tab-pane-desc">Track and view details of your previous store purchases.</p>
+                      <p className="tab-pane-desc">Track and view details of your previous purchases.</p>
                     </div>
 
                     {ordersLoading ? (
@@ -564,7 +621,7 @@ export default function ProfilePage() {
                         <Loader2 className="spinner" size={30} />
                         <p>Fetching your orders history...</p>
                       </div>
-                    ) : displayOrders.length === 0 ? (
+                    ) : orders.length === 0 ? (
                       <div className="orders-empty-state">
                         <div className="empty-state-icon"><ShoppingBag size={40} /></div>
                         <h3>No Orders Found</h3>
@@ -573,7 +630,7 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       <div className="profile-orders-list">
-                        {/* Desktop: Table View */}
+                        {/* Desktop Table */}
                         <div className="orders-table-wrapper">
                           <table className="orders-table">
                             <thead>
@@ -582,12 +639,12 @@ export default function ProfilePage() {
                                 <th>Date Placed</th>
                                 <th>Total Price</th>
                                 <th>Payment</th>
-                                <th>Shipment Status</th>
-                                <th>Actions</th>
+                                <th>Status</th>
+                                <th>Action</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {displayOrders.map((order) => (
+                              {orders.map((order) => (
                                 <tr key={order.id}>
                                   <td className="order-id">#BF-{order.id}</td>
                                   <td>{formatDate(order.created_at)}</td>
@@ -610,9 +667,9 @@ export default function ProfilePage() {
                           </table>
                         </div>
 
-                        {/* Mobile: Card View */}
+                        {/* Mobile Cards */}
                         <div className="profile-orders-mobile-list">
-                          {displayOrders.map((order) => (
+                          {orders.map((order) => (
                             <div key={order.id} className="order-mobile-card">
                               <div className="order-card-header">
                                 <span className="order-card-id">#BF-{order.id}</span>
@@ -640,9 +697,97 @@ export default function ProfilePage() {
                             </div>
                           ))}
                         </div>
-
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* TAB 3: SHIPPING ADDRESS */}
+                {activeTab === "address" && (
+                  <div className="profile-tab-pane">
+                    <div className="tab-pane-header">
+                      <h2 className="tab-pane-title">Saved Shipping Address</h2>
+                      <p className="tab-pane-desc">Manage your default delivery destination for faster checkout.</p>
+                    </div>
+
+                    <div className="address-card-box">
+                      <div className="address-card-header">
+                        <div className="address-card-badge">
+                          <MapPin size={16} /> Default Address
+                        </div>
+                        <button
+                          type="button"
+                          className="profile-edit-toggle-btn"
+                          onClick={() => { setActiveTab("info"); setIsEditing(true); }}
+                        >
+                          <Pencil size={14} /> Update Address
+                        </button>
+                      </div>
+
+                      <div className="address-card-content">
+                        <h4>{user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user.username}</h4>
+                        <p className="address-phone"><Phone size={14} /> {user.phone || "No phone number saved"}</p>
+                        <p className="address-text">{user.address || "No shipping address saved yet. Click update to add your delivery address."}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: SECURITY & HELP */}
+                {activeTab === "security" && (
+                  <div className="profile-tab-pane">
+                    <div className="tab-pane-header">
+                      <h2 className="tab-pane-title">Security & Support</h2>
+                      <p className="tab-pane-desc">Account protection, privacy, and direct customer support links.</p>
+                    </div>
+
+                    <div className="security-cards-grid">
+                      {/* Security Status Box */}
+                      <div className="sec-info-card">
+                        <div className="sec-info-icon"><ShieldCheck size={24} /></div>
+                        <div>
+                          <h4>Account Protection</h4>
+                          <p>Your account is protected by encrypted login credentials. Keep your login password confidential.</p>
+                        </div>
+                      </div>
+
+                      {/* Customer Care Box */}
+                      <div className="sec-info-card">
+                        <div className="sec-info-icon gold"><Headphones size={24} /></div>
+                        <div>
+                          <h4>24/7 Customer Care</h4>
+                          <p>Need help with an order or product inquiry? Reach our hotline anytime.</p>
+                          <div className="sec-support-actions">
+                            <a href="tel:01635275630" className="sec-action-btn">
+                              <Phone size={14} /> Call Hotline
+                            </a>
+                            <a href="https://wa.me/+8801635275630" target="_blank" rel="noopener noreferrer" className="sec-action-btn whatsapp">
+                              <FaWhatsapp size={15} /> WhatsApp
+                            </a>
+                            <Link href="/contact-us" className="sec-action-btn">
+                              <Mail size={14} /> Contact Form
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Fast Navigation */}
+                      <div className="sec-info-card">
+                        <div className="sec-info-icon"><HelpCircle size={24} /></div>
+                        <div>
+                          <h4>Quick Assistance</h4>
+                          <p>Direct links for tracking, terms, and order history.</p>
+                          <div className="sec-support-actions">
+                            <Link href="/orders" className="sec-action-btn">
+                              <Truck size={14} /> Track Orders
+                            </Link>
+                            <Link href="/terms-and-conditions" className="sec-action-btn">
+                              <FileText size={14} /> Terms & Policy
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 

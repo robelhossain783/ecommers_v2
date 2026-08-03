@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 import { Product } from "@/lib/backend_type";
 
 interface ProductCardProps {
@@ -45,8 +46,8 @@ export default function ProductCard({
             <Image
               src={imageSrc}
               alt={product.name || "Product Image"}
-              width={250}
-              height={200}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 220px"
               className="product-card-image"
               unoptimized
             />
@@ -55,29 +56,31 @@ export default function ProductCard({
           )}
         </div>
 
-        <p className="product-card-category">
-          {product.category?.name || "Gadget"}
-        </p>
+        <div className="product-card-info">
+          <p className="product-card-category">
+            {product.category?.name || "Gadget"}
+          </p>
 
-        <h3 className="product-card-name">
-          {product.name || "Unnamed Product"}
-        </h3>
+          <h3 className="product-card-name">
+            {product.name || "Unnamed Product"}
+          </h3>
 
-        <div className="product-card-prices">
-          <span className="product-card-sell-price">
-            ৳{sellPrice}
-          </span>
-
-          {hasDiscount && (
-            <span className="product-card-regular-price">
-              ৳{regularPrice}
+          <div className="product-card-prices">
+            <span className="product-card-sell-price">
+              ৳{sellPrice}
             </span>
-          )}
-        </div>
 
-        <p className={`product-card-stock ${product.stock && product.stock > 0 ? "" : "out-of-stock"}`}>
-          {product.stock && product.stock > 0 ? `Stock: ${product.stock}` : "Stock Out"}
-        </p>
+            {hasDiscount && (
+              <span className="product-card-regular-price">
+                ৳{regularPrice}
+              </span>
+            )}
+          </div>
+
+          <p className={`product-card-stock ${product.stock && product.stock > 0 ? "" : "out-of-stock"}`}>
+            {product.stock && product.stock > 0 ? `In Stock` : "Stock Out"}
+          </p>
+        </div>
       </Link>
 
       <button
@@ -90,7 +93,14 @@ export default function ProductCard({
           onAddToCart();
         }}
       >
-        {product.stock && product.stock > 0 ? "Add to Cart" : "Stock Out"}
+        {product.stock && product.stock > 0 ? (
+          <>
+            <ShoppingCart size={14} />
+            <span>Add to Cart</span>
+          </>
+        ) : (
+          "Stock Out"
+        )}
       </button>
 
     </div>
