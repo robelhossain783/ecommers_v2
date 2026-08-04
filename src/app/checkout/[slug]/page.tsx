@@ -33,8 +33,8 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
 
-  const [checkoutItems, setCheckoutItems] = useState<{ product: Product; quantity: number }[]>([]);
-  const [purchasedItems, setPurchasedItems] = useState<{ product: Product; quantity: number }[]>([]);
+  const [checkoutItems, setCheckoutItems] = useState<{ product: Product; quantity: number; selectedSize?: string; selectedColor?: string }[]>([]);
+  const [purchasedItems, setPurchasedItems] = useState<{ product: Product; quantity: number; selectedSize?: string; selectedColor?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Helper variables for single product checkout backward compatibility
@@ -159,11 +159,18 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
       try {
         const data = await getProductBySlug(slug);
         if (data) {
-          // Read qty query parameter
+          // Read qty, size, color query parameters
           const qtyParam = searchParams.get("qty");
+          const sizeParam = searchParams.get("size");
+          const colorParam = searchParams.get("color");
           const qtyVal = qtyParam ? parseInt(qtyParam, 10) : 1;
           const finalQty = qtyVal > 0 ? qtyVal : 1;
-          setCheckoutItems([{ product: data, quantity: finalQty }]);
+          setCheckoutItems([{
+            product: data,
+            quantity: finalQty,
+            selectedSize: sizeParam || undefined,
+            selectedColor: colorParam || undefined,
+          }]);
         } else {
           setCheckoutItems([]);
         }
@@ -274,11 +281,16 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
       if (isCartOrder) {
         requestBody.items = checkoutItems.map(item => ({
           product_id: item.product.id,
-          quantity: item.quantity
+          quantity: item.quantity,
+          size: item.selectedSize || null,
+          color: item.selectedColor || null,
         }));
       } else {
+        const singleItem = checkoutItems[0];
         requestBody.product_id = product?.id;
         requestBody.quantity = quantity;
+        requestBody.size = singleItem?.selectedSize || null;
+        requestBody.color = singleItem?.selectedColor || null;
       }
 
       const response = await fetch(`${BASE_URL}/api/create-order/`, {
@@ -869,6 +881,20 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                         </div>
                         <div style={{ flex: 1 }}>
                           <h4 style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-primary)", marginBottom: "2px", lineHeight: "1.3" }}>{item.product.name}</h4>
+                          {(item.selectedSize || item.selectedColor) && (
+                            <div style={{ display: "flex", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
+                              {item.selectedSize && (
+                                <span style={{ fontSize: "10px", fontWeight: "700", background: "#f3f0ec", color: "#444", padding: "1px 6px", borderRadius: "4px" }}>
+                                  Size: {item.selectedSize}
+                                </span>
+                              )}
+                              {item.selectedColor && (
+                                <span style={{ fontSize: "10px", fontWeight: "700", background: "#222", color: "#C5A880", padding: "1px 6px", borderRadius: "4px" }}>
+                                  Color: {item.selectedColor}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           <p style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "2px" }}>Category: {item.product.category?.name || "Gadgets"}</p>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <span style={{ fontSize: "12px", fontWeight: "700", color: "var(--primary)" }}>৳{itemUnitPrice}</span>

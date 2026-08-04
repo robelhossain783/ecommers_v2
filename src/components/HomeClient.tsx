@@ -7,7 +7,6 @@ import CategoriesSection from "@/components/sections/CategoriesSection";
 import NewTrends from "@/components/sections/NewTrends";
 import NewArrivals from "@/components/sections/NewArrivals";
 import SeoSection from "@/components/sections/SeoSection";
-import NotificationBanner from "./sections/NotificationBanner";
 
 export default function HomeClient() {
   return (
@@ -19,7 +18,6 @@ export default function HomeClient() {
         <CategoriesSection />
         <NewArrivals />
         <NewTrends />
-        <NotificationBanner />
         <SeoSection />
       </main>
 

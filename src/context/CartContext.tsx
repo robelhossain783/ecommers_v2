@@ -6,13 +6,15 @@ import { Product } from "@/lib/backend_type";
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => { success: boolean; message?: string };
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => { success: boolean; message?: string };
+  addToCart: (product: Product, quantity?: number, selectedSize?: string, selectedColor?: string) => { success: boolean; message?: string };
+  removeFromCart: (productId: number, selectedSize?: string, selectedColor?: string) => void;
+  updateQuantity: (productId: number, quantity: number, selectedSize?: string, selectedColor?: string) => { success: boolean; message?: string };
   clearCart: () => void;
   cartCount: number;
   isCartDrawerOpen: boolean;
@@ -46,13 +48,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cart, isInitialized]);
 
-  const addToCart = (product: Product, quantity = 1): { success: boolean; message?: string } => {
+  const matchItem = (item: CartItem, productId: number, size?: string, color?: string) =>
+    item.product.id === productId &&
+    (item.selectedSize || "") === (size || "") &&
+    (item.selectedColor || "") === (color || "");
+
+  const addToCart = (product: Product, quantity = 1, selectedSize?: string, selectedColor?: string): { success: boolean; message?: string } => {
     if (product.stock !== undefined && product.stock !== null && product.stock <= 0) {
       return { success: false, message: "Stock Out" };
     }
 
     const maxAllowed = Math.max(1, Math.floor((product.stock || 0) * 0.7));
-    const existingItem = cart.find((item) => item.product.id === product.id);
+    const existingItem = cart.find((item) => matchItem(item, product.id, selectedSize, selectedColor));
     const existingQty = existingItem ? existingItem.quantity : 0;
     const newQty = existingQty + quantity;
 
@@ -64,32 +71,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.product.id === product.id);
+      const existingItem = prevCart.find((item) => matchItem(item, product.id, selectedSize, selectedColor));
       if (existingItem) {
         return prevCart.map((item) =>
-          item.product.id === product.id
+          matchItem(item, product.id, selectedSize, selectedColor)
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prevCart, { product, quantity }];
+      return [...prevCart, { product, quantity, selectedSize, selectedColor }];
     });
 
     setCartDrawerOpen(true);
     return { success: true };
   };
 
-  const removeFromCart = (productId: number) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+  const removeFromCart = (productId: number, selectedSize?: string, selectedColor?: string) => {
+    setCart((prevCart) => prevCart.filter((item) => !matchItem(item, productId, selectedSize, selectedColor)));
   };
 
-  const updateQuantity = (productId: number, quantity: number): { success: boolean; message?: string } => {
+  const updateQuantity = (productId: number, quantity: number, selectedSize?: string, selectedColor?: string): { success: boolean; message?: string } => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, selectedSize, selectedColor);
       return { success: true };
     }
 
-    const item = cart.find((i) => i.product.id === productId);
+    const item = cart.find((i) => matchItem(i, productId, selectedSize, selectedColor));
     if (item && item.product.stock !== undefined && item.product.stock !== null) {
       const maxAllowed = Math.max(1, Math.floor(item.product.stock * 0.7));
       if (quantity > maxAllowed) {
@@ -102,7 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        matchItem(item, productId, selectedSize, selectedColor) ? { ...item, quantity } : item
       )
     );
 
