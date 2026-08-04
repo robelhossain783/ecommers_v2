@@ -205,12 +205,20 @@ img {
 .container,
 .header-inner,
 .sub-nav-inner,
+.product-details-container,
 .category-products-container,
 .orders-page-container,
 .profile-page-container,
 .checkout-container,
 .contact-page-wrapper,
-.cart-page-wrapper {
+.contact-page-container,
+.cart-page-wrapper,
+.cart-container,
+.new-arrivals-page-container,
+.search-results-page-container,
+.about-container,
+.terms-container,
+.careers-container {
   width: 100%;
   max-width: 1320px;
   margin-left: auto;
@@ -224,12 +232,20 @@ img {
   .container,
   .header-inner,
   .sub-nav-inner,
+  .product-details-container,
   .category-products-container,
   .orders-page-container,
   .profile-page-container,
   .checkout-container,
   .contact-page-wrapper,
-  .cart-page-wrapper {
+  .contact-page-container,
+  .cart-page-wrapper,
+  .cart-container,
+  .new-arrivals-page-container,
+  .search-results-page-container,
+  .about-container,
+  .terms-container,
+  .careers-container {
     max-width: 1440px;
   }
 }
@@ -238,12 +254,20 @@ img {
   .container,
   .header-inner,
   .sub-nav-inner,
+  .product-details-container,
   .category-products-container,
   .orders-page-container,
   .profile-page-container,
   .checkout-container,
   .contact-page-wrapper,
-  .cart-page-wrapper {
+  .contact-page-container,
+  .cart-page-wrapper,
+  .cart-container,
+  .new-arrivals-page-container,
+  .search-results-page-container,
+  .about-container,
+  .terms-container,
+  .careers-container {
     max-width: 1600px;
   }
 }
@@ -252,12 +276,20 @@ img {
   .container,
   .header-inner,
   .sub-nav-inner,
+  .product-details-container,
   .category-products-container,
   .orders-page-container,
   .profile-page-container,
   .checkout-container,
   .contact-page-wrapper,
-  .cart-page-wrapper {
+  .contact-page-container,
+  .cart-page-wrapper,
+  .cart-container,
+  .new-arrivals-page-container,
+  .search-results-page-container,
+  .about-container,
+  .terms-container,
+  .careers-container {
     max-width: 1760px;
   }
 }
@@ -3019,9 +3051,8 @@ img {
    PRODUCT DETAILS PAGE STYLES
    ========================================================================== */
 .product-details-container {
-  padding: 28px 16px 60px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding-top: 28px;
+  padding-bottom: 60px;
 }
 
 /* Breadcrumb */
@@ -3122,7 +3153,8 @@ img {
 
 @media (max-width: 480px) {
   .product-details-container {
-    padding: 16px 12px 40px;
+    padding-top: 16px;
+    padding-bottom: 40px;
   }
 
   .product-detail-grid {
@@ -3458,6 +3490,88 @@ img {
   line-height: 1.8;
   color: var(--text-secondary);
   margin-bottom: 20px;
+}
+
+/* ─── PRODUCT OPTIONS (SIZE & COLOR) ─── */
+.product-option-group {
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+
+.product-option-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.product-option-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.product-option-value {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #C5A880;
+  background: rgba(197, 168, 128, 0.1);
+  border: 1px solid rgba(197, 168, 128, 0.25);
+  padding: 2px 9px;
+  border-radius: 6px;
+}
+
+.product-option-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.product-option-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  height: 38px;
+  padding: 0 16px;
+  border: 1.5px solid #e8e4de;
+  border-radius: 8px;
+  background: var(--bg-white);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.product-option-chip:hover {
+  border-color: #C5A880;
+  color: #C5A880;
+  background: #faf7f2;
+}
+
+.product-option-chip.active {
+  border-color: #C5A880;
+  background: #222222;
+  color: #C5A880;
+  box-shadow: 0 4px 14px rgba(34, 34, 34, 0.15);
+}
+
+.product-option-chip.color-chip {
+  padding: 0 14px;
+}
+
+.color-chip-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
+  flex-shrink: 0;
 }
 
 /* ─── TRUST BADGES ─── */
@@ -4250,9 +4364,8 @@ img {
    CART PAGE STYLES
    ========================================================================== */
 .cart-container {
-  padding: 40px 16px 60px;
-  max-width: 1280px;
-  margin: 0 auto;
+  padding-top: 40px;
+  padding-bottom: 60px;
 }
 
 .cart-title {
@@ -5282,9 +5395,8 @@ img {
    ========================================================================== */
 .category-products-container,
 .orders-page-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 32px 16px;
+  padding-top: 32px;
+  padding-bottom: 32px;
   min-height: 70vh;
 }
 
@@ -5821,7 +5933,8 @@ img {
 
 @media (max-width: 480px) {
   .cart-container {
-    padding: 20px 12px !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
   }
 
   .cart-items-panel,
@@ -8165,9 +8278,8 @@ img {
    CONTACT US PAGE STYLES
    ========================================================================== */
 .contact-page-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 60px 16px;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 .contact-header {
@@ -9212,9 +9324,8 @@ img {
    ABOUT US PAGE STYLES
    ========================================================================== */
 .about-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 60px 16px;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 .about-hero {
@@ -9418,9 +9529,8 @@ img {
    TERMS & CONDITIONS PAGE STYLES
    ========================================================================== */
 .terms-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 60px 16px;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 .terms-header {
@@ -9564,9 +9674,8 @@ img {
    CAREERS PAGE STYLES
    ========================================================================== */
 .careers-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 60px 16px;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 .careers-hero {

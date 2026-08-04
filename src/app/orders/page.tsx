@@ -328,6 +328,8 @@ interface OrderProductItem {
   product_image: string | null;
   quantity: number;
   price: number;
+  size?: string | null;
+  color?: string | null;
 }
 
 interface Order {
@@ -420,6 +422,8 @@ export default function MyOrdersPage() {
             product_image: item.product?.image || null,
             quantity: item.quantity || 1,
             price: Number(item.price || item.product?.sell_price || 0),
+            size: item.size || null,
+            color: item.color || null,
           }));
 
           return {
@@ -620,6 +624,12 @@ export default function MyOrdersPage() {
                                     </div>
                                     <div className="order-item-info">
                                       <div className="order-item-name">{item.product_name}</div>
+                                      {(item.size || item.color) && (
+                                        <div style={{ display: "flex", gap: "6px", margin: "3px 0" }}>
+                                          {item.size && <span style={{ fontSize: "10px", fontWeight: "700", background: "#f3f0ec", padding: "1px 6px", borderRadius: "4px" }}>Size: {item.size}</span>}
+                                          {item.color && <span style={{ fontSize: "10px", fontWeight: "700", background: "#222", color: "#C5A880", padding: "1px 6px", borderRadius: "4px" }}>Color: {item.color}</span>}
+                                        </div>
+                                      )}
                                       <div className="order-item-meta">Qty: {item.quantity} &middot; ৳{item.price.toFixed(2)}</div>
                                     </div>
                                   </div>

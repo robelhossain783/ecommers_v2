@@ -47,6 +47,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [reviewSuccess, setReviewSuccess] = useState("");
   const [stockLimitMsg, setStockLimitMsg] = useState<string | null>(null);
 
+  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedColor, setSelectedColor] = useState<string>("");
+
   useEffect(() => {
     if (!slug) return;
     async function loadProduct() {
@@ -57,6 +60,18 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         if (data) {
           setActiveImage(data.image);
           if (data.reviews) setReviews(data.reviews);
+          if (data.size) {
+            const szList = data.size.split(",").map((s) => s.trim()).filter(Boolean);
+            if (szList.length > 0) setSelectedSize(szList[0]);
+          } else {
+            setSelectedSize("");
+          }
+          if (data.color) {
+            const colList = data.color.split(",").map((c) => c.trim()).filter(Boolean);
+            if (colList.length > 0) setSelectedColor(colList[0]);
+          } else {
+            setSelectedColor("");
+          }
           // Pre-fill name from logged-in user
           if (user) {
             const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
@@ -115,7 +130,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       setStockLimitMsg(`Limit exceeded. You cannot order more than 70% of available stock (Limit: ${maxAllowed} items)`);
       return;
     }
-    const res = addToCart(product, quantity);
+    const res = addToCart(product, quantity, selectedSize, selectedColor);
     if (res && !res.success) {
       setStockLimitMsg(res.message || "Failed to add to cart");
     } else {
@@ -135,8 +150,34 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       return;
     }
     setStockLimitMsg(null);
-    // Redirect to custom single-product checkout form
-    router.push(`/checkout/${product.slug}?qty=${quantity}`);
+    // Redirect to custom single-product checkout form with qty, size, color
+    const query = new URLSearchParams();
+    query.set("qty", String(quantity));
+    if (selectedSize) query.set("size", selectedSize);
+    if (selectedColor) query.set("color", selectedColor);
+    router.push(`/checkout/${product.slug}?${query.toString()}`);
+  };
+
+  const handleThumbnailClick = (imgSrc: string) => {
+    setActiveImage(imgSrc);
+    if (product?.gallery_images) {
+      const match = product.gallery_images.find((gi) => gi.image === imgSrc);
+      if (match && match.color) {
+        setSelectedColor(match.color);
+      }
+    }
+  };
+
+  const handleColorSelect = (col: string) => {
+    setSelectedColor(col);
+    if (product?.gallery_images) {
+      const match = product.gallery_images.find(
+        (gi) => gi.color && gi.color.toLowerCase().trim() === col.toLowerCase().trim()
+      );
+      if (match && match.image) {
+        setActiveImage(match.image);
+      }
+    }
   };
 
   if (loading) {
@@ -177,8 +218,33 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const discount = hasDiscount ? regularPrice - sellPrice : 0;
   const inStock = product.stock > 0;
 
+  const sizesList = product.size ? product.size.split(",").map((s) => s.trim()).filter(Boolean) : [];
+  const colorsList = product.color ? product.color.split(",").map((c) => c.trim()).filter(Boolean) : [];
+
+  const getColorDot = (name: string) => {
+    const lower = name.toLowerCase().trim();
+    const colorMap: Record<string, string> = {
+      black: "#111111",
+      white: "#ffffff",
+      red: "#e53e3e",
+      blue: "#3182ce",
+      navy: "#1a365d",
+      green: "#38a169",
+      yellow: "#d69e2e",
+      gold: "#C5A880",
+      silver: "#cbd5e0",
+      grey: "#718096",
+      gray: "#718096",
+      pink: "#ed64a6",
+      purple: "#805ad5",
+      orange: "#dd6b20",
+      brown: "#744210",
+    };
+    return colorMap[lower] || "#C5A880";
+  };
+
   const productUrl = typeof window !== "undefined" ? `${window.location.origin}/product/${product.slug}` : "";
-  const whatsappMessage = `Hello, I want to order this product:\n\n*Product:* ${product.name}\n*Price:* ৳${sellPrice}\n*Quantity:* ${quantity}\n${productUrl ? `*Link:* ${productUrl}` : ""}`;
+  const whatsappMessage = `Hello, I want to order this product:\n\n*Product:* ${product.name}\n${selectedSize ? `*Size:* ${selectedSize}\n` : ""}${selectedColor ? `*Color:* ${selectedColor}\n` : ""}*Price:* ৳${sellPrice}\n*Quantity:* ${quantity}\n${productUrl ? `*Link:* ${productUrl}` : ""}`;
   const whatsappUrl = `https://wa.me/8801635275630?text=${encodeURIComponent(whatsappMessage)}`;
 
   // Build the list of all images for gallery
@@ -253,7 +319,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                     <button
                       key={idx}
                       className={`product-detail-gallery-thumb-btn ${isActive ? "active" : ""}`}
-                      onClick={() => setActiveImage(imgSrc)}
+                      onClick={() => handleThumbnailClick(imgSrc)}
                       type="button"
                     >
                       <Image
@@ -298,6 +364,52 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </>
               )}
             </div>
+
+            {/* OPTIONAL SIZE SELECTION (SHOWS ONLY IF SIZE IS PROVIDED) */}
+            {sizesList.length > 0 && (
+              <div className="product-option-group">
+                <div className="product-option-header">
+                  <span className="product-option-label">Select Size:</span>
+                  {selectedSize && <span className="product-option-value">{selectedSize}</span>}
+                </div>
+                <div className="product-option-chips">
+                  {sizesList.map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      className={`product-option-chip ${selectedSize === sz ? "active" : ""}`}
+                      onClick={() => setSelectedSize(sz)}
+                    >
+                      {sz}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* OPTIONAL COLOR SELECTION (SHOWS ONLY IF COLOR IS PROVIDED) */}
+            {colorsList.length > 0 && (
+              <div className="product-option-group">
+                <div className="product-option-header">
+                  <span className="product-option-label">Color:</span>
+                  {selectedColor && <span className="product-option-value">{selectedColor}</span>}
+                </div>
+                <div className="product-option-chips">
+                  {colorsList.map((col) => (
+                    <button
+                      key={col}
+                      type="button"
+                      className={`product-option-chip color-chip ${selectedColor === col ? "active" : ""}`}
+                      onClick={() => handleColorSelect(col)}
+                    >
+                      <span className="color-chip-indicator" style={{ backgroundColor: getColorDot(col) }} />
+                      <span>{col}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
 
             {/* TRUST BADGES */}
             <div className="product-trust-badges">

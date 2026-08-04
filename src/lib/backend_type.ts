@@ -15,7 +15,7 @@ export interface Product {
   slug: string;
 
   image: string | null;
-  gallery_images?: { id: number; image: string }[];
+  gallery_images?: { id: number; image: string; color?: string | null }[];
   reviews?: { id: number; name: string; rating: number; comment: string; created_at: string; avatar_url?: string | null }[];
   description: string;
 
@@ -29,6 +29,8 @@ export interface Product {
   created_at: string;
 
   badge?: string;
+  size?: string | null;
+  color?: string | null;
 }
 
 export interface Brand {
