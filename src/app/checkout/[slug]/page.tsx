@@ -33,8 +33,8 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
 
-  const [checkoutItems, setCheckoutItems] = useState<{ product: Product; quantity: number; selectedSize?: string; selectedColor?: string }[]>([]);
-  const [purchasedItems, setPurchasedItems] = useState<{ product: Product; quantity: number; selectedSize?: string; selectedColor?: string }[]>([]);
+  const [checkoutItems, setCheckoutItems] = useState<{ product: Product; quantity: number; selectedSize?: string; selectedColor?: string; selectedImage?: string }[]>([]);
+  const [purchasedItems, setPurchasedItems] = useState<{ product: Product; quantity: number; selectedSize?: string; selectedColor?: string; selectedImage?: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Helper variables for single product checkout backward compatibility
@@ -159,10 +159,11 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
       try {
         const data = await getProductBySlug(slug);
         if (data) {
-          // Read qty, size, color query parameters
+          // Read qty, size, color, img query parameters
           const qtyParam = searchParams.get("qty");
           const sizeParam = searchParams.get("size");
           const colorParam = searchParams.get("color");
+          const imgParam = searchParams.get("img");
           const qtyVal = qtyParam ? parseInt(qtyParam, 10) : 1;
           const finalQty = qtyVal > 0 ? qtyVal : 1;
           setCheckoutItems([{
@@ -170,6 +171,7 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
             quantity: finalQty,
             selectedSize: sizeParam || undefined,
             selectedColor: colorParam || undefined,
+            selectedImage: imgParam || undefined,
           }]);
         } else {
           setCheckoutItems([]);
@@ -863,12 +865,13 @@ function CheckoutContent({ slug }: CheckoutContentProps) {
                 <div style={{ maxHeight: "280px", overflowY: "auto", marginBottom: "18px", paddingBottom: "8px", borderBottom: "1px solid #f5f5f5" }}>
                   {checkoutItems.map((item, idx) => {
                     const itemUnitPrice = Number(item.product.sell_price || 0);
+                    const displayImage = item.selectedImage || item.product.image;
                     return (
                       <div key={idx} style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
                         <div style={{ width: "60px", height: "60px", background: "#f8f9fa", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: "1px solid #eee", flexShrink: 0 }}>
-                          {item.product.image ? (
+                          {displayImage ? (
                             <Image
-                              src={item.product.image.startsWith("http") ? item.product.image : `${BASE_URL}${item.product.image}`}
+                              src={displayImage.startsWith("http") ? displayImage : `${BASE_URL}${displayImage}`}
                               alt={item.product.name}
                               width={50}
                               height={50}

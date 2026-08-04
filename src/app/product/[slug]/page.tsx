@@ -187,11 +187,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       return;
     }
     setStockLimitMsg(null);
-    // Redirect to custom single-product checkout form with qty, size, color
+    // Redirect to custom single-product checkout form with qty, size, color, and selected image
     const query = new URLSearchParams();
     query.set("qty", String(quantity));
     if (selectedSize) query.set("size", selectedSize);
     if (selectedColor) query.set("color", selectedColor);
+    if (activeImage) query.set("img", activeImage);
     router.push(`/checkout/${product.slug}?${query.toString()}`);
   };
 
