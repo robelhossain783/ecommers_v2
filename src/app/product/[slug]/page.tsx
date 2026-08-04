@@ -50,6 +50,37 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
 
+  const normalizeImagePath = (src: string | null | undefined): string => {
+    if (!src) return "";
+    return src.replace(/^https?:\/\/[^\/]+/, "").split("?")[0];
+  };
+
+  const findColorForImage = (imgSrc: string | null, productData: Product): string => {
+    if (!imgSrc || !productData) return "";
+    const colorsList = productData.color ? productData.color.split(",").map((c) => c.trim()).filter(Boolean) : [];
+    const normSrc = normalizeImagePath(imgSrc);
+
+    if (productData.gallery_images && productData.gallery_images.length > 0) {
+      const match = productData.gallery_images.find((gi) => {
+        if (!gi.image) return false;
+        const normGi = normalizeImagePath(gi.image);
+        return normGi === normSrc || normSrc.endsWith(normGi) || normGi.endsWith(normSrc);
+      });
+
+      if (match && match.color) {
+        const trimmedColor = match.color.trim();
+        const matchedInList = colorsList.find((c) => c.toLowerCase() === trimmedColor.toLowerCase());
+        return matchedInList || trimmedColor;
+      }
+    }
+
+    if (colorsList.length > 0) {
+      return colorsList[0];
+    }
+
+    return "";
+  };
+
   useEffect(() => {
     if (!slug) return;
     async function loadProduct() {
@@ -60,18 +91,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         if (data) {
           setActiveImage(data.image);
           if (data.reviews) setReviews(data.reviews);
-          if (data.size) {
-            const szList = data.size.split(",").map((s) => s.trim()).filter(Boolean);
-            if (szList.length > 0) setSelectedSize(szList[0]);
-          } else {
-            setSelectedSize("");
-          }
-          if (data.color) {
-            const colList = data.color.split(",").map((c) => c.trim()).filter(Boolean);
-            if (colList.length > 0) setSelectedColor(colList[0]);
-          } else {
-            setSelectedColor("");
-          }
+
+          // Size is not selected by default - user selects manually
+          setSelectedSize("");
+
+          // Color defaults to the color corresponding to default main image
+          const defaultCol = findColorForImage(data.image, data);
+          setSelectedColor(defaultCol);
+
           // Pre-fill name from logged-in user
           if (user) {
             const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
@@ -125,6 +152,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       setStockLimitMsg("Stock Out");
       return;
     }
+    const szList = product.size ? product.size.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    if (szList.length > 0 && !selectedSize) {
+      setStockLimitMsg("Please select a size");
+      return;
+    }
     const maxAllowed = Math.max(1, Math.floor(product.stock * 0.7));
     if (quantity > maxAllowed) {
       setStockLimitMsg(`Limit exceeded. You cannot order more than 70% of available stock (Limit: ${maxAllowed} items)`);
@@ -144,6 +176,11 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       setStockLimitMsg("Stock Out");
       return;
     }
+    const szList = product.size ? product.size.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    if (szList.length > 0 && !selectedSize) {
+      setStockLimitMsg("Please select a size");
+      return;
+    }
     const maxAllowed = Math.max(1, Math.floor(product.stock * 0.7));
     if (quantity > maxAllowed) {
       setStockLimitMsg(`Limit exceeded. You cannot order more than 70% of available stock (Limit: ${maxAllowed} items)`);
@@ -160,17 +197,17 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   const handleThumbnailClick = (imgSrc: string) => {
     setActiveImage(imgSrc);
-    if (product?.gallery_images) {
-      const match = product.gallery_images.find((gi) => gi.image === imgSrc);
-      if (match && match.color) {
-        setSelectedColor(match.color);
+    if (product) {
+      const matchedCol = findColorForImage(imgSrc, product);
+      if (matchedCol) {
+        setSelectedColor(matchedCol);
       }
     }
   };
 
   const handleColorSelect = (col: string) => {
     setSelectedColor(col);
-    if (product?.gallery_images) {
+    if (product?.gallery_images && product.gallery_images.length > 0) {
       const match = product.gallery_images.find(
         (gi) => gi.color && gi.color.toLowerCase().trim() === col.toLowerCase().trim()
       );
@@ -378,7 +415,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                       key={sz}
                       type="button"
                       className={`product-option-chip ${selectedSize === sz ? "active" : ""}`}
-                      onClick={() => setSelectedSize(sz)}
+                      onClick={() => {
+                        setSelectedSize(sz);
+                        setStockLimitMsg(null);
+                      }}
                     >
                       {sz}
                     </button>
@@ -387,25 +427,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </div>
             )}
 
-            {/* OPTIONAL COLOR SELECTION (SHOWS ONLY IF COLOR IS PROVIDED) */}
-            {colorsList.length > 0 && (
+            {/* OPTIONAL COLOR DISPLAY (SHOWS ONLY IF COLOR IS PROVIDED) */}
+            {(selectedColor || product.color) && (
               <div className="product-option-group">
                 <div className="product-option-header">
                   <span className="product-option-label">Color:</span>
-                  {selectedColor && <span className="product-option-value">{selectedColor}</span>}
-                </div>
-                <div className="product-option-chips">
-                  {colorsList.map((col) => (
-                    <button
-                      key={col}
-                      type="button"
-                      className={`product-option-chip color-chip ${selectedColor === col ? "active" : ""}`}
-                      onClick={() => handleColorSelect(col)}
-                    >
-                      <span className="color-chip-indicator" style={{ backgroundColor: getColorDot(col) }} />
-                      <span>{col}</span>
-                    </button>
-                  ))}
+                  <span className="product-option-value">{selectedColor || product.color}</span>
                 </div>
               </div>
             )}
