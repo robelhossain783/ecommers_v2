@@ -8,12 +8,10 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
-import { useCart } from "@/context/CartContext";
 
 const PAGE_SIZE = 20;
 
 export default function AllProductsPage() {
-  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
@@ -52,8 +50,8 @@ export default function AllProductsPage() {
     loadAllProducts();
   }, []);
 
-  const handleAddToCart = (product: Product) => {
-    addToCart(product, 1);
+  const handleAddToCart = () => {
+    // ProductCard handles addToCart internally
   };
 
   const sortedProducts = [...products];
@@ -100,7 +98,7 @@ export default function AllProductsPage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAddToCart={() => handleAddToCart(product)}
+                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>

@@ -4,15 +4,15 @@ export default function SeoSection() {
   return (
     <div className="container section-gap">
       <div className="seo-section">
-        
+
         <div className="seo-header-banner">
           <div className="seo-brand-icon">
             <ShoppingBag size={28} />
           </div>
           <div>
-            <h1>BuyFest BD — Your Trusted Online Shop in Bangladesh</h1>
+            <h1>Ryor BD — Your Trusted Online Shop in Bangladesh</h1>
             <p className="seo-subtitle">
-              BuyFest BD is your go-to online store in Bangladesh for fashion, cosmetics, and everyday essentials.
+              Ryor BD is your go-to online store in Bangladesh for fashion, cosmetics, and everyday essentials.
               We offer a handpicked selection of hoodies, jerseys, T-shirts, jeans, cosmetics, and food items —
               all 100% authentic and sourced from trusted brands. Whether you&apos;re upgrading your wardrobe,
               refreshing your beauty routine, or stocking up on groceries, we deliver quality and convenience to your door.
@@ -28,16 +28,16 @@ export default function SeoSection() {
             </div>
             <p>
               <strong>Fashion & Apparel</strong> — Hoodies, jerseys, T-shirts, and jeans for men and women. Trendy styles,
-              durable fabrics, and modern fits.<br />
-              <strong>Cosmetics & Personal Care</strong> — Skincare, makeup, haircare, and beauty essentials.<br />
-              <strong>Food & Groceries</strong> — Daily kitchen staples, snacks, and beverages.
+              premium fabrics, and perfect fits for any season.<br />
+              <strong>Cosmetics & Beauty</strong> — Skincare essentials, makeup, and personal care products from genuine brands.<br />
+              <strong>Food & Grocery</strong> — Snacks, pantry staples, and specialty food items delivered fresh.
             </p>
           </div>
 
           <div className="seo-card">
             <div className="seo-card-header">
-              <Truck className="seo-icon" size={20} />
-              <h2>Shipping & Delivery</h2>
+              <ShieldCheck className="seo-icon" size={20} />
+              <h2>Why Choose Ryor BD</h2>
             </div>
             <p>
               We offer fast, trackable shipping to all 64 districts in Bangladesh. Orders are processed within 24 hours
@@ -70,7 +70,7 @@ export default function SeoSection() {
         <div className="seo-highlights-box">
           <div className="seo-card-header">
             <Sparkles className="seo-icon" size={20} />
-            <h2>Why Choose BuyFest BD</h2>
+            <h2>Why Choose Ryor BD</h2>
           </div>
           <div className="seo-pills-wrap">
             <span className="seo-pill">✓ 100% Authentic Products</span>

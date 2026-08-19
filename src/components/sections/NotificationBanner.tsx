@@ -11,7 +11,7 @@ export default function NotificationBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const bannerClosed = sessionStorage.getItem("buyfest_banner_closed");
+    const bannerClosed = sessionStorage.getItem("ryor_banner_closed");
     if (bannerClosed === "true") return;
 
     fetch(`${BASE_URL}/api/banner/notification-banner/`)
@@ -29,7 +29,7 @@ export default function NotificationBanner() {
 
   const handleClose = () => {
     setVisible(false);
-    sessionStorage.setItem("buyfest_banner_closed", "true");
+    sessionStorage.setItem("ryor_banner_closed", "true");
     setTimeout(() => setBanner(null), 300);
   };
 

@@ -1,4 +1,5 @@
 import { FaFacebookF, FaInstagram, FaWhatsapp, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import RyorLogo from "./RyorLogo";
 
 export default function Footer() {
   return (
@@ -7,22 +8,16 @@ export default function Footer() {
         <div className="footer-grid">
           {/* Brand */}
           <div className="footer-brand">
-            <a href="/" aria-label="BuyFest Home" style={{ display: "inline-block" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/official_logo_3.png"
-                alt="BuyFest Logo"
-                className="logo-img"
-              />
+            <a href="/" aria-label="Ryor Home" style={{ display: "inline-block", marginBottom: "12px" }}>
+              <RyorLogo size="lg" variant="dark" />
             </a>
 
             <p className="footer-desc">
               Bangladesh&apos;s trusted e-commerce store for dedicated to providing safe delivery.
-
             </p>
             <div className="footer-contact">
               <p><FaWhatsapp /> <a href="tel:01635275630">01635275630</a></p>
-              <p>< FaEnvelope /> <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a></p>
+              <p>< FaEnvelope /> <a href="mailto:support@ryorbd.com">support@ryorbd.com</a></p>
               <p><FaMapMarkerAlt /> Savar, Dhaka, Bangladesh</p>
               {/* <p>< FaEnvelope /> <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a></p> */}
             </div>
@@ -79,7 +74,7 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="footer-bottom">
-          <p>© 2026 BuyFest Bangladesh | All rights reserved</p>
+          <p>© 2026 Ryor Bangladesh | All rights reserved</p>
           <div className="social-links">
             <a href="https://wa.me/+8801635275630" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a>
             <a href="https://facebook.com/buyfestbd" className="social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FaFacebookF /></a>

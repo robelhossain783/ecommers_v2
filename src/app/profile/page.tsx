@@ -348,7 +348,7 @@ export default function ProfilePage() {
                   </h3>
                   <p className="profile-user-username">@{user.username}</p>
                   <span className="profile-badge">
-                    <Sparkles size={11} style={{ marginRight: "4px" }} /> VIP Customer
+                    <Sparkles size={11} style={{ marginRight: "4px" }} /> Your Profile
                   </span>
                 </div>
 
@@ -410,7 +410,7 @@ export default function ProfilePage() {
                   className="profile-logout-btn"
                 >
                   <LogOut size={16} />
-                  <span>Log Out Account</span>
+                  <span>Logout</span>
                 </button>
 
               </div>
@@ -486,7 +486,7 @@ export default function ProfilePage() {
                         <div className="profile-security-badge-box">
                           <ShieldCheck size={20} color="#C5A880" />
                           <div>
-                            <h4>Verified BuyFest Account</h4>
+                            <h4>Verified Ryor Account</h4>
                             <p>Your credentials and saved data are protected under SSL 256-bit encryption.</p>
                           </div>
                         </div>
@@ -625,7 +625,7 @@ export default function ProfilePage() {
                       <div className="orders-empty-state">
                         <div className="empty-state-icon"><ShoppingBag size={40} /></div>
                         <h3>No Orders Found</h3>
-                        <p>You haven&apos;t placed any orders with BuyFest yet.</p>
+                        <p>You haven&apos;t placed any orders with Ryor yet.</p>
                         <Link href="/" className="empty-state-btn">Shop Now</Link>
                       </div>
                     ) : (

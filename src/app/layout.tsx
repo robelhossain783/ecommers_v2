@@ -13,36 +13,33 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://buyfest.vercel.app"),
-
+  metadataBase: new URL("https://ryorbd.vercel.app"),
 
   title: {
-    default: "BuyFest - Online Shopping in Bangladesh",
-    template: "%s | BuyFest",
+    default: "Ryor - Online Shopping in Bangladesh",
+    template: "%s | Ryor",
   },
 
   description:
-    "BuyFest is your trusted online shopping destination in Bangladesh. Shop electronics, fashion, beauty, home essentials, gadgets, and more at the best prices with fast delivery nationwide.",
+    "Ryor is your trusted online shopping destination in Bangladesh. Shop fashion, beauty, electronics, home essentials, gadgets, and more at the best prices with fast delivery nationwide.",
 
   keywords: [
-    "BuyFest",
-    "BuyFest Bangladesh",
+    "Ryor",
+    "Ryor Bangladesh",
+    "Ryor BD",
     "online shopping Bangladesh",
     "ecommerce Bangladesh",
-    "electronics Bangladesh",
     "fashion Bangladesh",
     "gadgets BD",
-    "mobile phones Bangladesh",
-    "home appliances Bangladesh",
     "online store Bangladesh",
   ],
 
   openGraph: {
-    title: "BuyFest - Online Shopping in Bangladesh",
+    title: "Ryor - Online Shopping in Bangladesh",
     description:
-      "Discover electronics, fashion, beauty products, home essentials, gadgets and more at BuyFest with fast delivery across Bangladesh.",
-    url: "https://buyfest.vercel.app",
-    siteName: "BuyFest",
+      "Discover fashion, beauty products, electronics, home essentials, gadgets and more at Ryor with fast delivery across Bangladesh.",
+    url: "https://ryorbd.vercel.app",
+    siteName: "Ryor",
     locale: "en_US",
     type: "website",
 
@@ -51,16 +48,16 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "BuyFest",
+        alt: "Ryor",
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "BuyFest - Online Shopping in Bangladesh",
+    title: "Ryor - Online Shopping in Bangladesh",
     description:
-      "Shop electronics, fashion, gadgets, beauty products and more with fast delivery across Bangladesh.",
+      "Shop fashion, gadgets, beauty products and more with fast delivery across Bangladesh.",
     images: ["/og-image.jpg"],
   },
 
