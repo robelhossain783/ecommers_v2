@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
 
 import { getNewArrival2 } from "@/lib/api";
 import ProductCard from "@/components/ui/ProductCard";
@@ -13,7 +12,6 @@ interface NewArrivalsProps {
 }
 
 export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
-  const { addToCart } = useCart();
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -41,8 +39,7 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
     return () => observer.disconnect();
   }, [products]);
 
-  const handleAddToCart = (product: Product) => {
-    addToCart(product);
+  const handleAddToCart = () => {
     onAddToCart?.();
   };
 
@@ -87,7 +84,9 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
 
       <div className="section-header">
         <h2 className="section-title">New Arrival</h2>
-        <Link href="/new-arrivals" className="see-all">View All</Link>
+        {hasOverflow && (
+          <Link href="/new-arrivals" className="see-all">View All</Link>
+        )}
       </div>
 
       <div className="new-arrival-slider-wrapper">
@@ -111,7 +110,7 @@ export default function NewArrivals({ onAddToCart }: NewArrivalsProps) {
             <div key={product.id} className="nar-slider-item">
               <ProductCard
                 product={product}
-                onAddToCart={() => handleAddToCart(product)}
+                onAddToCart={handleAddToCart}
               />
             </div>
           ))}

@@ -71,7 +71,7 @@ export default function CareersPage() {
           {/* Hero Section */}
           <section className="careers-hero">
             <span className="careers-hero-badge">Careers</span>
-            <h1>Join the BuyFest Team</h1>
+            <h1>Join the Ryor Team</h1>
             <p>
               Are you passionate about technology, gadgets, and building digital retail experiences?
               Come help us shape the future of e-commerce in Bangladesh.

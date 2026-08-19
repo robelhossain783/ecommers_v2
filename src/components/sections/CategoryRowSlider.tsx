@@ -3,31 +3,25 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ui/ProductCard";
-import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
 
-export default function NewTrends() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+interface CategoryRowSliderProps {
+  title: string;
+  categorySlug: string;
+  products: Product[];
+}
 
+export default function CategoryRowSlider({
+  title,
+  categorySlug,
+  products,
+}: CategoryRowSliderProps) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
 
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await getNewArrivals();
-        setProducts(data || []);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
 
   useEffect(() => {
     const el = sliderRef.current;
@@ -73,14 +67,14 @@ export default function NewTrends() {
     }
   };
 
-  if (loading || products.length === 0) return null;
+  if (products.length === 0) return null;
 
   return (
     <div className="container section-gap">
       <div className="section-header">
-        <h2 className="section-title">Just For You</h2>
+        <h2 className="section-title">{title}</h2>
         {hasOverflow && (
-          <Link href="/all-products" className="see-all">
+          <Link href={`/category_product?category=${categorySlug}`} className="see-all">
             View All
           </Link>
         )}
@@ -115,9 +109,9 @@ export default function NewTrends() {
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseUp}
         >
-          {products.map((p) => (
-            <div key={p.id} className="nar-slider-item">
-              <ProductCard product={p} />
+          {products.map((product) => (
+            <div key={product.id} className="nar-slider-item">
+              <ProductCard product={product} />
             </div>
           ))}
         </div>

@@ -41,12 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem("buyfest_customer");
+      const stored = sessionStorage.getItem("ryor_customer");
       if (stored) {
         setUser(JSON.parse(stored));
       }
     } catch {
-      sessionStorage.removeItem("buyfest_customer");
+      sessionStorage.removeItem("ryor_customer");
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setUser(customerUser);
       try {
-        sessionStorage.setItem("buyfest_customer", JSON.stringify(customerUser));
-        sessionStorage.setItem("buyfest_last_activity", Date.now().toString());
+        sessionStorage.setItem("ryor_customer", JSON.stringify(customerUser));
+        sessionStorage.setItem("ryor_last_activity", Date.now().toString());
         if (data.access) localStorage.setItem("token", data.access);
         if (data.refresh) localStorage.setItem("refreshToken", data.refresh);
       } catch (e) { }
@@ -108,8 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     try {
-      sessionStorage.removeItem("buyfest_customer");
-      sessionStorage.removeItem("buyfest_last_activity");
+      sessionStorage.removeItem("ryor_customer");
+      sessionStorage.removeItem("ryor_last_activity");
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
     } catch (e) { }
@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!prev) return null;
       const newUser = { ...prev, ...updatedFields };
       try {
-        sessionStorage.setItem("buyfest_customer", JSON.stringify(newUser));
+        sessionStorage.setItem("ryor_customer", JSON.stringify(newUser));
       } catch (e) {}
       return newUser;
     });
@@ -132,11 +132,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let lastActivity = Date.now();
     try {
-      const savedLastActivity = sessionStorage.getItem("buyfest_last_activity");
+      const savedLastActivity = sessionStorage.getItem("ryor_last_activity");
       if (savedLastActivity) {
         lastActivity = parseInt(savedLastActivity, 10);
       } else {
-        sessionStorage.setItem("buyfest_last_activity", lastActivity.toString());
+        sessionStorage.setItem("ryor_last_activity", lastActivity.toString());
       }
     } catch (e) { }
 
@@ -144,11 +144,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const now = Date.now();
       lastActivity = now;
       try {
-        sessionStorage.setItem("buyfest_last_activity", now.toString());
+        sessionStorage.setItem("ryor_last_activity", now.toString());
       } catch (e) { }
     };
 
-    const events = ["mousemove", "mousedown", "keypress", "scroll", "touchstart", "click"];
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
 
     events.forEach((event) => {
       window.addEventListener(event, handleActivity);
@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const now = Date.now();
       let storedLastActivity = lastActivity;
       try {
-        const savedLastActivity = sessionStorage.getItem("buyfest_last_activity");
+        const savedLastActivity = sessionStorage.getItem("ryor_last_activity");
         if (savedLastActivity) {
           storedLastActivity = parseInt(savedLastActivity, 10);
         }

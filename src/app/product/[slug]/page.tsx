@@ -733,7 +733,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <ProductCard
                   key={p.id}
                   product={p}
-                  onAddToCart={() => addToCart(p)}
                 />
               ))}
             </div>

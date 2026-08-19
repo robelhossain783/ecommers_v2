@@ -8,7 +8,6 @@ import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/ui/ProductCard";
 import { getNewArrivals } from "@/lib/api";
 import { Product } from "@/lib/backend_type";
-import { useCart } from "@/context/CartContext";
 import { newArrivals as staticArrivals, brandProductMap } from "@/data";
 import { ChevronRight } from "lucide-react";
 
@@ -43,7 +42,6 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 function CategoryProductsContent() {
   const searchParams = useSearchParams();
-  const { addToCart } = useCart();
   const categorySlug = searchParams.get("category") || "";
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -121,12 +119,9 @@ function CategoryProductsContent() {
   }, [categorySlug]);
 
   const handleAddToCart = (product: Product) => {
-    const res = addToCart(product, 1);
-    if (res && !res.success) {
-      setNotification({ type: "error", text: res.message || "Could not add to cart" });
-    } else {
-      setNotification({ type: "success", text: `"${product.name}" added to cart!` });
-    }
+    // ProductCard handles addToCart internally
+    // Show success notification
+    setNotification({ type: "success", text: `"${product.name}" added to cart!` });
     setTimeout(() => {
       setNotification(null);
     }, 3000);

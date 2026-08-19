@@ -58,7 +58,7 @@ export default function TermsAndConditionsPage() {
         <div className="terms-container">
           <div className="terms-header">
             <h1 className="terms-title">Terms & Conditions</h1>
-            <p className="terms-subtitle">Last updated: July 2026 | Welcome to BuyFest Bangladesh</p>
+            <p className="terms-subtitle">Last updated: July 2026 | Welcome to Ryor Bangladesh</p>
           </div>
 
           <div className="terms-layout">
@@ -85,7 +85,7 @@ export default function TermsAndConditionsPage() {
               <section id="intro" className="terms-section">
                 <h2>1. Introduction</h2>
                 <p>
-                  Welcome to BuyFest (buyfestbd.com). These Terms &amp; Conditions govern your use of our website, services, and purchase of products. 
+                  Welcome to Ryor (ryorbd.com). These Terms &amp; Conditions govern your use of our website, services, and purchase of products. 
                   By accessing, browsing, or using this website, you acknowledge that you have read, understood, and agreed to be bound by these terms.
                 </p>
                 <p>
@@ -101,7 +101,7 @@ export default function TermsAndConditionsPage() {
                   To place orders or access specific features, you may need to register an account. You are solely responsible for maintaining the confidentiality of your account credentials (username, password) and for restricting access to your devices.
                 </p>
                 <p>
-                  You agree to accept responsibility for all activities that occur under your account. If you believe your account security has been compromised, notify our support team immediately at buyfestbd@gmail.com.
+                  You agree to accept responsibility for all activities that occur under your account. If you believe your account security has been compromised, notify our support team immediately at support@ryorbd.com.
                 </p>
               </section>
 
@@ -141,7 +141,7 @@ export default function TermsAndConditionsPage() {
               <section id="warranty" className="terms-section">
                 <h2>5. Warranty Policy</h2>
                 <p>
-                  Various accessories and gadgets on BuyFest come with manufacturer warranties. 
+                  Various accessories and gadgets on Ryor come with manufacturer warranties. 
                   The duration and conditions of the warranty depend solely on the manufacturer and will be explicitly mentioned on the product page or invoice.
                 </p>
                 <p>

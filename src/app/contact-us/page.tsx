@@ -135,7 +135,7 @@ export default function ContactUsPage() {
                   <div className="contact-info-icon-wrap"><Mail size={20} /></div>
                   <div className="contact-info-details">
                     <h4>Email Address</h4>
-                    <a href="mailto:buyfestbd@gmail.com">buyfestbd@gmail.com</a>
+                    <a href="mailto:support@ryorbd.com">support@ryorbd.com</a>
                   </div>
                 </div>
 

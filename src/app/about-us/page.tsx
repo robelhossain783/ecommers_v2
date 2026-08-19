@@ -17,7 +17,7 @@ export default function AboutUsPage() {
             <span className="about-hero-badge">Who We Are</span>
             <h1>Bangladesh&apos;s Trusted Gadget Partner</h1>
             <p>
-              Welcome to BuyFest, your ultimate destination for authentic smartphones, premium gadgets, and mobile accessories. 
+              Welcome to Ryor, your ultimate destination for authentic smartphones, premium gadgets, and mobile accessories. 
               We aim to redefine your tech shopping experience with high-quality products, rapid delivery, and outstanding customer service.
             </p>
           </section>
@@ -47,7 +47,7 @@ export default function AboutUsPage() {
             <div className="about-story-content">
               <h2>Our Journey</h2>
               <p>
-                Founded in Dhaka, BuyFest started with a simple vision: to bridge the gap between global technology innovations and Bangladeshi tech enthusiasts. 
+                Founded in Dhaka, Ryor started with a simple vision: to bridge the gap between global technology innovations and Bangladeshi tech enthusiasts. 
                 We observed how difficult it was for consumers to find genuine, authorized accessories and devices at reasonable prices.
               </p>
               <p>
@@ -58,7 +58,7 @@ export default function AboutUsPage() {
             <div className="about-story-img-container" style={{ background: "linear-gradient(135deg, #2f64cf 0%, #e8320a 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div style={{ color: "#fff", textAlign: "center", padding: "40px" }}>
                 <Sparkles size={64} style={{ marginBottom: "16px", animation: "bounce 3s infinite" }} />
-                <h3 style={{ fontSize: "24px", fontWeight: "800", margin: "0 0 8px 0" }}>BuyFest BD</h3>
+                <h3 style={{ fontSize: "24px", fontWeight: "800", margin: "0 0 8px 0" }}>Ryor BD</h3>
                 <p style={{ margin: 0, fontSize: "14px", opacity: 0.9 }}>Empowering Tech Lifestyles</p>
               </div>
             </div>

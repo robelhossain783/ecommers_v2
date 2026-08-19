@@ -20,8 +20,8 @@ export default function AddToCarts() {
     0
   );
 
-  const handleQuantityChange = (productId: number, newQty: number) => {
-    const res = updateQuantity(productId, newQty);
+  const handleQuantityChange = (productId: number, newQty: number, selectedSize?: string, selectedColor?: string) => {
+    const res = updateQuantity(productId, newQty, selectedSize, selectedColor);
     if (res && !res.success) {
       setCartErrors((prev) => ({
         ...prev,
@@ -81,8 +81,8 @@ export default function AddToCarts() {
                           <Image
                             src={imageSrc}
                             alt={item.product.name}
-                            width={60}
-                            height={60}
+                            width={110}
+                            height={110}
                             className="cart-item-image"
                             unoptimized
                           />
@@ -94,6 +94,16 @@ export default function AddToCarts() {
                       <div className="cart-item-details">
                         <h3 className="cart-item-name">{item.product.name}</h3>
                         <p className="cart-item-category">{item.product.category?.name || "Gadget"}</p>
+                        {(item.selectedSize || item.selectedColor) && (
+                          <div className="cart-item-badges">
+                            {item.selectedSize && (
+                              <span className="cart-item-badge">Size: {item.selectedSize}</span>
+                            )}
+                            {item.selectedColor && (
+                              <span className="cart-item-badge">Color: {item.selectedColor}</span>
+                            )}
+                          </div>
+                        )}
                         {cartErrors[item.product.id] && (
                           <div className="cart-item-error">
                             <AlertCircle size={12} />
@@ -105,7 +115,7 @@ export default function AddToCarts() {
                       {/* QTY CONTROL */}
                       <div className="quantity-control">
                         <button
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1, item.selectedSize, item.selectedColor)}
                           className="quantity-control-btn"
                         >
                           <Minus size={14} strokeWidth={3} />
@@ -117,7 +127,7 @@ export default function AddToCarts() {
                           className="quantity-input"
                         />
                         <button
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1, item.selectedSize, item.selectedColor)}
                           className="quantity-control-btn"
                         >
                           <Plus size={14} strokeWidth={3} />
@@ -131,7 +141,7 @@ export default function AddToCarts() {
                       </div>
 
                       <button
-                        onClick={() => removeFromCart(item.product.id)}
+                        onClick={() => removeFromCart(item.product.id, item.selectedSize, item.selectedColor)}
                         className="cart-item-delete"
                         title="Remove product"
                       >

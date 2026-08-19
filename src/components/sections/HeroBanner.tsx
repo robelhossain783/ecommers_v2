@@ -6,7 +6,6 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, ArrowRight, RotateCcw, Headset, Truck, ShieldCheck, Sparkles } from "lucide-react";
 import { bannerSlides as mockBanners } from "@/data";
 
-
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
   "http://127.0.0.1:8000";
@@ -56,7 +55,7 @@ export default function HeroBanner() {
       } catch (error) {
         console.log("Banner fetch error:", error);
       }
-      
+
       // Fallback to local mockup data if fetch fails or is empty
       const normalizedMock = mockBanners.map((b: any) => ({
         id: b.id,
@@ -122,7 +121,7 @@ export default function HeroBanner() {
 
   if (bannerSlides.length === 0) {
     return (
-      <section className="hero-banner-container container">
+      <section className="hero-banner-section">
         <div className="hero-banner-slider" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
           <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>Loading banners...</span>
         </div>
@@ -131,48 +130,42 @@ export default function HeroBanner() {
   }
 
   return (
-    <section className="hero-banner-section container">
-      {/* ── Full-width Banner Slider ── */}
-      <div 
+    <section className="hero-banner-section">
+      {/* ── Edge-to-Edge Full Width Banner Slider (Fimon Style: No Padding, No Border Radius) ── */}
+      <div
         className="hero-banner-slider"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div 
+        <div
           className="hero-banner-track"
           style={{ transform: `translateX(-${active * 100}%)` }}
         >
           {bannerSlides.map((slide) => (
-            <Link 
-              href={slide.href} 
-              key={slide.id} 
+            <Link
+              href={slide.href}
+              key={slide.id}
               className="hero-banner-slide"
             >
               <div className="hero-banner-image-wrapper">
                 <Image
                   src={slide.image}
-                  alt="Hero Banner Image"
+                  alt={slide.title || "Banner Image"}
                   fill
                   style={{ objectFit: "cover" }}
                   priority
+                  unoptimized
                 />
-                <div className="hero-banner-overlay" />
               </div>
 
               {/* Content Overlay */}
-              <div className="hero-banner-content-box">
-                <span className="hero-banner-tag">
-                  <Sparkles size={11} /> Featured Store Collection
-                </span>
-                {slide.title && <h2 className="hero-banner-title">{slide.title}</h2>}
-                {slide.subtitle && <p className="hero-banner-subtitle">{slide.subtitle}</p>}
-                
-                <div className="hero-banner-button">
-                  <span>{slide.cta || "Shop Now"}</span>
-                  <ArrowRight size={14} />
+              {(slide.title || slide.subtitle) && (
+                <div className="hero-banner-content-box">
+                  {slide.title && <h2 className="hero-banner-title">{slide.title}</h2>}
+                  {slide.subtitle && <p className="hero-banner-subtitle">{slide.subtitle}</p>}
                 </div>
-              </div>
+              )}
             </Link>
           ))}
         </div>
@@ -197,74 +190,74 @@ export default function HeroBanner() {
         {/* Arrow Navigation */}
         {bannerSlides.length > 1 && (
           <>
-            <button 
-              className="hero-banner-arrow prev" 
+            <button
+              className="hero-banner-arrow prev"
               onClick={(e) => {
                 e.preventDefault();
                 prevSlide();
               }}
               aria-label="Previous slide"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={22} />
             </button>
-            <button 
-              className="hero-banner-arrow next" 
+            <button
+              className="hero-banner-arrow next"
               onClick={(e) => {
                 e.preventDefault();
                 nextSlide();
               }}
               aria-label="Next slide"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={22} />
             </button>
           </>
         )}
       </div>
 
-
       {/* ── Bottom E-Commerce Trust Value Pillars Bar ── */}
-      <div className="hero-trust-bar">
-        <div className="trust-pillar">
-          <div className="trust-pillar-icon">
-            <Truck size={20} />
+      <div className="container" style={{ marginTop: "24px" }}>
+        <div className="hero-trust-bar">
+          <div className="trust-pillar">
+            <div className="trust-pillar-icon">
+              <Truck size={20} />
+            </div>
+            <div className="trust-pillar-info">
+              <span className="trust-pillar-title">Free Express Shipping</span>
+              <span className="trust-pillar-sub">On orders over ৳999</span>
+            </div>
           </div>
-          <div className="trust-pillar-info">
-            <span className="trust-pillar-title">Free Express Shipping</span>
-            <span className="trust-pillar-sub">On orders over ৳999</span>
-          </div>
-        </div>
 
-        <div className="trust-pillar">
-          <div className="trust-pillar-icon">
-            <ShieldCheck size={20} />
+          <div className="trust-pillar">
+            <div className="trust-pillar-icon">
+              <ShieldCheck size={20} />
+            </div>
+            <div className="trust-pillar-info">
+              <span className="trust-pillar-title">100% Authentic Products</span>
+              <span className="trust-pillar-sub">Official brand warranty</span>
+            </div>
           </div>
-          <div className="trust-pillar-info">
-            <span className="trust-pillar-title">100% Authentic Products</span>
-            <span className="trust-pillar-sub">Official brand warranty</span>
-          </div>
-        </div>
 
-        <div className="trust-pillar">
-          <div className="trust-pillar-icon">
-            <RotateCcw size={20} />
+          <div className="trust-pillar">
+            <div className="trust-pillar-icon">
+              <RotateCcw size={20} />
+            </div>
+            <div className="trust-pillar-info">
+              <span className="trust-pillar-title">7-Day Replacement</span>
+              <span className="trust-pillar-sub">Easy & fast exchange</span>
+            </div>
           </div>
-          <div className="trust-pillar-info">
-            <span className="trust-pillar-title">7-Day Replacement</span>
-            <span className="trust-pillar-sub">Easy & fast exchange</span>
-          </div>
-        </div>
 
-        <div className="trust-pillar">
-          <div className="trust-pillar-icon">
-            <Headset size={20} />
-          </div>
-          <div className="trust-pillar-info">
-            <span className="trust-pillar-title">24/7 Dedicated Support</span>
-            <span className="trust-pillar-sub">Call: 01635-275630</span>
+          <div className="trust-pillar">
+            <div className="trust-pillar-icon">
+              <Headset size={20} />
+            </div>
+            <div className="trust-pillar-info">
+              <span className="trust-pillar-title">24/7 Dedicated Support</span>
+              <span className="trust-pillar-sub">Call: 01635-275630</span>
+            </div>
           </div>
         </div>
       </div>
-
     </section>
   );
 }

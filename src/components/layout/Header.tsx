@@ -3,6 +3,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
+import RyorLogo from "./RyorLogo";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import {
@@ -270,6 +271,45 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
     setTimeout(() => mobileInputRef.current?.focus(), 60);
   };
 
+  // Desktop Right-side Search Popup State
+  const [isRightSearchPopupOpen, setIsRightSearchPopupOpen] = useState(false);
+  const [rightSearchQuery, setRightSearchQuery] = useState("");
+  const [rightSearchResults, setRightSearchResults] = useState<Product[]>([]);
+  const [isRightSearchLoading, setIsRightSearchLoading] = useState(false);
+  const rightSearchInputRef = useRef<HTMLInputElement>(null);
+  const rightSearchRef = useRef<HTMLDivElement>(null);
+  const rightSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (rightSearchDebounceRef.current) clearTimeout(rightSearchDebounceRef.current);
+    if (!rightSearchQuery.trim()) {
+      setRightSearchResults([]);
+      setIsRightSearchLoading(false);
+      return;
+    }
+    setIsRightSearchLoading(true);
+    rightSearchDebounceRef.current = setTimeout(async () => {
+      const results = await searchProducts(rightSearchQuery);
+      setRightSearchResults(results);
+      setIsRightSearchLoading(false);
+    }, 300);
+    return () => {
+      if (rightSearchDebounceRef.current) clearTimeout(rightSearchDebounceRef.current);
+    };
+  }, [rightSearchQuery]);
+
+  // Close right search popup on outside click
+  useEffect(() => {
+    if (!isRightSearchPopupOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (rightSearchRef.current && !rightSearchRef.current.contains(e.target as Node)) {
+        setIsRightSearchPopupOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isRightSearchPopupOpen]);
+
   const closeMobileSearch = useCallback(() => {
     setIsMobileSearchOpen(false);
     setMobileQuery("");
@@ -394,65 +434,33 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
               className="category-menu-btn"
               aria-label="Open Category Sidebar"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
+              <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Top line – full width */}
+                <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                {/* Middle line – with accent dot + shorter */}
+                <circle cx="2.5" cy="8" r="2" fill="#C5A880"/>
+                <line x1="6.5" y1="8" x2="22" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                {/* Bottom line – 3/4 width */}
+                <line x1="0" y1="15" x2="15" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </button>
 
-            {/* ── Logo ── */}
-            <a href="/" className="logo" aria-label="BuyFest Home">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/official_logo_3.png"
-                alt="BuyFest Logo"
-                className="logo-img"
-              />
+            {/* Mobile Logo (left side next to hamburger) */}
+            <a href="/" className="logo header-mobile-logo" aria-label="Ryor Home">
+              <RyorLogo size="sm" />
             </a>
           </div>
 
-
-          {/* ── DESKTOP: always-visible search bar ── */}
-          <div className="header-desktop-search" ref={desktopSearchRef}>
-            <div className={`hds-input-row ${showDesktopDropdown && desktopQuery ? "active" : ""}`}>
-              <svg className="hds-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                className="hds-input"
-                placeholder="Search products…"
-                value={desktopQuery}
-                onChange={(e) => setDesktopQuery(e.target.value)}
-                onFocus={() => { if (desktopQuery.trim()) setShowDesktopDropdown(true); }}
-                autoComplete="off"
-                id="desktop-search-input"
-              />
-              {desktopQuery && (
-                <button className="hds-clear" onClick={() => { setDesktopQuery(""); setShowDesktopDropdown(false); setDesktopAllResults([]); setDesktopVisibleCount(ITEMS_PER_PAGE); }} aria-label="Clear search">✕</button>
-              )}
-            </div>
-
-            {showDesktopDropdown && desktopQuery.trim() && (
-              <div className="header-search-dropdown" ref={desktopDropdownRef}>
-                <SearchDropdownContent
-                  isSearching={isDesktopSearching}
-                  results={desktopResults}
-                  query={desktopQuery}
-                  onClose={() => { setShowDesktopDropdown(false); setDesktopQuery(""); setDesktopAllResults([]); setDesktopVisibleCount(ITEMS_PER_PAGE); }}
-                />
-                {!isDesktopSearching && desktopHasMore && (
-                  <div className="header-search-more">Scroll for more</div>
-                )}
-              </div>
-            )}
+          {/* ── CENTER: Web Logo (Desktop Only) ── */}
+          <div className="header-center-logo">
+            <a href="/" className="logo" aria-label="Ryor Home">
+              <RyorLogo size="md" />
+            </a>
           </div>
 
-
-          {/* ── Nav ── */}
+          {/* ── RIGHT: Nav Controls ── */}
           <nav className="header-nav">
-            {/* Mobile search icon — inside nav so it appears right of logo on mobile */}
+            {/* Mobile search: Expandable bar (Original mobile behavior) */}
             <div className="header-mobile-search" ref={mobileSearchRef}>
               {!isMobileSearchOpen ? (
                 <button className="header-search-icon-btn" onClick={openMobileSearch} aria-label="Open search" id="header-search-icon">
@@ -494,6 +502,123 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                 </div>
               )}
             </div>
+
+            {/* Desktop Search Icon & Right Floating Popup Window (Desktop Web View Only) */}
+            <div className="desktop-search-popup-wrap" ref={rightSearchRef}>
+              <button
+                className={`header-search-icon-btn desktop-search-only ${isRightSearchPopupOpen ? "active" : ""}`}
+                onClick={() => {
+                  setIsRightSearchPopupOpen(prev => !prev);
+                  setTimeout(() => rightSearchInputRef.current?.focus(), 80);
+                }}
+                aria-label="Open search popup"
+                id="desktop-header-search-icon"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </button>
+
+              {isRightSearchPopupOpen && (
+                <div className="right-search-popup-window">
+                  <div className="rsp-header">
+                    <div className="rsp-input-row">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C5A880" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                      <input
+                        ref={rightSearchInputRef}
+                        type="text"
+                        className="rsp-input"
+                        placeholder="Search products, categories..."
+                        value={rightSearchQuery}
+                        onChange={(e) => setRightSearchQuery(e.target.value)}
+                        autoComplete="off"
+                        id="right-search-input"
+                      />
+                      {rightSearchQuery && (
+                        <button className="rsp-clear-btn" onClick={() => setRightSearchQuery("")} aria-label="Clear query">✕</button>
+                      )}
+                    </div>
+                    <button className="rsp-close-btn" onClick={() => setIsRightSearchPopupOpen(false)} aria-label="Close search popup">
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="rsp-body">
+                    {isRightSearchLoading ? (
+                      <div className="rsp-loading">
+                        <span className="rsp-spinner" />
+                        <span>Searching catalog...</span>
+                      </div>
+                    ) : rightSearchQuery.trim() ? (
+                      rightSearchResults.length > 0 ? (
+                        <div className="rsp-results-list">
+                          {rightSearchResults.map((product) => {
+                            const sellPrice = Number(product.sell_price || 0);
+                            const regularPrice = Number(product.regular_price || 0);
+                            const hasDiscount = regularPrice > 0 && regularPrice > sellPrice;
+                            const imageSrc = product.image
+                              ? product.image.startsWith("http")
+                                ? product.image
+                                : `${BASE_URL}${product.image}`
+                              : null;
+
+                            return (
+                              <Link
+                                key={product.id}
+                                href={`/product/${product.slug || product.id}`}
+                                className="rsp-product-item"
+                                onClick={() => setIsRightSearchPopupOpen(false)}
+                              >
+                                <div className="rsp-item-img-wrap">
+                                  {imageSrc ? (
+                                    <img src={imageSrc} alt={product.name} className="rsp-item-img" />
+                                  ) : (
+                                    <div className="rsp-no-img">📦</div>
+                                  )}
+                                </div>
+                                <div className="rsp-item-info">
+                                  <span className="rsp-item-name">{product.name}</span>
+                                  <div className="rsp-item-prices">
+                                    <span className="rsp-sell-price">৳{sellPrice.toLocaleString("en-BD")}</span>
+                                    {hasDiscount && (
+                                      <span className="rsp-regular-price">৳{regularPrice.toLocaleString("en-BD")}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                <ChevronRight size={16} className="rsp-item-arrow" />
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="rsp-empty">
+                          <p>No products found for &ldquo;<strong>{rightSearchQuery}</strong>&rdquo;</p>
+                        </div>
+                      )
+                    ) : (
+                      <div className="rsp-popular">
+                        <span className="rsp-popular-title">POPULAR CATEGORIES</span>
+                        <div className="rsp-popular-tags">
+                          {categoriesList.map((cat) => (
+                            <Link
+                              key={cat.slug}
+                              href={`/category_product?category=${cat.slug}`}
+                              className="rsp-popular-tag"
+                              onClick={() => setIsRightSearchPopupOpen(false)}
+                            >
+                              {cat.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
 
             {/* ── Account Button ── */}
             {mounted && (user ? (
@@ -584,16 +709,16 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
             {/* Home */}
             <a href="/" className="sub-nav-link active">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
               Home
             </a>
 
             {/* Categories simple dropdown */}
             <div className="sub-nav-dropdown">
               <span className="sub-nav-link sub-nav-cat-trigger">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"5px"}}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "5px" }}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
                 All Categories
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{marginLeft:"4px"}} className="cat-chevron"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: "4px" }} className="cat-chevron"><polyline points="6 9 12 15 18 9" /></svg>
               </span>
 
               <div className="sub-nav-simple-dropdown">
@@ -607,7 +732,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                       )}
                     </span>
                     <span className="sub-nav-simple-name">{cat.name}</span>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sub-nav-simple-arrow"><polyline points="9 18 15 12 9 6"/></svg>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sub-nav-simple-arrow"><polyline points="9 18 15 12 9 6" /></svg>
                   </Link>
                 ))}
               </div>
@@ -615,20 +740,20 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
 
             {/* New Arrivals */}
             <Link href="/new-arrivals" className="sub-nav-link sub-nav-hot">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
               New Arrivals
               <span className="sub-nav-badge">New</span>
             </Link>
 
             {/* My Orders */}
             <Link href="/orders" className="sub-nav-link">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" /></svg>
               My Orders
             </Link>
 
             {/* Contact Us */}
             <Link href="/contact-us" className="sub-nav-link">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px"}}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.04 3.33 2 2 0 0 1 3 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 12 19.79 19.79 0 0 1 1.04 3.33 2 2 0 0 1 3 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
               Contact Us
             </Link>
 
@@ -883,13 +1008,8 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             <button className="auth-modal-close" onClick={() => setIsAuthModalOpen(false)} aria-label="Close">✕</button>
 
             {/* Logo */}
-            <div className="auth-modal-brand">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/official_logo_3.png"
-                alt="BuyFest Logo"
-                className="auth-modal-logo"
-              />
+            <div className="auth-modal-brand" style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+              <RyorLogo size="lg" />
             </div>
 
             {/* Tabs */}
@@ -1038,9 +1158,21 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                     </div>
                     <div className="cart-drawer-item-info">
                       <div className="cart-drawer-item-top">
-                        <h4 className="cart-drawer-item-name">{item.product.name}</h4>
+                        <div className="cart-drawer-item-name-wrap">
+                          <h4 className="cart-drawer-item-name">{item.product.name}</h4>
+                          {(item.selectedSize || item.selectedColor) && (
+                            <div className="cart-drawer-item-badges">
+                              {item.selectedSize && (
+                                <span className="cart-drawer-badge">Size: {item.selectedSize}</span>
+                              )}
+                              {item.selectedColor && (
+                                <span className="cart-drawer-badge">Color: {item.selectedColor}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                         <button
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(item.product.id, item.selectedSize, item.selectedColor)}
                           className="cart-drawer-item-delete"
                           title="Remove item"
                         >
@@ -1051,14 +1183,14 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
                         <span className="cart-drawer-item-unit">৳{itemPrice} each</span>
                         <div className="cart-drawer-qty-control">
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.selectedSize, item.selectedColor)}
                             className="cart-drawer-qty-btn"
                           >
                             <Minus size={12} strokeWidth={3} />
                           </button>
                           <span className="cart-drawer-qty-val">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.selectedSize, item.selectedColor)}
                             className="cart-drawer-qty-btn"
                           >
                             <Plus size={12} strokeWidth={3} />
