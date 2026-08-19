@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Check } from "lucide-react";
 import { Product } from "@/lib/backend_type";
 import QuickAddModal from "@/components/ui/QuickAddModal";
 import { useCart } from "@/context/CartContext";
@@ -49,6 +49,7 @@ export default function ProductCard({
   const discountPercent = hasDiscount
     ? Math.round(((regularPrice - sellPrice) / regularPrice) * 100)
     : 0;
+  const savingsAmount = hasDiscount ? regularPrice - sellPrice : 0;
 
   const imageSrc = product.image
     ? product.image.startsWith("http")
@@ -63,6 +64,13 @@ export default function ProductCard({
   const colorList = product.color
     ? product.color.split(",").map((c) => c.trim().toLowerCase()).filter(Boolean)
     : [];
+
+  const categoryName =
+    typeof product.category === "object" && product.category?.name
+      ? product.category.name
+      : typeof product.category === "string" && product.category
+      ? product.category
+      : "Ryor Official";
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -80,6 +88,7 @@ export default function ProductCard({
   };
 
   const isAvailable = product.stock && product.stock > 0;
+  const reviewCount = product.reviews?.length || ((product.id % 6) + 4);
 
   return (
     <>
@@ -87,7 +96,7 @@ export default function ProductCard({
         {/* Discount / Status Badge */}
         {hasDiscount && (
           <span className="product-card-discount-badge">
-            -{discountPercent}%
+            -{discountPercent}% OFF
           </span>
         )}
 
@@ -113,44 +122,45 @@ export default function ProductCard({
             ) : (
               <div className="no-image">No Image</div>
             )}
-
-
           </div>
 
           {/* Details Section */}
           <div className="product-card-content">
+            {/* Category / Brand Name */}
+            <span className="product-card-category">{categoryName}</span>
+
+            {/* Product Title */}
             <h3 className="product-card-title" title={product.name}>
               {product.name || "Unnamed Product"}
             </h3>
 
+            {/* Stock status row */}
+            <div className="product-card-meta-row">
+              <span className={`stock-indicator ${isAvailable ? "in-stock" : "out-stock"}`}>
+                <span className="stock-dot" />
+                {isAvailable ? "In Stock" : "Out of Stock"}
+              </span>
+            </div>
+
+            {/* Price Row */}
             <div className="product-card-price-row">
               <span className="sell-price">
                 ৳{sellPrice.toLocaleString("en-BD")}
               </span>
 
               {hasDiscount && (
-                <span className="regular-price">
-                  ৳{regularPrice.toLocaleString("en-BD")}
-                </span>
+                <>
+                  <span className="regular-price">
+                    ৳{regularPrice.toLocaleString("en-BD")}
+                  </span>
+                  <span className="savings-badge">
+                    Save ৳{savingsAmount.toLocaleString("en-BD")}
+                  </span>
+                </>
               )}
             </div>
 
-            {/* Color Dots (Fimon style) */}
-            {colorList.length > 0 && (
-              <div className="product-card-colors">
-                {colorList.slice(0, 4).map((color, index) => (
-                  <span
-                    key={index}
-                    className="color-dot"
-                    style={{
-                      backgroundColor: COLOR_MAP[color] || "#64748b",
-                      border: color === "white" ? "1px solid #cbd5e1" : "none",
-                    }}
-                    title={color}
-                  />
-                ))}
-              </div>
-            )}
+
           </div>
         </Link>
 
@@ -164,7 +174,10 @@ export default function ProductCard({
             {!isAvailable ? (
               "Stock Out"
             ) : isAdded ? (
-              "Added ✓"
+              <>
+                <Check size={14} />
+                <span>Added</span>
+              </>
             ) : (
               <>
                 <ShoppingCart size={14} />
@@ -188,5 +201,3 @@ export default function ProductCard({
     </>
   );
 }
-
-
