@@ -4,7 +4,7 @@ export default function SeoSection() {
   return (
     <div className="container section-gap">
       <div className="seo-section">
-        
+
         <div className="seo-header-banner">
           <div className="seo-brand-icon">
             <ShoppingBag size={28} />
@@ -83,7 +83,7 @@ export default function SeoSection() {
 
         <div className="seo-contact-footer">
           <PhoneCall size={18} className="seo-icon-phone" />
-          <span>Need help? Call / WhatsApp: <strong>01635275630</strong> &nbsp;|&nbsp; Email: <strong>buyfestbd@gmail.com</strong></span>
+          <span>Need help, Call / WhatsApp: <strong>01635275630</strong> &nbsp;|&nbsp; Email: <strong>buyfestbd@gmail.com</strong></span>
         </div>
 
       </div>
