@@ -79,11 +79,6 @@ export default function NewTrends() {
     <div className="container section-gap">
       <div className="section-header">
         <h2 className="section-title">Just For You</h2>
-        {hasOverflow && (
-          <Link href="/all-products" className="see-all">
-            View All
-          </Link>
-        )}
       </div>
 
       <div className="new-arrival-slider-wrapper">
@@ -121,6 +116,12 @@ export default function NewTrends() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
+        <Link href="/all-products" className="see-all see-more-btn">
+          See More
+        </Link>
       </div>
     </div>
   );
