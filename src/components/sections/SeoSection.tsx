@@ -21,50 +21,7 @@ export default function SeoSection() {
         </div>
 
         <div className="seo-grid">
-          <div className="seo-card">
-            <div className="seo-card-header">
-              <ShoppingBag className="seo-icon" size={20} />
-              <h2>What We Sell</h2>
-            </div>
-            <p>
-              <strong>Fashion & Apparel</strong> — Hoodies, jerseys, T-shirts, and jeans for men and women. Trendy styles,
-              premium fabrics, and perfect fits for any season.<br />
-              <strong>Cosmetics & Beauty</strong> — Skincare essentials, makeup, and personal care products from genuine brands.<br />
-              <strong>Food & Grocery</strong> — Snacks, pantry staples, and specialty food items delivered fresh.
-            </p>
-          </div>
 
-          <div className="seo-card">
-            <div className="seo-card-header">
-              <ShieldCheck className="seo-icon" size={20} />
-              <h2>Why Choose Ryor BD</h2>
-            </div>
-            <p>
-              We offer fast, trackable shipping to all 64 districts in Bangladesh. Orders are processed within 24 hours
-              and delivered through reliable courier partners.
-            </p>
-          </div>
-
-          <div className="seo-card">
-            <div className="seo-card-header">
-              <RotateCcw className="seo-icon" size={20} />
-              <h2>Return & Exchange</h2>
-            </div>
-            <p>
-              Damaged, defective, or incorrect items can be returned or exchanged within 7 days of delivery.
-              Hassle-free support guaranteed.
-            </p>
-          </div>
-
-          <div className="seo-card">
-            <div className="seo-card-header">
-              <CreditCard className="seo-icon" size={20} />
-              <h2>Payment Methods</h2>
-            </div>
-            <p>
-              Cash on Delivery (COD), bKash, Nagad, and secure online card payments. Safe and encrypted transactions.
-            </p>
-          </div>
         </div>
 
         <div className="seo-highlights-box">
@@ -87,6 +44,6 @@ export default function SeoSection() {
         </div>
 
       </div>
-    </div>
+    </div >
   );
 }

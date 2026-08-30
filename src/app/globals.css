@@ -2100,6 +2100,12 @@ img {
   transform: translateY(0);
 }
 
+.see-more-btn {
+  font-size: 14px !important;
+  padding: 10px 32px !important;
+  border-radius: 8px !important;
+}
+
 /* CATEGORIES SLIDER */
 .categories-slider-wrap {
   position: relative;
@@ -7161,6 +7167,8 @@ img {
   outline: none;
   transition: all 0.2s ease;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .auth-input::placeholder {

@@ -436,12 +436,12 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
             >
               <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Top line – full width */}
-                <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="0" y1="1" x2="22" y2="1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 {/* Middle line – with accent dot + shorter */}
-                <circle cx="2.5" cy="8" r="2" fill="#C5A880"/>
-                <line x1="6.5" y1="8" x2="22" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="2.5" cy="8" r="2" fill="#C5A880" />
+                <line x1="6.5" y1="8" x2="22" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 {/* Bottom line – 3/4 width */}
-                <line x1="0" y1="15" x2="15" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <line x1="0" y1="15" x2="15" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
 
@@ -996,7 +996,7 @@ export default function Header({ cartCount: propCartCount }: HeaderProps) {
           </div>
 
           <div className="category-sidebar-footer">
-            <p className="category-sidebar-footer-text">Explore premium gadgets & accessories</p>
+            <p className="category-sidebar-footer-text">Explore Our Shop</p>
           </div>
         </div>
       </div>
